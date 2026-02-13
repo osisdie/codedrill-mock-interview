@@ -1,0 +1,61 @@
+{
+  "id": "request-middleware",
+  "title": "Implement Request Timing Middleware",
+  "category": "fastapi",
+  "difficulty": "medium",
+  "description": "Implement a request processing pipeline simulation that mirrors how FastAPI middleware works.\n\nIn FastAPI, middleware intercepts every request and response. A common pattern is a **timing middleware** that measures how long a request takes to process and adds an `X-Process-Time` header to the response.\n\nSince we cannot make real HTTP calls in this sandbox, you will implement the middleware logic as pure Python functions:\n\n1. **`RequestContext`** - A Pydantic model representing an incoming request with fields:\n   - `method` (`str`): HTTP method (GET, POST, etc.)\n   - `path` (`str`): The URL path\n   - `headers` (`dict[str, str]`): Request headers (default empty dict)\n   - `timestamp` (`float`): Request arrival time (use `time.time()` if not provided)\n\n2. **`ResponseContext`** - A Pydantic model representing a response with fields:\n   - `status_code` (`int`): HTTP status code\n   - `body` (`str`): Response body\n   - `headers` (`dict[str, str]`): Response headers (default empty dict)\n\n3. **`process_request(request: RequestContext, handler: Callable, middlewares: list[Callable]) -> ResponseContext`** - Process a request through a chain of middleware functions before reaching the handler.\n   - Each middleware is a function with signature: `(request: RequestContext, next_handler: Callable) -> ResponseContext`\n   - Middlewares are applied in order (first middleware in the list wraps the outermost layer).\n   - The handler is a function with signature: `(request: RequestContext) -> ResponseContext`\n\n4. **`timing_middleware(request: RequestContext, next_handler: Callable) -> ResponseContext`** - A middleware that:\n   - Records the start time before calling `next_handler`\n   - Calls `next_handler(request)` to get the response\n   - Calculates the elapsed time\n   - Adds an `X-Process-Time` header to the response with the value formatted as a float string (e.g., `\"0.001234\"`)\n   - Returns the modified response\n\n5. **`logging_middleware(request: RequestContext, next_handler: Callable) -> ResponseContext`** - A middleware that:\n   - Adds `X-Request-Method` header with the request method to the response\n   - Adds `X-Request-Path` header with the request path to the response\n   - Returns the modified response",
+  "examples": [
+    {
+      "input": "handler = lambda req: ResponseContext(status_code=200, body='OK')\nresponse = timing_middleware(RequestContext(method='GET', path='/test'), handler)\n'X-Process-Time' in response.headers",
+      "output": "True",
+      "explanation": "The timing middleware adds the X-Process-Time header to the response."
+    },
+    {
+      "input": "handler = lambda req: ResponseContext(status_code=200, body='OK')\nresponse = logging_middleware(RequestContext(method='POST', path='/users'), handler)\n(response.headers['X-Request-Method'], response.headers['X-Request-Path'])",
+      "output": "('POST', '/users')",
+      "explanation": "The logging middleware adds method and path info as response headers."
+    }
+  ],
+  "constraints": [
+    "Use Pydantic BaseModel for RequestContext and ResponseContext.",
+    "The timing_middleware must use time.time() to measure elapsed time.",
+    "X-Process-Time header value must be a string representation of a float.",
+    "process_request must correctly chain middlewares in order (first middleware is outermost).",
+    "Middlewares must not mutate the original request object."
+  ],
+  "starter_code": "import time\nfrom typing import Callable\nfrom pydantic import BaseModel, Field\n\n\nclass RequestContext(BaseModel):\n    method: str\n    path: str\n    headers: dict[str, str] = Field(default_factory=dict)\n    timestamp: float = Field(default_factory=time.time)\n\n\nclass ResponseContext(BaseModel):\n    status_code: int\n    body: str\n    headers: dict[str, str] = Field(default_factory=dict)\n\n\ndef timing_middleware(request: RequestContext, next_handler: Callable) -> ResponseContext:\n    \"\"\"Middleware that adds X-Process-Time header with elapsed time.\"\"\"\n    # Implement this\n    pass\n\n\ndef logging_middleware(request: RequestContext, next_handler: Callable) -> ResponseContext:\n    \"\"\"Middleware that adds X-Request-Method and X-Request-Path headers.\"\"\"\n    # Implement this\n    pass\n\n\ndef process_request(\n    request: RequestContext,\n    handler: Callable,\n    middlewares: list[Callable]\n) -> ResponseContext:\n    \"\"\"Process a request through a chain of middlewares before reaching the handler.\"\"\"\n    # Implement this\n    pass\n",
+  "test_cases": [
+    {
+      "input": "handler = lambda req: ResponseContext(status_code=200, body='Hello')\nreq = RequestContext(method='GET', path='/api/test')\nresp = timing_middleware(req, handler)\n(resp.status_code, resp.body, 'X-Process-Time' in resp.headers, float(resp.headers['X-Process-Time']) >= 0)",
+      "expected": "(200, 'Hello', True, True)",
+      "is_hidden": false
+    },
+    {
+      "input": "handler = lambda req: ResponseContext(status_code=201, body='Created')\nreq = RequestContext(method='POST', path='/api/users')\nresp = logging_middleware(req, handler)\n(resp.status_code, resp.headers.get('X-Request-Method'), resp.headers.get('X-Request-Path'))",
+      "expected": "(201, 'POST', '/api/users')",
+      "is_hidden": false
+    },
+    {
+      "input": "handler = lambda req: ResponseContext(status_code=200, body='OK')\nreq = RequestContext(method='DELETE', path='/api/items/5')\nresp = process_request(req, handler, [logging_middleware, timing_middleware])\n(resp.headers.get('X-Request-Method'), resp.headers.get('X-Request-Path'), 'X-Process-Time' in resp.headers)",
+      "expected": "('DELETE', '/api/items/5', True)",
+      "is_hidden": false
+    },
+    {
+      "input": "handler = lambda req: ResponseContext(status_code=200, body='OK')\nreq = RequestContext(method='GET', path='/')\nresp = process_request(req, handler, [])\n(resp.status_code, resp.body, len(resp.headers))",
+      "expected": "(200, 'OK', 0)",
+      "is_hidden": true
+    },
+    {
+      "input": "import time as _time\ndef slow_handler(req):\n    _time.sleep(0.05)\n    return ResponseContext(status_code=200, body='slow')\nreq = RequestContext(method='GET', path='/slow')\nresp = timing_middleware(req, slow_handler)\nfloat(resp.headers['X-Process-Time']) >= 0.04",
+      "expected": "True",
+      "is_hidden": true
+    },
+    {
+      "input": "def auth_middleware(request, next_handler):\n    resp = next_handler(request)\n    resp.headers['X-Auth'] = 'verified'\n    return resp\nhandler = lambda req: ResponseContext(status_code=200, body='data')\nreq = RequestContext(method='GET', path='/secure')\nresp = process_request(req, handler, [auth_middleware, logging_middleware])\n(resp.headers.get('X-Auth'), resp.headers.get('X-Request-Method'), resp.headers.get('X-Request-Path'))",
+      "expected": "('verified', 'GET', '/secure')",
+      "is_hidden": true
+    }
+  ],
+  "time_limit_minutes": 30,
+  "tags": ["fastapi", "middleware"]
+}

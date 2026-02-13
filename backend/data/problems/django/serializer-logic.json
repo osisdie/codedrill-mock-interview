@@ -1,0 +1,63 @@
+{
+  "id": "serializer-logic",
+  "title": "Serializer Logic",
+  "category": "django",
+  "difficulty": "medium",
+  "description": "Django REST Framework (DRF) serializers handle converting complex data types to and from Python native types, while also performing validation. In this problem, you will build a simplified serializer system in pure Python.\n\n**Implement the following classes:**\n\n1. **`Field`** base class:\n   - `__init__(self, required=True, default=None)`: Store whether the field is required and its default value.\n   - `validate(self, value)`: Base implementation returns the value as-is. Subclasses override this.\n\n2. **`CharField(Field)`**:\n   - `__init__(self, required=True, default=None, max_length=None, min_length=None)`\n   - `validate(self, value)`: Checks that the value is a string. If `max_length` is set, ensures `len(value) <= max_length`. If `min_length` is set, ensures `len(value) >= min_length`. Raises `ValidationError(message)` on failure.\n\n3. **`IntegerField(Field)`**:\n   - `__init__(self, required=True, default=None, min_value=None, max_value=None)`\n   - `validate(self, value)`: Checks that the value is an int (not bool). If `min_value` is set, ensures `value >= min_value`. If `max_value` is set, ensures `value <= max_value`. Raises `ValidationError(message)` on failure.\n\n4. **`EmailField(CharField)`**:\n   - `validate(self, value)`: First calls `CharField.validate`, then checks that the value contains exactly one `@` with non-empty parts on both sides. Raises `ValidationError(\"Invalid email format\")` on failure.\n\n5. **`ValidationError`** exception class:\n   - Stores a `message` attribute (str).\n\n6. **`Serializer`** class:\n   - On class definition, any class attributes that are `Field` instances become the serializer's field schema.\n   - `__init__(self, data=None)`: Accepts input data (a dict) to validate.\n   - `is_valid(self)`: Validates all fields against `self.data`. Returns `True` if all validations pass, `False` otherwise. Populates `self.errors` (a dict mapping field names to error message strings) and `self.validated_data` (a dict of validated field values).\n     - For missing required fields (not in data and no default): add error `\"This field is required.\"`\n     - For missing optional fields with a default: use the default value in `validated_data`.\n     - For fields that fail validation: add the `ValidationError`'s message.\n   - `serialize(self, obj)`: Takes a dict and returns a new dict containing only the keys defined as fields on the serializer.",
+  "examples": [
+    {
+      "input": "class UserSerializer(Serializer):\n    name = CharField(max_length=50)\n    email = EmailField()\n    age = IntegerField(min_value=0)\n\ns = UserSerializer(data={\"name\": \"Alice\", \"email\": \"alice@example.com\", \"age\": 30})\ns.is_valid()\n(s.is_valid(), s.validated_data)",
+      "output": "(True, {\"name\": \"Alice\", \"email\": \"alice@example.com\", \"age\": 30})",
+      "explanation": "All fields pass validation."
+    },
+    {
+      "input": "s = UserSerializer(data={\"name\": \"\", \"email\": \"invalid\", \"age\": -5})\ns.is_valid()\n(s.is_valid(), s.errors)",
+      "output": "(False, {\"email\": \"Invalid email format\", \"age\": \"Value must be >= 0.\"})",
+      "explanation": "email has no @, age is below min_value. name is empty string but still a valid string with no min_length set."
+    }
+  ],
+  "constraints": [
+    "Field.required defaults to True, Field.default defaults to None",
+    "CharField validates type is str, then checks length constraints",
+    "IntegerField validates type is int (booleans are NOT valid ints), then checks value constraints",
+    "EmailField must have exactly one '@' with non-empty text on both sides",
+    "ValidationError stores its message in a .message attribute",
+    "is_valid() returns True only if self.errors is empty",
+    "serialize() only includes keys that correspond to declared fields"
+  ],
+  "starter_code": "class ValidationError(Exception):\n    def __init__(self, message: str):\n        self.message = message\n        super().__init__(message)\n\nclass Field:\n    def __init__(self, required=True, default=None):\n        self.required = required\n        self.default = default\n\n    def validate(self, value):\n        return value\n\nclass CharField(Field):\n    def __init__(self, required=True, default=None, max_length=None, min_length=None):\n        super().__init__(required, default)\n        self.max_length = max_length\n        self.min_length = min_length\n\n    def validate(self, value):\n        # Validate type is str, check length constraints\n        pass\n\nclass IntegerField(Field):\n    def __init__(self, required=True, default=None, min_value=None, max_value=None):\n        super().__init__(required, default)\n        self.min_value = min_value\n        self.max_value = max_value\n\n    def validate(self, value):\n        # Validate type is int (not bool), check value constraints\n        pass\n\nclass EmailField(CharField):\n    def validate(self, value):\n        # Call parent validate, then check email format\n        pass\n\nclass Serializer:\n    def __init__(self, data=None):\n        self.data = data or {}\n        self.errors = {}\n        self.validated_data = {}\n\n    def _get_fields(self):\n        # Return dict of {field_name: field_instance} from class attributes\n        return {k: v for k, v in type(self).__dict__.items() if isinstance(v, Field)}\n\n    def is_valid(self):\n        # Validate all fields and populate self.errors / self.validated_data\n        pass\n\n    def serialize(self, obj: dict) -> dict:\n        # Return a dict with only the declared field keys from obj\n        pass\n",
+  "test_cases": [
+    {
+      "input": "class UserSerializer(Serializer):\n    name = CharField(max_length=50)\n    email = EmailField()\n    age = IntegerField(min_value=0)\n\ns = UserSerializer(data={\"name\": \"Alice\", \"email\": \"alice@example.com\", \"age\": 30})\nresult = s.is_valid()\n(result, s.validated_data)",
+      "expected": "(True, {\"name\": \"Alice\", \"email\": \"alice@example.com\", \"age\": 30})",
+      "is_hidden": false
+    },
+    {
+      "input": "class UserSerializer(Serializer):\n    name = CharField(max_length=50)\n    email = EmailField()\n    age = IntegerField(min_value=0)\n\ns = UserSerializer(data={\"name\": \"Alice\"})\nresult = s.is_valid()\n(result, s.errors)",
+      "expected": "(False, {\"email\": \"This field is required.\", \"age\": \"This field is required.\"})",
+      "is_hidden": false
+    },
+    {
+      "input": "class UserSerializer(Serializer):\n    name = CharField(max_length=50)\n    email = EmailField()\n    age = IntegerField(min_value=0)\n\ns = UserSerializer(data={})\ns.serialize({\"name\": \"Bob\", \"email\": \"bob@test.com\", \"age\": 25, \"extra\": \"ignored\"})",
+      "expected": "{\"name\": \"Bob\", \"email\": \"bob@test.com\", \"age\": 25}",
+      "is_hidden": false
+    },
+    {
+      "input": "class ProfileSerializer(Serializer):\n    bio = CharField(required=False, default=\"No bio\")\n    score = IntegerField(min_value=0, max_value=100)\n\ns = ProfileSerializer(data={\"score\": 85})\nresult = s.is_valid()\n(result, s.validated_data)",
+      "expected": "(True, {\"bio\": \"No bio\", \"score\": 85})",
+      "is_hidden": true
+    },
+    {
+      "input": "class ItemSerializer(Serializer):\n    name = CharField(min_length=2, max_length=10)\n    price = IntegerField(min_value=1)\n\ns = ItemSerializer(data={\"name\": \"A\", \"price\": 0})\nresult = s.is_valid()\n(result, s.errors)",
+      "expected": "(False, {\"name\": \"Value must be at least 2 characters.\", \"price\": \"Value must be >= 1.\"})",
+      "is_hidden": true
+    },
+    {
+      "input": "class StrictSerializer(Serializer):\n    flag = IntegerField()\n\ns = StrictSerializer(data={\"flag\": True})\nresult = s.is_valid()\n(result, s.errors)",
+      "expected": "(False, {\"flag\": \"Expected an integer.\"})",
+      "is_hidden": true
+    }
+  ],
+  "time_limit_minutes": 30,
+  "tags": ["django", "drf", "serialization"]
+}

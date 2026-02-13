@@ -1,0 +1,62 @@
+{
+  "id": "orm-queries",
+  "title": "ORM-Style Queries",
+  "category": "django",
+  "difficulty": "medium",
+  "description": "In Django, the ORM (Object-Relational Mapper) lets you query databases using Python instead of raw SQL. In this problem, you will implement three functions that simulate common Django ORM operations on a list of dictionaries (each dict represents a database row).\n\nYou are given a list of employee records, where each record is a dictionary with keys: `\"name\"` (str), `\"department\"` (str), `\"salary\"` (int), and `\"years\"` (int, years of experience).\n\nImplement the following functions:\n\n1. **`filter_records(records, **kwargs)`** - Return a list of records where ALL key-value conditions match (like Django's `filter()`). Each kwarg key is a field name and value is the required value. Support a special `__gte` suffix for \"greater than or equal\" (e.g., `salary__gte=50000` means salary >= 50000) and `__lt` suffix for \"less than\" (e.g., `years__lt=5`).\n\n2. **`annotate_records(records, **kwargs)`** - Return a new list of records where each record has additional computed fields. Each kwarg key is the new field name and value is a tuple `(operation, field)` where operation is `\"upper\"` (uppercase string field) or `\"double\"` (multiply numeric field by 2). Example: `annotate_records(records, name_upper=(\"upper\", \"name\"))` adds a `\"name_upper\"` field.\n\n3. **`aggregate(records, **kwargs)`** - Return a single dictionary of aggregate results. Each kwarg key is the result name and value is a tuple `(operation, field)` where operation is one of `\"sum\"`, `\"avg\"`, `\"count\"`, `\"min\"`, or `\"max\"`. Example: `aggregate(records, total_salary=(\"sum\", \"salary\"))` returns `{\"total_salary\": ...}`.",
+  "examples": [
+    {
+      "input": "records = [\n  {\"name\": \"Alice\", \"department\": \"Engineering\", \"salary\": 80000, \"years\": 5},\n  {\"name\": \"Bob\", \"department\": \"Marketing\", \"salary\": 60000, \"years\": 3},\n  {\"name\": \"Charlie\", \"department\": \"Engineering\", \"salary\": 95000, \"years\": 8}\n]\nfilter_records(records, department=\"Engineering\")",
+      "output": "[{\"name\": \"Alice\", \"department\": \"Engineering\", \"salary\": 80000, \"years\": 5}, {\"name\": \"Charlie\", \"department\": \"Engineering\", \"salary\": 95000, \"years\": 8}]",
+      "explanation": "Only Alice and Charlie are in the Engineering department."
+    },
+    {
+      "input": "aggregate(records, total_salary=(\"sum\", \"salary\"), avg_years=(\"avg\", \"years\"))",
+      "output": "{\"total_salary\": 235000, \"avg_years\": 5.333333333333333}",
+      "explanation": "Sum of salaries: 80000+60000+95000=235000. Average years: (5+3+8)/3 = 5.333..."
+    }
+  ],
+  "constraints": [
+    "1 <= len(records) <= 1000",
+    "All records have consistent keys",
+    "Filter supports exact match, __gte (>=), and __lt (<) lookups",
+    "Annotate supports \"upper\" (for strings) and \"double\" (for numbers)",
+    "Aggregate supports \"sum\", \"avg\", \"count\", \"min\", \"max\"",
+    "For avg, return a float; for count, count non-None values of that field"
+  ],
+  "starter_code": "def filter_records(records: list[dict], **kwargs) -> list[dict]:\n    # Implement Django-style filtering with support for __gte and __lt lookups\n    pass\n\ndef annotate_records(records: list[dict], **kwargs) -> list[dict]:\n    # Add computed fields to each record\n    pass\n\ndef aggregate(records: list[dict], **kwargs) -> dict:\n    # Compute aggregate values (sum, avg, count, min, max)\n    pass\n",
+  "test_cases": [
+    {
+      "input": "filter_records([{\"name\": \"Alice\", \"department\": \"Engineering\", \"salary\": 80000, \"years\": 5}, {\"name\": \"Bob\", \"department\": \"Marketing\", \"salary\": 60000, \"years\": 3}, {\"name\": \"Charlie\", \"department\": \"Engineering\", \"salary\": 95000, \"years\": 8}], department=\"Engineering\")",
+      "expected": "[{\"name\": \"Alice\", \"department\": \"Engineering\", \"salary\": 80000, \"years\": 5}, {\"name\": \"Charlie\", \"department\": \"Engineering\", \"salary\": 95000, \"years\": 8}]",
+      "is_hidden": false
+    },
+    {
+      "input": "filter_records([{\"name\": \"Alice\", \"department\": \"Engineering\", \"salary\": 80000, \"years\": 5}, {\"name\": \"Bob\", \"department\": \"Marketing\", \"salary\": 60000, \"years\": 3}, {\"name\": \"Charlie\", \"department\": \"Engineering\", \"salary\": 95000, \"years\": 8}], salary__gte=70000)",
+      "expected": "[{\"name\": \"Alice\", \"department\": \"Engineering\", \"salary\": 80000, \"years\": 5}, {\"name\": \"Charlie\", \"department\": \"Engineering\", \"salary\": 95000, \"years\": 8}]",
+      "is_hidden": false
+    },
+    {
+      "input": "aggregate([{\"name\": \"Alice\", \"department\": \"Engineering\", \"salary\": 80000, \"years\": 5}, {\"name\": \"Bob\", \"department\": \"Marketing\", \"salary\": 60000, \"years\": 3}, {\"name\": \"Charlie\", \"department\": \"Engineering\", \"salary\": 95000, \"years\": 8}], total_salary=(\"sum\", \"salary\"), avg_years=(\"avg\", \"years\"))",
+      "expected": "{\"total_salary\": 235000, \"avg_years\": 5.333333333333333}",
+      "is_hidden": false
+    },
+    {
+      "input": "filter_records([{\"name\": \"Alice\", \"department\": \"Engineering\", \"salary\": 80000, \"years\": 5}, {\"name\": \"Bob\", \"department\": \"Marketing\", \"salary\": 60000, \"years\": 3}, {\"name\": \"Charlie\", \"department\": \"Engineering\", \"salary\": 95000, \"years\": 8}], department=\"Engineering\", salary__gte=90000)",
+      "expected": "[{\"name\": \"Charlie\", \"department\": \"Engineering\", \"salary\": 95000, \"years\": 8}]",
+      "is_hidden": true
+    },
+    {
+      "input": "annotate_records([{\"name\": \"Alice\", \"department\": \"Engineering\", \"salary\": 80000, \"years\": 5}, {\"name\": \"Bob\", \"department\": \"Marketing\", \"salary\": 60000, \"years\": 3}], name_upper=(\"upper\", \"name\"), double_salary=(\"double\", \"salary\"))",
+      "expected": "[{\"name\": \"Alice\", \"department\": \"Engineering\", \"salary\": 80000, \"years\": 5, \"name_upper\": \"ALICE\", \"double_salary\": 160000}, {\"name\": \"Bob\", \"department\": \"Marketing\", \"salary\": 60000, \"years\": 3, \"name_upper\": \"BOB\", \"double_salary\": 120000}]",
+      "is_hidden": true
+    },
+    {
+      "input": "aggregate([{\"name\": \"Alice\", \"department\": \"Engineering\", \"salary\": 80000, \"years\": 5}, {\"name\": \"Bob\", \"department\": \"Marketing\", \"salary\": 60000, \"years\": 3}, {\"name\": \"Charlie\", \"department\": \"Engineering\", \"salary\": 95000, \"years\": 8}], max_salary=(\"max\", \"salary\"), min_years=(\"min\", \"years\"), headcount=(\"count\", \"name\"))",
+      "expected": "{\"max_salary\": 95000, \"min_years\": 3, \"headcount\": 3}",
+      "is_hidden": true
+    }
+  ],
+  "time_limit_minutes": 30,
+  "tags": ["django", "orm", "database"]
+}

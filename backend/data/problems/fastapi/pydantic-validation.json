@@ -1,0 +1,56 @@
+{
+  "id": "pydantic-validation",
+  "title": "Create Pydantic Models with Custom Validation for User Registration",
+  "category": "fastapi",
+  "difficulty": "easy",
+  "description": "Create a Pydantic model `UserRegistration` with custom validation rules suitable for a user registration endpoint in a FastAPI application.\n\nThe model must have the following fields with validations:\n\n1. **`username`** (`str`) - Must be between 3 and 20 characters. Must contain only alphanumeric characters and underscores. Must start with a letter.\n\n2. **`email`** (`str`) - Must be a valid email format (contains exactly one `@`, has a domain with at least one `.` after the `@`, no spaces).\n\n3. **`password`** (`str`) - Must be at least 8 characters long. Must contain at least one uppercase letter, one lowercase letter, one digit, and one special character (`!@#$%^&*`).\n\n4. **`age`** (`int`) - Must be between 18 and 120 (inclusive).\n\n5. **`full_name`** (`str`) - Must be non-empty after stripping whitespace. Should be automatically stripped of leading/trailing whitespace.\n\nAlso implement a helper function:\n\n- **`validate_user(data: dict) -> tuple[bool, str | UserRegistration]`** - Attempts to create a `UserRegistration` from the given dict. Returns `(True, user_instance)` on success or `(False, error_message_string)` on validation failure.\n\nUse Pydantic v2 `field_validator` or `model_validator` decorators for custom validation logic.",
+  "examples": [
+    {
+      "input": "validate_user({'username': 'john_doe', 'email': 'john@example.com', 'password': 'Secure1!x', 'age': 25, 'full_name': 'John Doe'})",
+      "output": "(True, UserRegistration(username='john_doe', email='john@example.com', ...))",
+      "explanation": "All fields pass validation, so the function returns True and the model instance."
+    },
+    {
+      "input": "validate_user({'username': '2bad', 'email': 'john@example.com', 'password': 'Secure1!x', 'age': 25, 'full_name': 'John'})",
+      "output": "(False, 'Validation error: ...')",
+      "explanation": "Username starts with a digit, which is not allowed."
+    }
+  ],
+  "constraints": [
+    "Use Pydantic v2 BaseModel with field_validator or model_validator.",
+    "Email validation should be done with string checks (do not rely on Pydantic EmailStr or external libraries).",
+    "Password special characters are limited to: !@#$%^&*",
+    "All validation errors should raise ValueError with a descriptive message.",
+    "The validate_user function should catch ValidationError and return the error message string."
+  ],
+  "starter_code": "from pydantic import BaseModel, field_validator, ValidationError\n\n\nclass UserRegistration(BaseModel):\n    username: str\n    email: str\n    password: str\n    age: int\n    full_name: str\n\n    # Add your validators here\n    pass\n\n\ndef validate_user(data: dict) -> tuple[bool, str | object]:\n    \"\"\"Attempt to create a UserRegistration from the given dict.\n    Returns (True, user_instance) on success, or (False, error_message) on failure.\n    \"\"\"\n    # Implement this function\n    pass\n",
+  "test_cases": [
+    {
+      "input": "result = validate_user({'username': 'alice_99', 'email': 'alice@test.com', 'password': 'MyPass1!', 'age': 25, 'full_name': 'Alice Smith'})\n(result[0], result[1].username if result[0] else None)",
+      "expected": "(True, 'alice_99')",
+      "is_hidden": false
+    },
+    {
+      "input": "result = validate_user({'username': '1invalid', 'email': 'alice@test.com', 'password': 'MyPass1!', 'age': 25, 'full_name': 'Alice'})\nresult[0]",
+      "expected": "False",
+      "is_hidden": false
+    },
+    {
+      "input": "result = validate_user({'username': 'bob', 'email': 'notanemail', 'password': 'MyPass1!', 'age': 25, 'full_name': 'Bob'})\nresult[0]",
+      "expected": "False",
+      "is_hidden": false
+    },
+    {
+      "input": "r1 = validate_user({'username': 'charlie', 'email': 'c@d.com', 'password': 'weakpass', 'age': 25, 'full_name': 'Charlie'})\nr2 = validate_user({'username': 'charlie', 'email': 'c@d.com', 'password': 'NoDigit!x', 'age': 25, 'full_name': 'Charlie'})\nr3 = validate_user({'username': 'charlie', 'email': 'c@d.com', 'password': 'nospecial1X', 'age': 25, 'full_name': 'Charlie'})\n(r1[0], r2[0], r3[0])",
+      "expected": "(False, False, False)",
+      "is_hidden": true
+    },
+    {
+      "input": "r1 = validate_user({'username': 'dave', 'email': 'dave@site.com', 'password': 'Good1!aa', 'age': 17, 'full_name': 'Dave'})\nr2 = validate_user({'username': 'eve', 'email': 'eve@site.com', 'password': 'Good1!aa', 'age': 121, 'full_name': 'Eve'})\nr3 = validate_user({'username': 'frank', 'email': 'frank@site.com', 'password': 'Good1!aa', 'age': 18, 'full_name': '   '})\n(r1[0], r2[0], r3[0])",
+      "expected": "(False, False, False)",
+      "is_hidden": true
+    }
+  ],
+  "time_limit_minutes": 25,
+  "tags": ["fastapi", "pydantic", "validation"]
+}

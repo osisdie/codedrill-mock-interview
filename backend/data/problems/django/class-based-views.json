@@ -1,0 +1,62 @@
+{
+  "id": "class-based-views",
+  "title": "Class-Based Views",
+  "category": "django",
+  "difficulty": "medium",
+  "description": "Django uses Class-Based Views (CBVs) to handle HTTP requests with an object-oriented approach. Each HTTP method (GET, POST, PUT, DELETE) maps to a method on the view class. A central `dispatch()` method routes incoming requests to the appropriate handler.\n\nIn this problem, you will implement a simplified class-based view system in pure Python.\n\n**Implement the following classes:**\n\n1. **`Request`** - A simple data class with attributes:\n   - `method` (str): The HTTP method, e.g., `\"GET\"`, `\"POST\"`, `\"PUT\"`, `\"DELETE\"`\n   - `data` (dict): The request body/payload (default `{}`)\n   - `query_params` (dict): URL query parameters (default `{}`)\n\n2. **`Response`** - A simple data class with attributes:\n   - `status_code` (int): HTTP status code\n   - `data` (any): The response body\n\n3. **`View`** (base class):\n   - `dispatch(request)` method: Looks up the method name (lowercased, e.g., `\"get\"`, `\"post\"`) on `self`. If the handler exists, call it with `request` and return the result. If not, return a `Response(405, {\"error\": \"Method not allowed\"})`.\n   - `as_view()` class method: Returns a callable (function) that creates an instance of the class and calls `dispatch` on it.\n\n4. **`ListView(View)`**:\n   - Has a class attribute `items = []` (to be overridden by subclasses).\n   - `get(request)`: Returns `Response(200, self.items)`.\n\n5. **`CreateView(View)`**:\n   - Has a class attribute `items = []` and `required_fields = []`.\n   - `post(request)`: Validates that all `required_fields` are present in `request.data`. If any are missing, return `Response(400, {\"error\": \"Missing fields\", \"fields\": <sorted list of missing fields>})`. Otherwise, append `request.data` to `self.items` and return `Response(201, request.data)`.\n\n6. **`DetailView(View)`**:\n   - Has a class attribute `items = []` and `lookup_field = \"id\"`.\n   - `get(request)`: Finds the first item in `self.items` where `item[self.lookup_field]` equals `request.query_params[self.lookup_field]`. Returns `Response(200, item)` if found, or `Response(404, {\"error\": \"Not found\"})` if not.",
+  "examples": [
+    {
+      "input": "request = Request(method=\"GET\")\nview = View()\nresponse = view.dispatch(request)\n(response.status_code, response.data)",
+      "output": "(405, {\"error\": \"Method not allowed\"})",
+      "explanation": "The base View has no get() method, so dispatch returns 405."
+    },
+    {
+      "input": "class BookList(ListView):\n    items = [{\"id\": 1, \"title\": \"Django Unleashed\"}]\n\nrequest = Request(method=\"GET\")\nview = BookList()\nresponse = view.dispatch(request)\n(response.status_code, response.data)",
+      "output": "(200, [{\"id\": 1, \"title\": \"Django Unleashed\"}])",
+      "explanation": "ListView.get() returns all items with status 200."
+    }
+  ],
+  "constraints": [
+    "Request.method is always an uppercase string: \"GET\", \"POST\", \"PUT\", or \"DELETE\"",
+    "dispatch() must convert method to lowercase to find the handler",
+    "as_view() returns a callable that accepts a Request and returns a Response",
+    "CreateView must validate all required_fields are present in request.data",
+    "Missing fields list in the error response must be sorted alphabetically",
+    "DetailView looks up items using the lookup_field key in query_params"
+  ],
+  "starter_code": "class Request:\n    def __init__(self, method: str, data: dict = None, query_params: dict = None):\n        self.method = method\n        self.data = data or {}\n        self.query_params = query_params or {}\n\nclass Response:\n    def __init__(self, status_code: int, data=None):\n        self.status_code = status_code\n        self.data = data\n\nclass View:\n    def dispatch(self, request: Request) -> Response:\n        # Route to the appropriate handler method based on request.method\n        pass\n\n    @classmethod\n    def as_view(cls):\n        # Return a callable that instantiates the view and calls dispatch\n        pass\n\nclass ListView(View):\n    items = []\n\n    def get(self, request: Request) -> Response:\n        pass\n\nclass CreateView(View):\n    items = []\n    required_fields = []\n\n    def post(self, request: Request) -> Response:\n        pass\n\nclass DetailView(View):\n    items = []\n    lookup_field = \"id\"\n\n    def get(self, request: Request) -> Response:\n        pass\n",
+  "test_cases": [
+    {
+      "input": "r = View().dispatch(Request(method='GET'))\n(r.status_code, r.data)",
+      "expected": "(405, {\"error\": \"Method not allowed\"})",
+      "is_hidden": false
+    },
+    {
+      "input": "class BookList(ListView):\n    items = [{\"id\": 1, \"title\": \"Django\"}, {\"id\": 2, \"title\": \"Flask\"}]\nr = BookList().dispatch(Request(method='GET'))\n(r.status_code, r.data)",
+      "expected": "(200, [{\"id\": 1, \"title\": \"Django\"}, {\"id\": 2, \"title\": \"Flask\"}])",
+      "is_hidden": false
+    },
+    {
+      "input": "class BookCreate(CreateView):\n    items = []\n    required_fields = [\"title\", \"author\"]\nr = BookCreate().dispatch(Request(method='POST', data={\"title\": \"DRF Guide\", \"author\": \"Tom\"}))\n(r.status_code, r.data)",
+      "expected": "(201, {\"title\": \"DRF Guide\", \"author\": \"Tom\"})",
+      "is_hidden": false
+    },
+    {
+      "input": "class BookCreate(CreateView):\n    items = []\n    required_fields = [\"title\", \"author\"]\nr = BookCreate().dispatch(Request(method='POST', data={\"title\": \"Incomplete\"}))\n(r.status_code, r.data)",
+      "expected": "(400, {\"error\": \"Missing fields\", \"fields\": [\"author\"]})",
+      "is_hidden": true
+    },
+    {
+      "input": "class BookDetail(DetailView):\n    items = [{\"id\": 1, \"title\": \"Django\"}, {\"id\": 2, \"title\": \"Flask\"}]\n    lookup_field = \"id\"\nr = BookDetail().dispatch(Request(method='GET', query_params={\"id\": 2}))\n(r.status_code, r.data)",
+      "expected": "(200, {\"id\": 2, \"title\": \"Flask\"})",
+      "is_hidden": true
+    },
+    {
+      "input": "class BookDetail(DetailView):\n    items = [{\"id\": 1, \"title\": \"Django\"}]\n    lookup_field = \"id\"\nr = BookDetail().dispatch(Request(method='GET', query_params={\"id\": 99}))\n(r.status_code, r.data)",
+      "expected": "(404, {\"error\": \"Not found\"})",
+      "is_hidden": true
+    }
+  ],
+  "time_limit_minutes": 30,
+  "tags": ["django", "views", "oop"]
+}

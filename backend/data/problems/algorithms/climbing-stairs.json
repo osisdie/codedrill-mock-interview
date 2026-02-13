@@ -1,0 +1,33 @@
+{
+  "id": "climbing-stairs",
+  "title": "Climbing Stairs",
+  "category": "algorithms",
+  "difficulty": "easy",
+  "description": "You are climbing a staircase. It takes `n` steps to reach the top.\n\nEach time you can either climb `1` or `2` steps. In how many distinct ways can you climb to the top?",
+  "examples": [
+    {
+      "input": "n = 2",
+      "output": "2",
+      "explanation": "There are two ways to climb to the top:\n1. 1 step + 1 step\n2. 2 steps"
+    },
+    {
+      "input": "n = 3",
+      "output": "3",
+      "explanation": "There are three ways to climb to the top:\n1. 1 step + 1 step + 1 step\n2. 1 step + 2 steps\n3. 2 steps + 1 step"
+    }
+  ],
+  "constraints": [
+    "1 <= n <= 45"
+  ],
+  "starter_code": "def climb_stairs(n: int) -> int:\n    # Write your solution here\n    pass\n",
+  "test_cases": [
+    {"input": "climb_stairs(2)", "expected": "2", "is_hidden": false},
+    {"input": "climb_stairs(3)", "expected": "3", "is_hidden": false},
+    {"input": "climb_stairs(1)", "expected": "1", "is_hidden": false},
+    {"input": "climb_stairs(5)", "expected": "8", "is_hidden": true},
+    {"input": "climb_stairs(10)", "expected": "89", "is_hidden": true},
+    {"input": "climb_stairs(20)", "expected": "10946", "is_hidden": true}
+  ],
+  "time_limit_minutes": 15,
+  "tags": ["dynamic-programming"]
+}

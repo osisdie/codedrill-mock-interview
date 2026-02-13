@@ -1,0 +1,24 @@
+{
+  "problems": [
+    {"id": "two-sum", "file": "algorithms/two-sum.json"},
+    {"id": "valid-anagram", "file": "algorithms/valid-anagram.json"},
+    {"id": "maximum-subarray", "file": "algorithms/maximum-subarray.json"},
+    {"id": "fibonacci-number", "file": "algorithms/fibonacci-number.json"},
+    {"id": "valid-parentheses", "file": "algorithms/valid-parentheses.json"},
+    {"id": "move-zeroes", "file": "algorithms/move-zeroes.json"},
+    {"id": "climbing-stairs", "file": "algorithms/climbing-stairs.json"},
+    {"id": "binary-search", "file": "algorithms/binary-search.json"},
+    {"id": "reverse-linked-list", "file": "algorithms/reverse-linked-list.json"},
+    {"id": "merge-two-sorted-lists", "file": "algorithms/merge-two-sorted-lists.json"},
+    {"id": "crud-endpoint", "file": "fastapi/crud-endpoint.json"},
+    {"id": "pydantic-validation", "file": "fastapi/pydantic-validation.json"},
+    {"id": "request-middleware", "file": "fastapi/request-middleware.json"},
+    {"id": "dependency-injection", "file": "fastapi/dependency-injection.json"},
+    {"id": "background-tasks", "file": "fastapi/background-tasks.json"},
+    {"id": "orm-queries", "file": "django/orm-queries.json"},
+    {"id": "class-based-views", "file": "django/class-based-views.json"},
+    {"id": "serializer-logic", "file": "django/serializer-logic.json"},
+    {"id": "custom-middleware", "file": "django/custom-middleware.json"},
+    {"id": "signals-handlers", "file": "django/signals-handlers.json"}
+  ]
+}

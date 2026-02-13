@@ -1,0 +1,62 @@
+{
+  "id": "background-tasks",
+  "title": "Implement Background Task Processing System",
+  "category": "fastapi",
+  "difficulty": "medium",
+  "description": "Implement a background task processing system that simulates how FastAPI's `BackgroundTasks` works.\n\nIn FastAPI, `BackgroundTasks` allows you to schedule functions to run *after* the response is sent to the client. This is useful for operations like sending emails, processing uploads, or writing logs that don't need to block the response.\n\nBuild the following:\n\n1. **`TaskResult`** - A Pydantic model with fields:\n   - `task_id` (`str`): Unique identifier for the task.\n   - `status` (`str`): One of `\"pending\"`, `\"running\"`, `\"completed\"`, `\"failed\"`.\n   - `result` (`Any`): The return value of the task function (default `None`).\n   - `error` (`str | None`): Error message if the task failed (default `None`).\n\n2. **`BackgroundTaskQueue`** - A class that manages background tasks:\n   - `__init__(self)` - Initialize with an empty task list and results dict.\n   - `add_task(self, func: Callable, *args, **kwargs) -> str` - Register a task to be executed. Generate a unique `task_id` (use format `\"task-{n}\"` where n starts at 1). Store the task and return the `task_id`. The task status should be `\"pending\"`.\n   - `run_all(self) -> list[str]` - Execute all pending tasks **in the order they were added**. For each task: set status to `\"running\"`, call the function, store the result, set status to `\"completed\"`. If the function raises an exception, set status to `\"failed\"` and store the error message. Return a list of all task IDs that were processed.\n   - `get_result(self, task_id: str) -> TaskResult` - Return the `TaskResult` for the given task ID. Raise `KeyError` if not found.\n   - `get_all_results(self) -> list[TaskResult]` - Return all `TaskResult` objects in order of task ID.\n\n3. **`process_data(data: list[int]) -> dict`** - A sample task function that:\n   - Computes the sum, average (float), min, and max of the data list.\n   - Returns `{\"sum\": ..., \"average\": ..., \"min\": ..., \"max\": ...}`.\n   - Raises `ValueError(\"Empty data list\")` if the list is empty.\n\n4. **`send_notification(recipient: str, message: str) -> dict`** - A sample task function that:\n   - Returns `{\"sent_to\": recipient, \"message\": message, \"status\": \"delivered\"}`.\n\n5. **`create_report(title: str, items: list[str]) -> dict`** - A sample task function that:\n   - Returns `{\"title\": title, \"item_count\": len(items), \"items\": items}`.",
+  "examples": [
+    {
+      "input": "queue = BackgroundTaskQueue()\ntid = queue.add_task(process_data, [1, 2, 3, 4, 5])\n(tid, queue.get_result(tid).status)",
+      "output": "('task-1', 'pending')",
+      "explanation": "Task is added to the queue with status 'pending' and assigned task-1."
+    },
+    {
+      "input": "queue = BackgroundTaskQueue()\nqueue.add_task(process_data, [10, 20, 30])\nqueue.run_all()\nresult = queue.get_result('task-1')\n(result.status, result.result)",
+      "output": "('completed', {'sum': 60, 'average': 20.0, 'min': 10, 'max': 30})",
+      "explanation": "After run_all(), the task is completed and the result contains the computed statistics."
+    }
+  ],
+  "constraints": [
+    "Task IDs must follow the format 'task-{n}' with n starting from 1.",
+    "Tasks must be executed in FIFO order (the order they were added).",
+    "If a task function raises an exception, the task status must be 'failed' and the error message stored.",
+    "A failed task must not prevent subsequent tasks from running.",
+    "get_result must raise KeyError for unknown task IDs.",
+    "process_data must raise ValueError for empty lists."
+  ],
+  "starter_code": "from typing import Callable, Any\nfrom pydantic import BaseModel\n\n\nclass TaskResult(BaseModel):\n    task_id: str\n    status: str  # \"pending\", \"running\", \"completed\", \"failed\"\n    result: Any = None\n    error: str | None = None\n\n\nclass BackgroundTaskQueue:\n    \"\"\"A background task queue that simulates FastAPI BackgroundTasks.\"\"\"\n\n    def __init__(self):\n        # Initialize task storage\n        pass\n\n    def add_task(self, func: Callable, *args, **kwargs) -> str:\n        # Register a task and return its task_id\n        pass\n\n    def run_all(self) -> list[str]:\n        # Execute all pending tasks in order, return list of task IDs processed\n        pass\n\n    def get_result(self, task_id: str) -> TaskResult:\n        # Return the TaskResult for the given task_id\n        pass\n\n    def get_all_results(self) -> list[TaskResult]:\n        # Return all TaskResults in order\n        pass\n\n\ndef process_data(data: list[int]) -> dict:\n    \"\"\"Compute sum, average, min, and max of the data list.\"\"\"\n    # Implement this\n    pass\n\n\ndef send_notification(recipient: str, message: str) -> dict:\n    \"\"\"Simulate sending a notification.\"\"\"\n    # Implement this\n    pass\n\n\ndef create_report(title: str, items: list[str]) -> dict:\n    \"\"\"Create a report from title and items.\"\"\"\n    # Implement this\n    pass\n",
+  "test_cases": [
+    {
+      "input": "q = BackgroundTaskQueue()\nt1 = q.add_task(process_data, [1, 2, 3])\nt2 = q.add_task(send_notification, 'admin@test.com', 'Hello')\n(t1, t2, q.get_result(t1).status, q.get_result(t2).status)",
+      "expected": "('task-1', 'task-2', 'pending', 'pending')",
+      "is_hidden": false
+    },
+    {
+      "input": "q = BackgroundTaskQueue()\nq.add_task(process_data, [10, 20, 30])\nprocessed = q.run_all()\nr = q.get_result('task-1')\n(processed, r.status, r.result)",
+      "expected": "(['task-1'], 'completed', {'sum': 60, 'average': 20.0, 'min': 10, 'max': 30})",
+      "is_hidden": false
+    },
+    {
+      "input": "q = BackgroundTaskQueue()\nq.add_task(send_notification, 'user@example.com', 'Welcome!')\nq.add_task(create_report, 'Sales', ['item1', 'item2', 'item3'])\nq.run_all()\nr1 = q.get_result('task-1').result\nr2 = q.get_result('task-2').result\n(r1, r2)",
+      "expected": "({'sent_to': 'user@example.com', 'message': 'Welcome!', 'status': 'delivered'}, {'title': 'Sales', 'item_count': 3, 'items': ['item1', 'item2', 'item3']})",
+      "is_hidden": false
+    },
+    {
+      "input": "q = BackgroundTaskQueue()\nq.add_task(process_data, [])\nq.add_task(process_data, [5, 10])\nq.run_all()\nr1 = q.get_result('task-1')\nr2 = q.get_result('task-2')\n(r1.status, 'Empty data list' in r1.error, r2.status, r2.result)",
+      "expected": "('failed', True, 'completed', {'sum': 15, 'average': 7.5, 'min': 5, 'max': 10})",
+      "is_hidden": true
+    },
+    {
+      "input": "q = BackgroundTaskQueue()\ntry:\n    q.get_result('nonexistent')\n    result = 'no error'\nexcept KeyError:\n    result = 'key error raised'\nresult",
+      "expected": "'key error raised'",
+      "is_hidden": true
+    },
+    {
+      "input": "q = BackgroundTaskQueue()\nfor i in range(4):\n    q.add_task(send_notification, f'user{i}@test.com', message=f'msg-{i}')\nids = q.run_all()\nresults = q.get_all_results()\n(ids, len(results), all(r.status == 'completed' for r in results))",
+      "expected": "(['task-1', 'task-2', 'task-3', 'task-4'], 4, True)",
+      "is_hidden": true
+    }
+  ],
+  "time_limit_minutes": 30,
+  "tags": ["fastapi", "async", "background-tasks"]
+}

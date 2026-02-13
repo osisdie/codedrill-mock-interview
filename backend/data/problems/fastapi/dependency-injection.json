@@ -1,0 +1,61 @@
+{
+  "id": "dependency-injection",
+  "title": "Create a Dependency Injection System for Database Session Management",
+  "category": "fastapi",
+  "difficulty": "medium",
+  "description": "Implement a simplified dependency injection (DI) system that mirrors how FastAPI's `Depends()` mechanism works for managing database sessions and other resources.\n\nIn FastAPI, dependency injection allows you to declare what a route handler needs (e.g., a database session), and the framework automatically provides it. You will build a pure-Python simulation of this pattern.\n\nImplement the following:\n\n1. **`DatabaseSession`** - A class that simulates a database session:\n   - `__init__(self, db_url: str)` - Store the connection URL and set `is_active = True`, initialize an empty `queries` list.\n   - `execute(self, query: str) -> str` - Append the query to `self.queries` and return `f\"Result of: {query}\"`. Raise `RuntimeError` if session is not active.\n   - `close(self)` - Set `is_active = False`.\n   - Supports context manager protocol (`__enter__` returns self, `__exit__` calls `close()`).\n\n2. **`DependencyContainer`** - A class that manages dependency factories and resolution:\n   - `__init__(self)` - Initialize an empty registry (dict mapping string names to factory callables).\n   - `register(self, name: str, factory: Callable) -> None` - Register a factory function under the given name.\n   - `resolve(self, name: str) -> Any` - Call the factory registered under `name` and return the result. Raise `KeyError` if the name is not registered.\n   - `has(self, name: str) -> bool` - Return whether a dependency with the given name is registered.\n\n3. **`create_session_factory(db_url: str) -> Callable`** - Returns a factory function (no arguments) that creates and returns a new `DatabaseSession` connected to `db_url`.\n\n4. **`execute_with_session(container: DependencyContainer, dep_name: str, query: str) -> tuple[str, bool]`** - Resolve the named dependency to get a session, execute the query, close the session, and return a tuple of `(query_result, session_is_active_after_close)`.\n   This demonstrates the typical pattern: acquire resource -> use it -> clean up.",
+  "examples": [
+    {
+      "input": "session = DatabaseSession('sqlite:///test.db')\nresult = session.execute('SELECT * FROM users')\n(result, session.is_active)",
+      "output": "(\"Result of: SELECT * FROM users\", True)",
+      "explanation": "The session executes the query and remains active until explicitly closed."
+    },
+    {
+      "input": "container = DependencyContainer()\ncontainer.register('db', create_session_factory('sqlite:///app.db'))\nsession = container.resolve('db')\n(type(session).__name__, session.is_active)",
+      "output": "('DatabaseSession', True)",
+      "explanation": "The container resolves the 'db' dependency by calling the registered factory."
+    }
+  ],
+  "constraints": [
+    "DatabaseSession must support the context manager protocol (with statement).",
+    "Calling execute() on a closed session must raise RuntimeError.",
+    "Each call to resolve() must create a new instance (no singleton caching).",
+    "DependencyContainer.resolve() must raise KeyError for unregistered dependencies.",
+    "execute_with_session must always close the session, even conceptually after use."
+  ],
+  "starter_code": "from typing import Callable, Any\n\n\nclass DatabaseSession:\n    \"\"\"Simulates a database session with context manager support.\"\"\"\n\n    def __init__(self, db_url: str):\n        # Initialize session state\n        pass\n\n    def execute(self, query: str) -> str:\n        # Execute a query and return result string\n        pass\n\n    def close(self):\n        # Close the session\n        pass\n\n    def __enter__(self):\n        # Context manager enter\n        pass\n\n    def __exit__(self, exc_type, exc_val, exc_tb):\n        # Context manager exit\n        pass\n\n\nclass DependencyContainer:\n    \"\"\"A simple dependency injection container.\"\"\"\n\n    def __init__(self):\n        # Initialize the registry\n        pass\n\n    def register(self, name: str, factory: Callable) -> None:\n        # Register a factory under the given name\n        pass\n\n    def resolve(self, name: str) -> Any:\n        # Resolve and return an instance from the named factory\n        pass\n\n    def has(self, name: str) -> bool:\n        # Check if a dependency is registered\n        pass\n\n\ndef create_session_factory(db_url: str) -> Callable:\n    \"\"\"Return a factory function that creates DatabaseSession instances.\"\"\"\n    # Implement this\n    pass\n\n\ndef execute_with_session(\n    container: DependencyContainer, dep_name: str, query: str\n) -> tuple[str, bool]:\n    \"\"\"Resolve a session dependency, execute a query, close the session.\n    Returns (query_result, session.is_active after close).\"\"\"\n    # Implement this\n    pass\n",
+  "test_cases": [
+    {
+      "input": "s = DatabaseSession('sqlite:///test.db')\nr = s.execute('SELECT 1')\n(r, s.is_active, s.queries)",
+      "expected": "(\"Result of: SELECT 1\", True, ['SELECT 1'])",
+      "is_hidden": false
+    },
+    {
+      "input": "c = DependencyContainer()\nfactory = create_session_factory('postgres://localhost/mydb')\nc.register('db', factory)\ns = c.resolve('db')\n(type(s).__name__, s.is_active, c.has('db'), c.has('cache'))",
+      "expected": "('DatabaseSession', True, True, False)",
+      "is_hidden": false
+    },
+    {
+      "input": "c = DependencyContainer()\nc.register('db', create_session_factory('sqlite:///app.db'))\nresult, is_active = execute_with_session(c, 'db', 'INSERT INTO users VALUES (1)')\n(result, is_active)",
+      "expected": "(\"Result of: INSERT INTO users VALUES (1)\", False)",
+      "is_hidden": false
+    },
+    {
+      "input": "s = DatabaseSession('sqlite:///x.db')\nwith s as session:\n    r = session.execute('SELECT 1')\n(r, s.is_active)",
+      "expected": "(\"Result of: SELECT 1\", False)",
+      "is_hidden": true
+    },
+    {
+      "input": "s = DatabaseSession('sqlite:///x.db')\ns.close()\ntry:\n    s.execute('SELECT 1')\n    result = 'no error'\nexcept RuntimeError:\n    result = 'error raised'\nresult",
+      "expected": "'error raised'",
+      "is_hidden": true
+    },
+    {
+      "input": "c = DependencyContainer()\nc.register('db', create_session_factory('sqlite:///a.db'))\ns1 = c.resolve('db')\ns2 = c.resolve('db')\n(s1 is s2, s1.is_active, s2.is_active)",
+      "expected": "(False, True, True)",
+      "is_hidden": true
+    }
+  ],
+  "time_limit_minutes": 30,
+  "tags": ["fastapi", "dependency-injection"]
+}

@@ -1,0 +1,63 @@
+{
+  "id": "signals-handlers",
+  "title": "Signals & Handlers",
+  "category": "django",
+  "difficulty": "medium",
+  "description": "Django's signal dispatcher allows decoupled applications to get notified when actions occur elsewhere in the framework. Signals follow the observer pattern: senders emit signals, and receivers (handler functions) respond to them.\n\nIn this problem, you will implement a simplified signal dispatch system in pure Python.\n\n**Implement the following:**\n\n1. **`Signal`** class:\n   - `__init__(self)`: Initializes an empty list of receivers.\n   - `connect(self, receiver, sender=None)`: Registers a receiver function. If `sender` is provided, the receiver only fires when that specific sender emits the signal. If `sender` is `None`, the receiver fires for ALL senders. A receiver should not be connected more than once for the same sender (ignore duplicate connections).\n   - `disconnect(self, receiver, sender=None)`: Removes the receiver for the given sender. If `sender` is `None`, removes the catch-all registration. Returns `True` if the receiver was found and removed, `False` otherwise.\n   - `send(self, sender, **kwargs)`: Sends the signal from the given sender. Calls all receivers registered for this specific sender AND all receivers registered with `sender=None` (catch-all). Each receiver is called with `(sender=sender, **kwargs)`. Returns a list of tuples `(receiver, result)` where `result` is the return value of each receiver. The order should be: catch-all receivers first (in connection order), then sender-specific receivers (in connection order).\n\n2. **`pre_save`** - A module-level `Signal` instance (pre-created for use).\n3. **`post_save`** - A module-level `Signal` instance (pre-created for use).\n\n4. **`receiver(signal, sender=None)`** - A decorator function that connects the decorated function to the given signal for the given sender. Returns the original function unchanged.\n\nExample usage:\n```python\npre_save = Signal()\npost_save = Signal()\n\n@receiver(post_save, sender=\"User\")\ndef send_welcome_email(sender, **kwargs):\n    return f\"Welcome email sent to {kwargs.get('instance', {}).get('name')}\"\n\nresults = post_save.send(sender=\"User\", instance={\"name\": \"Alice\"})\n# results == [(send_welcome_email, \"Welcome email sent to Alice\")]\n```",
+  "examples": [
+    {
+      "input": "sig = Signal()\ndef handler_a(sender, **kwargs):\n    return f\"A got {kwargs.get('action')}\"\nsig.connect(handler_a)\nresults = sig.send(sender=\"TestSender\", action=\"create\")\n[(r.__name__, v) for r, v in results]",
+      "output": "[(\"handler_a\", \"A got create\")]",
+      "explanation": "handler_a is a catch-all receiver so it fires for any sender."
+    },
+    {
+      "input": "sig = Signal()\ndef handler_b(sender, **kwargs):\n    return \"B\"\nsig.connect(handler_b, sender=\"User\")\nresults = sig.send(sender=\"Post\", action=\"update\")\nresults",
+      "output": "[]",
+      "explanation": "handler_b is only registered for sender='User', so it does not fire for sender='Post'."
+    }
+  ],
+  "constraints": [
+    "Receivers are callable functions that accept (sender, **kwargs) and return a value",
+    "connect() with the same receiver and same sender twice should not create duplicates",
+    "disconnect() returns True if receiver was removed, False if not found",
+    "send() returns list of (receiver_function, return_value) tuples",
+    "send() order: catch-all receivers first (in connection order), then sender-specific (in connection order)",
+    "The receiver() decorator must return the original function (not a wrapper)",
+    "pre_save and post_save are pre-created Signal instances at module level"
+  ],
+  "starter_code": "class Signal:\n    def __init__(self):\n        # Initialize receiver storage\n        pass\n\n    def connect(self, receiver, sender=None):\n        # Register a receiver, optionally for a specific sender\n        pass\n\n    def disconnect(self, receiver, sender=None):\n        # Remove a receiver. Return True if found, False otherwise\n        pass\n\n    def send(self, sender, **kwargs):\n        # Send signal to all matching receivers. Return list of (receiver, result) tuples\n        pass\n\npre_save = Signal()\npost_save = Signal()\n\ndef receiver(signal, sender=None):\n    # Decorator that connects the decorated function to the signal\n    pass\n",
+  "test_cases": [
+    {
+      "input": "sig = Signal()\ndef handler_a(sender, **kwargs):\n    return f\"A:{kwargs.get('action')}\"\nsig.connect(handler_a)\nresults = sig.send(sender=\"TestSender\", action=\"create\")\n[(r.__name__, v) for r, v in results]",
+      "expected": "[(\"handler_a\", \"A:create\")]",
+      "is_hidden": false
+    },
+    {
+      "input": "sig = Signal()\ndef handler_b(sender, **kwargs):\n    return \"B\"\nsig.connect(handler_b, sender=\"User\")\nresult1 = sig.send(sender=\"User\")\nresult2 = sig.send(sender=\"Post\")\n([(r.__name__, v) for r, v in result1], [(r.__name__, v) for r, v in result2])",
+      "expected": "([(\"handler_b\", \"B\")], [])",
+      "is_hidden": false
+    },
+    {
+      "input": "sig = Signal()\ndef h1(sender, **kwargs):\n    return \"h1\"\nsig.connect(h1, sender=\"X\")\nremoved = sig.disconnect(h1, sender=\"X\")\nnot_found = sig.disconnect(h1, sender=\"X\")\nresults = sig.send(sender=\"X\")\n(removed, not_found, results)",
+      "expected": "(True, False, [])",
+      "is_hidden": false
+    },
+    {
+      "input": "sig = Signal()\ndef catch_all(sender, **kwargs):\n    return f\"all:{sender}\"\ndef specific(sender, **kwargs):\n    return f\"specific:{sender}\"\nsig.connect(catch_all)\nsig.connect(specific, sender=\"User\")\nresults = sig.send(sender=\"User\")\n[(r.__name__, v) for r, v in results]",
+      "expected": "[(\"catch_all\", \"all:User\"), (\"specific\", \"specific:User\")]",
+      "is_hidden": true
+    },
+    {
+      "input": "sig = Signal()\ndef dup_handler(sender, **kwargs):\n    return \"dup\"\nsig.connect(dup_handler, sender=\"A\")\nsig.connect(dup_handler, sender=\"A\")\nresults = sig.send(sender=\"A\")\n[(r.__name__, v) for r, v in results]",
+      "expected": "[(\"dup_handler\", \"dup\")]",
+      "is_hidden": true
+    },
+    {
+      "input": "test_signal = Signal()\n@receiver(test_signal, sender=\"Order\")\ndef on_order(sender, **kwargs):\n    return f\"order:{kwargs.get('total')}\"\nresults = test_signal.send(sender=\"Order\", total=99)\n[(r.__name__, v) for r, v in results]",
+      "expected": "[(\"on_order\", \"order:99\")]",
+      "is_hidden": true
+    }
+  ],
+  "time_limit_minutes": 25,
+  "tags": ["django", "signals", "observer-pattern"]
+}

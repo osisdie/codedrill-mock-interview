@@ -1,0 +1,66 @@
+{
+  "id": "crud-endpoint",
+  "title": "Build a FastAPI CRUD Endpoint for a Book Resource",
+  "category": "fastapi",
+  "difficulty": "medium",
+  "description": "Build a complete CRUD (Create, Read, Update, Delete) system for a **Book** resource using FastAPI and Pydantic.\n\nYou are given a `Book` Pydantic model and an in-memory storage dictionary. Implement the following helper functions that manage books in the `books_db` dictionary:\n\n1. **`create_book(book: BookCreate) -> Book`** - Add a new book to `books_db`. Auto-assign an integer `id` (starting from 1, incrementing). Return the created `Book` with its assigned `id`.\n\n2. **`get_book(book_id: int) -> Book | None`** - Retrieve a book by its `id`. Return `None` if not found.\n\n3. **`get_all_books() -> list[Book]`** - Return a list of all books in the database.\n\n4. **`update_book(book_id: int, book_data: BookUpdate) -> Book | None`** - Update an existing book. Only update fields that are explicitly provided (not `None`). Return the updated `Book`, or `None` if the book does not exist.\n\n5. **`delete_book(book_id: int) -> bool`** - Delete a book by its `id`. Return `True` if deleted, `False` if not found.\n\nThese functions represent the core logic behind typical FastAPI CRUD endpoints (`POST /books`, `GET /books/{id}`, `GET /books`, `PUT /books/{id}`, `DELETE /books/{id}`).",
+  "examples": [
+    {
+      "input": "create_book(BookCreate(title='Clean Code', author='Robert C. Martin', year=2008, isbn='978-0132350884'))",
+      "output": "Book(id=1, title='Clean Code', author='Robert C. Martin', year=2008, isbn='978-0132350884')",
+      "explanation": "A new book is created with auto-assigned id=1 and stored in books_db."
+    },
+    {
+      "input": "get_book(1)  # after creating the book above",
+      "output": "Book(id=1, title='Clean Code', author='Robert C. Martin', year=2008, isbn='978-0132350884')",
+      "explanation": "Retrieves the book with id=1 from the in-memory database."
+    },
+    {
+      "input": "update_book(1, BookUpdate(year=2009))",
+      "output": "Book(id=1, title='Clean Code', author='Robert C. Martin', year=2009, isbn='978-0132350884')",
+      "explanation": "Only the year field is updated; other fields remain unchanged."
+    }
+  ],
+  "constraints": [
+    "Use the provided Pydantic models (BookCreate, BookUpdate, Book) without modifying their fields.",
+    "Book IDs must be auto-incremented integers starting from 1.",
+    "update_book must only update fields that are explicitly provided (not None).",
+    "books_db is a plain dict mapping int IDs to Book objects.",
+    "The books_db dictionary must be cleared/reset between independent test scenarios."
+  ],
+  "starter_code": "from pydantic import BaseModel\nfrom typing import Optional\n\n\nclass BookCreate(BaseModel):\n    title: str\n    author: str\n    year: int\n    isbn: str\n\n\nclass BookUpdate(BaseModel):\n    title: Optional[str] = None\n    author: Optional[str] = None\n    year: Optional[int] = None\n    isbn: Optional[str] = None\n\n\nclass Book(BaseModel):\n    id: int\n    title: str\n    author: str\n    year: int\n    isbn: str\n\n\nbooks_db: dict[int, Book] = {}\n_next_id: int = 1\n\n\ndef create_book(book: BookCreate) -> Book:\n    # Create a new book, assign an auto-incremented id, store in books_db\n    pass\n\n\ndef get_book(book_id: int) -> Book | None:\n    # Return the book with the given id, or None if not found\n    pass\n\n\ndef get_all_books() -> list[Book]:\n    # Return a list of all books\n    pass\n\n\ndef update_book(book_id: int, book_data: BookUpdate) -> Book | None:\n    # Update only the provided fields of an existing book\n    pass\n\n\ndef delete_book(book_id: int) -> bool:\n    # Delete a book by id; return True if deleted, False if not found\n    pass\n",
+  "test_cases": [
+    {
+      "input": "books_db.clear()\nglobal _next_id\n_next_id = 1\nb = create_book(BookCreate(title='Clean Code', author='Robert C. Martin', year=2008, isbn='978-0132350884'))\n(b.id, b.title, b.author, b.year, b.isbn)",
+      "expected": "(1, 'Clean Code', 'Robert C. Martin', 2008, '978-0132350884')",
+      "is_hidden": false
+    },
+    {
+      "input": "books_db.clear()\nglobal _next_id\n_next_id = 1\ncreate_book(BookCreate(title='Book A', author='Author A', year=2020, isbn='111'))\ncreate_book(BookCreate(title='Book B', author='Author B', year=2021, isbn='222'))\nresult = get_all_books()\n[(b.id, b.title) for b in sorted(result, key=lambda x: x.id)]",
+      "expected": "[(1, 'Book A'), (2, 'Book B')]",
+      "is_hidden": false
+    },
+    {
+      "input": "books_db.clear()\nglobal _next_id\n_next_id = 1\ncreate_book(BookCreate(title='Old Title', author='Author', year=2020, isbn='123'))\nupdated = update_book(1, BookUpdate(title='New Title', year=2023))\n(updated.title, updated.year, updated.author)",
+      "expected": "('New Title', 2023, 'Author')",
+      "is_hidden": false
+    },
+    {
+      "input": "books_db.clear()\nglobal _next_id\n_next_id = 1\ncreate_book(BookCreate(title='To Delete', author='Author', year=2020, isbn='456'))\n(delete_book(1), delete_book(1), get_book(1))",
+      "expected": "(True, False, None)",
+      "is_hidden": true
+    },
+    {
+      "input": "books_db.clear()\nglobal _next_id\n_next_id = 1\nresult_none = get_book(999)\nresult_update = update_book(999, BookUpdate(title='Ghost'))\n(result_none, result_update)",
+      "expected": "(None, None)",
+      "is_hidden": true
+    },
+    {
+      "input": "books_db.clear()\nglobal _next_id\n_next_id = 1\nfor i in range(5):\n    create_book(BookCreate(title=f'Book {i}', author=f'Author {i}', year=2020+i, isbn=f'ISBN-{i}'))\ndelete_book(3)\nremaining_ids = sorted([b.id for b in get_all_books()])\nb6 = create_book(BookCreate(title='Book 5', author='Author 5', year=2025, isbn='ISBN-5'))\n(remaining_ids, b6.id)",
+      "expected": "([1, 2, 4, 5], 6)",
+      "is_hidden": true
+    }
+  ],
+  "time_limit_minutes": 30,
+  "tags": ["fastapi", "rest-api", "crud"]
+}

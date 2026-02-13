@@ -1,0 +1,62 @@
+{
+  "id": "custom-middleware",
+  "title": "Custom Middleware",
+  "category": "django",
+  "difficulty": "medium",
+  "description": "Django middleware is a chain-of-responsibility pattern where each middleware component processes requests and responses in sequence. Each middleware can modify the request before it reaches the view, and modify the response after the view returns.\n\nIn this problem, you will implement a simplified middleware pipeline in pure Python.\n\n**Implement the following:**\n\n1. **`Request`** class:\n   - `__init__(self, path: str, method: str, headers: dict = None, body: dict = None)`\n   - Stores the given attributes. `headers` defaults to `{}`, `body` defaults to `{}`.\n   - Has a `meta` dict attribute (defaults to `{}`) for middleware to attach extra data.\n\n2. **`Response`** class:\n   - `__init__(self, status_code: int, body=None, headers: dict = None)`\n   - `headers` defaults to `{}`.\n\n3. **`Middleware`** base class:\n   - `__init__(self, get_response)`: Stores `get_response`, which is a callable (the next middleware or final view).\n   - `__call__(self, request)`: Calls `self.process_request(request)`. If it returns a `Response`, short-circuit and return it. Otherwise, calls `self.get_response(request)` to get the response, then calls `self.process_response(request, response)` and returns its result.\n   - `process_request(self, request)`: Default returns `None` (continue processing).\n   - `process_response(self, request, response)`: Default returns the response unchanged.\n\n4. **`LoggingMiddleware(Middleware)`**:\n   - `process_request`: Adds `\"request_logged\"` key with value `True` to `request.meta`.\n   - `process_response`: Adds `\"X-Logged\"` key with value `\"true\"` to `response.headers`.\n\n5. **`AuthMiddleware(Middleware)`**:\n   - `process_request`: Checks if `\"Authorization\"` key exists in `request.headers`. If not, short-circuits by returning `Response(401, {\"error\": \"Unauthorized\"})`.\n   - Otherwise, adds `\"user\"` key with value `request.headers[\"Authorization\"]` to `request.meta`.\n\n6. **`CORSMiddleware(Middleware)`**:\n   - `process_response`: Adds `\"Access-Control-Allow-Origin\"` with value `\"*\"` to `response.headers`.\n\n7. **`build_middleware_chain(middlewares, view)`** function:\n   - Takes a list of middleware classes (in order from outermost to innermost) and a view function.\n   - Returns a callable that processes a request through the middleware chain.\n   - The view function takes a `Request` and returns a `Response`.\n   - Middleware wrapping: the last middleware in the list wraps the view, the second-to-last wraps that, etc.",
+  "examples": [
+    {
+      "input": "def my_view(request):\n    return Response(200, {\"message\": \"Hello\"})\n\nchain = build_middleware_chain([LoggingMiddleware], my_view)\nreq = Request(path=\"/api/test\", method=\"GET\")\nresp = chain(req)\n(resp.status_code, resp.body, resp.headers, req.meta)",
+      "output": "(200, {\"message\": \"Hello\"}, {\"X-Logged\": \"true\"}, {\"request_logged\": true})",
+      "explanation": "LoggingMiddleware adds request_logged to meta and X-Logged header to response."
+    },
+    {
+      "input": "chain = build_middleware_chain([AuthMiddleware], my_view)\nreq = Request(path=\"/api/secret\", method=\"GET\")\nresp = chain(req)\n(resp.status_code, resp.body)",
+      "output": "(401, {\"error\": \"Unauthorized\"})",
+      "explanation": "AuthMiddleware short-circuits because no Authorization header is present."
+    }
+  ],
+  "constraints": [
+    "Middleware classes must follow the chain-of-responsibility pattern",
+    "process_request returning a Response short-circuits the chain (skips view and inner middleware)",
+    "process_response is still called on the way back out (for non-short-circuited middleware)",
+    "build_middleware_chain wraps from right to left: last middleware class wraps the view",
+    "Request.headers and Response.headers default to empty dicts",
+    "When short-circuiting in process_request, process_response of that middleware is NOT called"
+  ],
+  "starter_code": "class Request:\n    def __init__(self, path: str, method: str, headers: dict = None, body: dict = None):\n        self.path = path\n        self.method = method\n        self.headers = headers or {}\n        self.body = body or {}\n        self.meta = {}\n\nclass Response:\n    def __init__(self, status_code: int, body=None, headers: dict = None):\n        self.status_code = status_code\n        self.body = body\n        self.headers = headers or {}\n\nclass Middleware:\n    def __init__(self, get_response):\n        self.get_response = get_response\n\n    def __call__(self, request):\n        # Implement the middleware processing flow\n        pass\n\n    def process_request(self, request):\n        return None\n\n    def process_response(self, request, response):\n        return response\n\nclass LoggingMiddleware(Middleware):\n    def process_request(self, request):\n        pass\n\n    def process_response(self, request, response):\n        pass\n\nclass AuthMiddleware(Middleware):\n    def process_request(self, request):\n        pass\n\nclass CORSMiddleware(Middleware):\n    def process_response(self, request, response):\n        pass\n\ndef build_middleware_chain(middlewares: list, view) -> callable:\n    # Build the middleware chain wrapping the view\n    pass\n",
+  "test_cases": [
+    {
+      "input": "def my_view(request):\n    return Response(200, {\"message\": \"Hello\"})\nchain = build_middleware_chain([LoggingMiddleware], my_view)\nreq = Request(path=\"/api/test\", method=\"GET\")\nresp = chain(req)\n(resp.status_code, resp.body, resp.headers.get(\"X-Logged\"), req.meta.get(\"request_logged\"))",
+      "expected": "(200, {\"message\": \"Hello\"}, \"true\", True)",
+      "is_hidden": false
+    },
+    {
+      "input": "def my_view(request):\n    return Response(200, {\"message\": \"Hello\"})\nchain = build_middleware_chain([AuthMiddleware], my_view)\nreq = Request(path=\"/api/secret\", method=\"GET\")\nresp = chain(req)\n(resp.status_code, resp.body)",
+      "expected": "(401, {\"error\": \"Unauthorized\"})",
+      "is_hidden": false
+    },
+    {
+      "input": "def my_view(request):\n    return Response(200, {\"user\": request.meta.get(\"user\")})\nchain = build_middleware_chain([AuthMiddleware], my_view)\nreq = Request(path=\"/api/me\", method=\"GET\", headers={\"Authorization\": \"admin\"})\nresp = chain(req)\n(resp.status_code, resp.body)",
+      "expected": "(200, {\"user\": \"admin\"})",
+      "is_hidden": false
+    },
+    {
+      "input": "def my_view(request):\n    return Response(200, {\"ok\": True})\nchain = build_middleware_chain([LoggingMiddleware, AuthMiddleware, CORSMiddleware], my_view)\nreq = Request(path=\"/api/data\", method=\"GET\", headers={\"Authorization\": \"token123\"})\nresp = chain(req)\n(resp.status_code, resp.headers.get(\"X-Logged\"), resp.headers.get(\"Access-Control-Allow-Origin\"), req.meta.get(\"request_logged\"), req.meta.get(\"user\"))",
+      "expected": "(200, \"true\", \"*\", True, \"token123\")",
+      "is_hidden": true
+    },
+    {
+      "input": "def my_view(request):\n    return Response(200, {\"ok\": True})\nchain = build_middleware_chain([LoggingMiddleware, AuthMiddleware, CORSMiddleware], my_view)\nreq = Request(path=\"/api/data\", method=\"GET\")\nresp = chain(req)\n(resp.status_code, resp.body, req.meta.get(\"request_logged\"))",
+      "expected": "(401, {\"error\": \"Unauthorized\"}, True)",
+      "is_hidden": true
+    },
+    {
+      "input": "def my_view(request):\n    return Response(200, {\"data\": \"result\"})\nchain = build_middleware_chain([CORSMiddleware], my_view)\nreq = Request(path=\"/api/open\", method=\"GET\")\nresp = chain(req)\n(resp.status_code, resp.body, resp.headers.get(\"Access-Control-Allow-Origin\"))",
+      "expected": "(200, {\"data\": \"result\"}, \"*\")",
+      "is_hidden": true
+    }
+  ],
+  "time_limit_minutes": 30,
+  "tags": ["django", "middleware", "design-patterns"]
+}

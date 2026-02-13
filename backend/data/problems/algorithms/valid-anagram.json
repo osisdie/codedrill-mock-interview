@@ -1,0 +1,33 @@
+{
+  "id": "valid-anagram",
+  "title": "Valid Anagram",
+  "category": "algorithms",
+  "difficulty": "easy",
+  "description": "Given two strings `s` and `t`, return `True` if `t` is an anagram of `s`, and `False` otherwise.\n\nAn anagram is a word or phrase formed by rearranging the letters of a different word or phrase, using all the original letters exactly once.",
+  "examples": [
+    {
+      "input": "s = \"anagram\", t = \"nagaram\"",
+      "output": "True",
+      "explanation": "\"nagaram\" is an anagram of \"anagram\"."
+    },
+    {
+      "input": "s = \"rat\", t = \"car\"",
+      "output": "False",
+      "explanation": "\"car\" is not an anagram of \"rat\"."
+    }
+  ],
+  "constraints": [
+    "1 <= s.length, t.length <= 5 * 10^4",
+    "s and t consist of lowercase English letters."
+  ],
+  "starter_code": "def is_anagram(s: str, t: str) -> bool:\n    # Write your solution here\n    pass\n",
+  "test_cases": [
+    {"input": "is_anagram('anagram', 'nagaram')", "expected": "True", "is_hidden": false},
+    {"input": "is_anagram('rat', 'car')", "expected": "False", "is_hidden": false},
+    {"input": "is_anagram('listen', 'silent')", "expected": "True", "is_hidden": true},
+    {"input": "is_anagram('hello', 'world')", "expected": "False", "is_hidden": true},
+    {"input": "is_anagram('', '')", "expected": "True", "is_hidden": true}
+  ],
+  "time_limit_minutes": 15,
+  "tags": ["hash-map", "string", "sorting"]
+}

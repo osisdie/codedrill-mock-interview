@@ -1,0 +1,39 @@
+{
+  "id": "valid-parentheses",
+  "title": "Valid Parentheses",
+  "category": "algorithms",
+  "difficulty": "easy",
+  "description": "Given a string `s` containing just the characters `'('`, `')'`, `'{'`, `'}'`, `'['` and `']'`, determine if the input string is valid.\n\nAn input string is valid if:\n\n1. Open brackets must be closed by the same type of brackets.\n2. Open brackets must be closed in the correct order.\n3. Every close bracket has a corresponding open bracket of the same type.",
+  "examples": [
+    {
+      "input": "s = \"()\"",
+      "output": "True",
+      "explanation": "The single pair of parentheses is properly matched."
+    },
+    {
+      "input": "s = \"()[]{}\"",
+      "output": "True",
+      "explanation": "All three pairs of brackets are properly matched."
+    },
+    {
+      "input": "s = \"(]\"",
+      "output": "False",
+      "explanation": "The opening '(' is not closed by a matching ')'."
+    }
+  ],
+  "constraints": [
+    "1 <= s.length <= 10^4",
+    "s consists of parentheses only: '()[]{}'"
+  ],
+  "starter_code": "def is_valid(s: str) -> bool:\n    # Write your solution here\n    pass\n",
+  "test_cases": [
+    {"input": "is_valid('()')", "expected": "True", "is_hidden": false},
+    {"input": "is_valid('()[]{}')", "expected": "True", "is_hidden": false},
+    {"input": "is_valid('(]')", "expected": "False", "is_hidden": false},
+    {"input": "is_valid('([)]')", "expected": "False", "is_hidden": true},
+    {"input": "is_valid('{[]}')", "expected": "True", "is_hidden": true},
+    {"input": "is_valid(']')", "expected": "False", "is_hidden": true}
+  ],
+  "time_limit_minutes": 15,
+  "tags": ["stack", "string"]
+}
