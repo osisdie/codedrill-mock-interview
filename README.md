@@ -2,6 +2,22 @@
 
 Practice coding problems, get AI-powered mock interviews, and receive scored feedback — all in one platform.
 
+## Preview
+
+Screenshots of the main workflow: home → problems → coding arena → test results → session history. API docs available at `/docs`.
+
+| Home — Pick a category | Problems — Browse & filter |
+|:---:|:---:|
+| ![Home](docs/screenshots/mock-interview-home.png) | ![Problems](docs/screenshots/mock-interview-problems.png) |
+
+| Coding Arena — Write & run code | Test Results — Submit & start interview |
+|:---:|:---:|
+| ![Coding Arena](docs/screenshots/mock-interview-exam.png) | ![Test Results](docs/screenshots/mock-interview-platform.png) |
+
+| Session History | API Documentation |
+|:---:|:---:|
+| ![History](docs/screenshots/mock-interview-history.png) | ![API](docs/screenshots/mock-interview-api.png) |
+
 ## Features
 
 - **Coding Problems** — Algorithms, FastAPI, and Django problems with automated test cases
