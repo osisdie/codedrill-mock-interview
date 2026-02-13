@@ -28,6 +28,14 @@ const categories = [
     color: 'from-purple-600 to-purple-800',
     count: '5 problems',
   },
+  {
+    id: 'pytest',
+    title: 'Pytest',
+    description: 'Implement core testing concepts: fixtures, parametrize, markers, mocking, and test discovery — the building blocks of pytest.',
+    icon: '&#x1F9EA;',
+    color: 'from-orange-600 to-orange-800',
+    count: '5 problems',
+  },
 ]
 
 function navigateToCategory(categoryId: string) {
@@ -48,7 +56,7 @@ function navigateToCategory(categoryId: string) {
     </div>
 
     <!-- Category Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
       <button
         v-for="cat in categories"
         :key="cat.id"

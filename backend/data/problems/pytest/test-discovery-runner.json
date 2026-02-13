@@ -1,0 +1,64 @@
+{
+  "id": "test-discovery-runner",
+  "title": "Build a Mini Test Discovery and Runner System",
+  "category": "pytest",
+  "difficulty": "medium",
+  "description": "Pytest automatically **discovers** test functions by scanning for functions whose names start with `test_`, and then runs them, collecting results. It also supports setup/teardown at the module level.\n\nImplement a simplified test discovery and runner system.\n\n**Implement the following:**\n\n1. **`TestRunner`** class:\n   - `__init__(self)`: Initializes the runner with empty collections.\n   - `collect(self, namespace: dict)`: Scans a namespace dictionary (like the result of `vars()` or a plain dict) and collects:\n     - All callables whose names start with `test_` — these are test functions.\n     - A callable named `setup_module` (if present) — called once before any tests.\n     - A callable named `teardown_module` (if present) — called once after all tests.\n     - A callable named `setup_function` (if present) — called before **each** test.\n     - A callable named `teardown_function` (if present) — called after **each** test.\n     - Tests should be sorted alphabetically by name.\n   - `run(self)` -> `RunReport`: Runs the collected tests in order:\n     1. Call `setup_module()` once (if present).\n     2. For each test (alphabetical order):\n        a. Call `setup_function()` (if present).\n        b. Call the test function.\n        c. Call `teardown_function()` (if present), even if the test raised an exception.\n     3. Call `teardown_module()` once (if present), even if tests failed.\n     Returns a `RunReport`.\n\n2. **`RunReport`** class:\n   - `results` (`list[TestResult]`): List of individual test results.\n   - `total` (property): Total number of tests.\n   - `passed_count` (property): Number of tests that passed.\n   - `failed_count` (property): Number of tests that failed.\n   - `summary()` -> `str`: Returns a string like `\"3 passed, 1 failed, 4 total\"`.\n\n3. **`TestResult`** class:\n   - `name` (`str`): The test function's name.\n   - `passed` (`bool`): Whether the test passed.\n   - `error` (`str | None`): Error message if failed, `None` if passed.",
+  "examples": [
+    {
+      "input": "runner = TestRunner()\ndef test_one(): assert 1 == 1\ndef test_two(): assert 2 == 2\nrunner.collect({'test_one': test_one, 'test_two': test_two, 'helper': lambda: None})\nreport = runner.run()\nreport.summary()",
+      "output": "\"2 passed, 0 failed, 2 total\"",
+      "explanation": "Only functions starting with 'test_' are collected. 'helper' is ignored."
+    },
+    {
+      "input": "runner = TestRunner()\ndef test_fail(): raise AssertionError('wrong')\nrunner.collect({'test_fail': test_fail})\nreport = runner.run()\n(report.results[0].passed, 'wrong' in report.results[0].error)",
+      "output": "(False, True)",
+      "explanation": "Failed tests have passed=False and the exception message is captured."
+    }
+  ],
+  "constraints": [
+    "Tests are collected from the namespace dict by checking callable items with names starting with 'test_'.",
+    "Tests must be sorted alphabetically by name before running.",
+    "setup_function/teardown_function are called per test; setup_module/teardown_module are called once.",
+    "teardown_function must be called even if the test raises an exception.",
+    "teardown_module must be called even if tests fail.",
+    "Non-callable items in the namespace should be ignored.",
+    "RunReport properties (total, passed_count, failed_count) must work correctly.",
+    "summary() format is exactly: '{passed} passed, {failed} failed, {total} total'."
+  ],
+  "starter_code": "class TestResult:\n    def __init__(self, name: str, passed: bool, error: str | None = None):\n        pass\n\n\nclass RunReport:\n    def __init__(self, results: list):\n        pass\n\n    @property\n    def total(self) -> int:\n        pass\n\n    @property\n    def passed_count(self) -> int:\n        pass\n\n    @property\n    def failed_count(self) -> int:\n        pass\n\n    def summary(self) -> str:\n        pass\n\n\nclass TestRunner:\n    def __init__(self):\n        pass\n\n    def collect(self, namespace: dict):\n        # Scan namespace for test functions and setup/teardown hooks\n        pass\n\n    def run(self):\n        # Execute collected tests with setup/teardown, return RunReport\n        pass\n",
+  "test_cases": [
+    {
+      "input": "runner = TestRunner()\ndef test_a(): assert True\ndef test_b(): assert True\ndef not_a_test(): assert False\nrunner.collect({'test_a': test_a, 'test_b': test_b, 'not_a_test': not_a_test, 'x': 42})\nreport = runner.run()\nreport.summary()",
+      "expected": "'2 passed, 0 failed, 2 total'",
+      "is_hidden": false
+    },
+    {
+      "input": "runner = TestRunner()\ndef test_ok(): pass\ndef test_err(): raise ValueError('bad')\nrunner.collect({'test_ok': test_ok, 'test_err': test_err})\nreport = runner.run()\n[(r.name, r.passed) for r in report.results]",
+      "expected": "[('test_err', False), ('test_ok', True)]",
+      "is_hidden": false
+    },
+    {
+      "input": "log = []\nrunner = TestRunner()\ndef setup_module(): log.append('SM')\ndef teardown_module(): log.append('TM')\ndef setup_function(): log.append('SF')\ndef teardown_function(): log.append('TF')\ndef test_x(): log.append('X')\ndef test_y(): log.append('Y')\nrunner.collect({'setup_module': setup_module, 'teardown_module': teardown_module, 'setup_function': setup_function, 'teardown_function': teardown_function, 'test_x': test_x, 'test_y': test_y})\nrunner.run()\nlog",
+      "expected": "['SM', 'SF', 'X', 'TF', 'SF', 'Y', 'TF', 'TM']",
+      "is_hidden": false
+    },
+    {
+      "input": "log = []\nrunner = TestRunner()\ndef teardown_function(): log.append('TF')\ndef test_boom(): raise RuntimeError('boom')\ndef test_ok(): pass\nrunner.collect({'teardown_function': teardown_function, 'test_boom': test_boom, 'test_ok': test_ok})\nreport = runner.run()\n(report.failed_count, log.count('TF'))",
+      "expected": "(1, 2)",
+      "is_hidden": true
+    },
+    {
+      "input": "runner = TestRunner()\nrunner.collect({})\nreport = runner.run()\nreport.summary()",
+      "expected": "'0 passed, 0 failed, 0 total'",
+      "is_hidden": true
+    },
+    {
+      "input": "log = []\nrunner = TestRunner()\ndef teardown_module(): log.append('TM')\ndef test_fail(): raise Exception('fail')\nrunner.collect({'teardown_module': teardown_module, 'test_fail': test_fail})\nrunner.run()\n'TM' in log",
+      "expected": "True",
+      "is_hidden": true
+    }
+  ],
+  "time_limit_minutes": 30,
+  "tags": ["pytest", "test-runner", "discovery", "testing"]
+}

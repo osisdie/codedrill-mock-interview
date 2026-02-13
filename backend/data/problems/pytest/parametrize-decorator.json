@@ -1,0 +1,62 @@
+{
+  "id": "parametrize-decorator",
+  "title": "Implement @parametrize Decorator for Test Functions",
+  "category": "pytest",
+  "difficulty": "easy",
+  "description": "In pytest, `@pytest.mark.parametrize` lets you run a single test function multiple times with different arguments. This is extremely useful for testing edge cases without writing repetitive test functions.\n\nImplement a simplified `@parametrize` decorator and a runner.\n\n**Implement the following:**\n\n1. **`parametrize(arg_names, arg_values)`** — A decorator factory.\n   - `arg_names` (`str`): A comma-separated string of parameter names (e.g., `\"x, y, expected\"`).\n   - `arg_values` (`list[tuple]`): A list of tuples, each containing values for one test case.\n   - The decorator should attach the parametrize metadata to the function as attributes `_param_names` (a list of stripped strings) and `_param_values` (the list of tuples).\n   - The decorated function is returned unchanged (not wrapped).\n   - If `parametrize` is applied multiple times, only the **last** application's metadata is kept.\n\n2. **`run_parametrized(func)`** — Runs a parametrized test function.\n   - Reads `_param_names` and `_param_values` from the function.\n   - For each tuple of values, calls the function with the corresponding keyword arguments.\n   - Returns a list of `ParamResult` objects.\n\n3. **`ParamResult`** class:\n   - `args` (`dict`): The keyword arguments used for this invocation (e.g., `{\"x\": 1, \"y\": 2, \"expected\": 3}`).\n   - `passed` (`bool`): `True` if the function ran without raising an exception.\n   - `error` (`str | None`): `None` if passed, otherwise the exception message.\n\nExample usage:\n```python\n@parametrize(\"a, b, expected\", [\n    (1, 2, 3),\n    (0, 0, 0),\n    (10, -5, 5),\n])\ndef test_add(a, b, expected):\n    assert a + b == expected\n\nresults = run_parametrized(test_add)\n# All 3 results should have passed=True\n```",
+  "examples": [
+    {
+      "input": "@parametrize(\"x, expected\", [(4, 2), (9, 3), (16, 4)])\ndef test_sqrt(x, expected):\n    assert int(x ** 0.5) == expected\nresults = run_parametrized(test_sqrt)\n[r.passed for r in results]",
+      "output": "[True, True, True]",
+      "explanation": "Each tuple of values is passed to the test function. All assertions pass."
+    },
+    {
+      "input": "@parametrize(\"val\", [(1,), (2,), (3,)])\ndef test_positive(val):\n    assert val > 0\nresults = run_parametrized(test_positive)\nresults[0].args",
+      "output": "{'val': 1}",
+      "explanation": "Single parameter is supported. args dict maps parameter name to value."
+    }
+  ],
+  "constraints": [
+    "arg_names is a comma-separated string that must be split and stripped.",
+    "The decorator attaches _param_names and _param_values as attributes on the function.",
+    "The original function is returned unchanged (not wrapped).",
+    "run_parametrized returns a list of ParamResult, one per tuple in arg_values.",
+    "ParamResult has attributes: args (dict), passed (bool), error (str | None).",
+    "If the function raises any exception, passed=False and error=str(exception)."
+  ],
+  "starter_code": "class ParamResult:\n    def __init__(self, args: dict, passed: bool, error: str | None = None):\n        # Store the parametrized test result\n        pass\n\n\ndef parametrize(arg_names: str, arg_values: list):\n    \"\"\"Decorator factory that attaches parametrize metadata to a test function.\"\"\"\n    # Return a decorator that adds _param_names and _param_values to the function\n    pass\n\n\ndef run_parametrized(func) -> list:\n    \"\"\"Run a parametrized test function and return list of ParamResult.\"\"\"\n    # Read metadata from func, call func for each set of values\n    pass\n",
+  "test_cases": [
+    {
+      "input": "@parametrize(\"a, b, expected\", [(1, 2, 3), (10, 20, 30), (0, 0, 0)])\ndef test_add(a, b, expected):\n    assert a + b == expected\nresults = run_parametrized(test_add)\n[r.passed for r in results]",
+      "expected": "[True, True, True]",
+      "is_hidden": false
+    },
+    {
+      "input": "@parametrize(\"val, expected\", [(2, True), (-1, False), (0, False)])\ndef test_is_positive(val, expected):\n    assert (val > 0) == expected\nresults = run_parametrized(test_is_positive)\nresults[1].args",
+      "expected": "{'val': -1, 'expected': False}",
+      "is_hidden": false
+    },
+    {
+      "input": "@parametrize(\"word\", [('hello',), ('',)])\ndef test_nonempty(word):\n    assert len(word) > 0\nresults = run_parametrized(test_nonempty)\n(results[0].passed, results[1].passed)",
+      "expected": "(True, False)",
+      "is_hidden": false
+    },
+    {
+      "input": "@parametrize(\"n\", [('abc',)])\ndef test_type_error(n):\n    assert n + 1 > 0\nresults = run_parametrized(test_type_error)\n(results[0].passed, results[0].error is not None)",
+      "expected": "(False, True)",
+      "is_hidden": true
+    },
+    {
+      "input": "@parametrize(\"x\", [(1,), (2,)])\ndef test_overwrite(x):\n    assert x > 0\ntest_overwrite._param_names\n",
+      "expected": "['x']",
+      "is_hidden": true
+    },
+    {
+      "input": "@parametrize(\"a ,  b\", [(1, 2), (3, 4)])\ndef test_strip(a, b):\n    pass\nresults = run_parametrized(test_strip)\nresults[0].args",
+      "expected": "{'a': 1, 'b': 2}",
+      "is_hidden": true
+    }
+  ],
+  "time_limit_minutes": 20,
+  "tags": ["pytest", "parametrize", "decorator", "testing"]
+}

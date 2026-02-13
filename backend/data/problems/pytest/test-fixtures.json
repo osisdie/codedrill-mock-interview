@@ -1,0 +1,61 @@
+{
+  "id": "test-fixtures",
+  "title": "Implement a Pytest-Style Fixture System",
+  "category": "pytest",
+  "difficulty": "easy",
+  "description": "In pytest, **fixtures** provide a fixed baseline for tests — they handle setup and teardown of resources like database connections, temporary files, and test data.\n\nImplement a simplified fixture system in pure Python.\n\n**Implement the following:**\n\n1. **`fixture(func)`** — A decorator that registers a function as a fixture. The decorated function should still be callable normally. Fixture functions take no arguments and return a value.\n\n2. **`FixtureManager`** class:\n   - `__init__(self)`: Initializes the manager with an empty fixture registry.\n   - `register(self, func)`: Registers a callable as a fixture using `func.__name__` as the key. If a fixture with the same name already exists, it should be overwritten.\n   - `resolve(self, func)`: Given a test function, inspect its parameter names (using `func.__code__.co_varnames` and `func.__code__.co_argcount`). For each parameter, look up a registered fixture by name and call it to get the value. Returns a dict mapping parameter names to resolved values.\n   - `run_test(self, func)`: Resolves all fixtures for `func`, calls `func(**resolved)`, and returns a `TestResult`.\n\n3. **`TestResult`** class (a simple data container):\n   - `name` (`str`): The test function's `__name__`.\n   - `passed` (`bool`): `True` if the test ran without raising an exception.\n   - `error` (`str | None`): `None` if passed, otherwise the string representation of the exception.\n\n**Important:** The `@fixture` decorator should automatically register the fixture into a module-level `FixtureManager` instance called `default_manager`.",
+  "examples": [
+    {
+      "input": "@fixture\ndef sample_list():\n    return [1, 2, 3]\n\nresult = default_manager.run_test(lambda sample_list: None if sample_list == [1, 2, 3] else (_ for _ in ()).throw(AssertionError('mismatch')))\nresult.passed",
+      "output": "True",
+      "explanation": "The fixture 'sample_list' is resolved and injected into the test function."
+    },
+    {
+      "input": "manager = FixtureManager()\nmanager.register(lambda: 42)  # anonymous, but let's use named\ndef answer():\n    return 42\nmanager.register(answer)\nresolved = manager.resolve(lambda answer: None)\nresolved",
+      "output": "{'answer': 42}",
+      "explanation": "The manager resolves the 'answer' parameter by calling the registered 'answer' fixture."
+    }
+  ],
+  "constraints": [
+    "Use func.__code__.co_varnames and func.__code__.co_argcount to extract parameter names.",
+    "If a parameter name has no matching fixture, raise a ValueError with a message containing the missing name.",
+    "TestResult should have attributes: name, passed, error.",
+    "The @fixture decorator must register into default_manager automatically.",
+    "Fixture functions take no arguments and return the fixture value."
+  ],
+  "starter_code": "class TestResult:\n    def __init__(self, name: str, passed: bool, error: str | None = None):\n        # Store test result data\n        pass\n\n\nclass FixtureManager:\n    def __init__(self):\n        # Initialize fixture registry\n        pass\n\n    def register(self, func):\n        # Register a callable as a fixture by its __name__\n        pass\n\n    def resolve(self, func):\n        # Inspect func's parameters and resolve each from registered fixtures\n        # Returns dict of {param_name: fixture_value}\n        pass\n\n    def run_test(self, func):\n        # Resolve fixtures, call func, return TestResult\n        pass\n\n\ndefault_manager = FixtureManager()\n\n\ndef fixture(func):\n    # Decorator: register func into default_manager, return func unchanged\n    pass\n",
+  "test_cases": [
+    {
+      "input": "mgr = FixtureManager()\ndef users():\n    return ['Alice', 'Bob']\nmgr.register(users)\nresolved = mgr.resolve(lambda users: None)\nresolved",
+      "expected": "{'users': ['Alice', 'Bob']}",
+      "is_hidden": false
+    },
+    {
+      "input": "mgr = FixtureManager()\ndef db_conn():\n    return {'host': 'localhost', 'port': 5432}\nmgr.register(db_conn)\ndef test_db(db_conn):\n    assert db_conn['host'] == 'localhost'\nresult = mgr.run_test(test_db)\n(result.name, result.passed, result.error)",
+      "expected": "('test_db', True, None)",
+      "is_hidden": false
+    },
+    {
+      "input": "mgr = FixtureManager()\ndef value():\n    return 10\nmgr.register(value)\ndef test_fail(value):\n    raise AssertionError(f'Expected 20, got {value}')\nresult = mgr.run_test(test_fail)\n(result.passed, 'Expected 20' in result.error)",
+      "expected": "(False, True)",
+      "is_hidden": false
+    },
+    {
+      "input": "try:\n    mgr = FixtureManager()\n    def test_missing(unknown_fixture):\n        pass\n    mgr.resolve(test_missing)\nexcept ValueError as e:\n    'unknown_fixture' in str(e)",
+      "expected": "True",
+      "is_hidden": true
+    },
+    {
+      "input": "@fixture\ndef greeting():\n    return 'hello'\ndef test_greeting(greeting):\n    assert greeting == 'hello'\nresult = default_manager.run_test(test_greeting)\n(result.passed, greeting())",
+      "expected": "(True, 'hello')",
+      "is_hidden": true
+    },
+    {
+      "input": "mgr = FixtureManager()\ndef items():\n    return [1, 2]\nmgr.register(items)\ndef items():\n    return [3, 4]\nmgr.register(items)\nresolved = mgr.resolve(lambda items: None)\nresolved['items']",
+      "expected": "[3, 4]",
+      "is_hidden": true
+    }
+  ],
+  "time_limit_minutes": 25,
+  "tags": ["pytest", "fixtures", "decorator", "testing"]
+}

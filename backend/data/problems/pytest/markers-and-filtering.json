@@ -1,0 +1,69 @@
+{
+  "id": "markers-and-filtering",
+  "title": "Implement Custom Markers and Test Filtering",
+  "category": "pytest",
+  "difficulty": "hard",
+  "description": "Pytest uses **markers** to tag tests with metadata (e.g., `@pytest.mark.slow`, `@pytest.mark.skip`). During test execution, you can filter which tests to run based on their markers.\n\nImplement a marker system with built-in skip/xfail support and a filtering test runner.\n\n**Implement the following:**\n\n1. **`mark`** — A module-level marker factory object. Accessing any attribute on it (e.g., `mark.slow`, `mark.integration`) returns a decorator. When called with arguments `mark.skip(reason=\"...\")` or without `mark.slow`, the marker is attached to the test function.\n   - `mark.<name>` returns a `Marker` that can be used as a decorator directly: `@mark.slow`\n   - `mark.<name>(reason=\"...\")` returns a `Marker` that can also be used as a decorator: `@mark.skip(reason=\"no db\")`\n   - The decorator attaches marker info to the function's `_markers` list (a list of `MarkerInfo` objects).\n   - Multiple markers can be stacked on a single function.\n\n2. **`MarkerInfo`** class:\n   - `name` (`str`): The marker name (e.g., `\"slow\"`, `\"skip\"`).\n   - `kwargs` (`dict`): Any keyword arguments passed (e.g., `{\"reason\": \"no db\"}`).\n\n3. **`Marker`** class:\n   - Supports being used as a decorator directly (`@mark.slow`) — this means `__call__` receives a function.\n   - Supports being called with kwargs first (`@mark.skip(reason=\"...\")`) — this returns a new decorator.\n   - Must distinguish between these two cases: if the first positional argument is callable, treat it as the decorated function; otherwise, treat arguments as marker config and return a decorator.\n\n4. **`MarkFactory`** class:\n   - `__getattr__(self, name)` returns a `Marker` with the given name.\n\n5. **`FilterRunner`** class:\n   - `__init__(self, namespace: dict)`: Collects all test functions (names starting with `test_`) from namespace.\n   - `run(self, include_markers=None, exclude_markers=None)` -> `list[TestResult]`:\n     - `include_markers` (`list[str] | None`): If provided, only run tests that have **at least one** of these markers.\n     - `exclude_markers` (`list[str] | None`): If provided, skip tests that have **any** of these markers.\n     - Built-in behavior: tests marked with `skip` are always skipped (result: `passed=False, error=\"SKIPPED: {reason}\"`).\n     - Built-in behavior: tests marked with `xfail` — if the test raises an exception, it's treated as `passed=True, error=\"XFAIL\"` (expected failure). If it does NOT raise, it's `passed=False, error=\"XPASS: test was expected to fail but passed\"`.\n     - `exclude_markers` is applied before `include_markers`.\n     - Tests are run in alphabetical order by name.\n\n6. **`TestResult`** class: `name` (str), `passed` (bool), `error` (str | None).",
+  "examples": [
+    {
+      "input": "@mark.slow\ndef test_heavy():\n    pass\n[m.name for m in test_heavy._markers]",
+      "output": "['slow']",
+      "explanation": "The @mark.slow decorator attaches a MarkerInfo with name='slow' to the function."
+    },
+    {
+      "input": "@mark.skip(reason='not ready')\ndef test_todo():\n    assert False\nfr = FilterRunner({'test_todo': test_todo})\nresults = fr.run()\n(results[0].passed, results[0].error)",
+      "output": "(False, 'SKIPPED: not ready')",
+      "explanation": "Tests marked with skip are not executed; their result shows the skip reason."
+    }
+  ],
+  "constraints": [
+    "mark.<name> must work both as @mark.slow and @mark.slow(reason='...').",
+    "A function can have multiple markers stacked (each appends to _markers list).",
+    "skip marker: test is not executed, result has error='SKIPPED: {reason}' (default reason is empty string).",
+    "xfail marker: if test raises -> passed=True, error='XFAIL'; if test passes -> passed=False, error='XPASS: test was expected to fail but passed'.",
+    "exclude_markers filtering is applied before include_markers.",
+    "Tests without _markers attribute are treated as having no markers.",
+    "Tests are sorted alphabetically by name.",
+    "FilterRunner.run() with no filters runs all tests (except skip/xfail special handling still applies)."
+  ],
+  "starter_code": "class MarkerInfo:\n    def __init__(self, name: str, **kwargs):\n        pass\n\n\nclass Marker:\n    def __init__(self, name: str):\n        pass\n\n    def __call__(self, *args, **kwargs):\n        # If first arg is callable: decorate it\n        # Otherwise: store kwargs and return a new decorator\n        pass\n\n\nclass MarkFactory:\n    def __getattr__(self, name):\n        pass\n\n\nmark = MarkFactory()\n\n\nclass TestResult:\n    def __init__(self, name: str, passed: bool, error: str | None = None):\n        pass\n\n\nclass FilterRunner:\n    def __init__(self, namespace: dict):\n        # Collect test functions from namespace\n        pass\n\n    def run(self, include_markers=None, exclude_markers=None):\n        # Run tests with filtering, skip, and xfail support\n        pass\n",
+  "test_cases": [
+    {
+      "input": "@mark.slow\n@mark.integration\ndef test_multi():\n    pass\nsorted([m.name for m in test_multi._markers])",
+      "expected": "['integration', 'slow']",
+      "is_hidden": false
+    },
+    {
+      "input": "@mark.skip(reason='WIP')\ndef test_wip():\n    raise RuntimeError('should not run')\nfr = FilterRunner({'test_wip': test_wip})\nr = fr.run()\n(r[0].passed, r[0].error)",
+      "expected": "(False, 'SKIPPED: WIP')",
+      "is_hidden": false
+    },
+    {
+      "input": "@mark.xfail\ndef test_expected_fail():\n    raise ValueError('known bug')\nfr = FilterRunner({'test_expected_fail': test_expected_fail})\nr = fr.run()\n(r[0].passed, r[0].error)",
+      "expected": "(True, 'XFAIL')",
+      "is_hidden": false
+    },
+    {
+      "input": "@mark.slow\ndef test_s(): pass\ndef test_fast(): pass\nfr = FilterRunner({'test_s': test_s, 'test_fast': test_fast})\nresults = fr.run(include_markers=['slow'])\n[r.name for r in results]",
+      "expected": "['test_s']",
+      "is_hidden": true
+    },
+    {
+      "input": "@mark.slow\ndef test_s2(): pass\n@mark.fast\ndef test_f2(): pass\ndef test_plain(): pass\nfr = FilterRunner({'test_s2': test_s2, 'test_f2': test_f2, 'test_plain': test_plain})\nresults = fr.run(exclude_markers=['slow'])\nsorted([r.name for r in results])",
+      "expected": "['test_f2', 'test_plain']",
+      "is_hidden": true
+    },
+    {
+      "input": "@mark.xfail\ndef test_xpass():\n    pass  # unexpectedly passes\nfr = FilterRunner({'test_xpass': test_xpass})\nr = fr.run()\n(r[0].passed, r[0].error)",
+      "expected": "(False, 'XPASS: test was expected to fail but passed')",
+      "is_hidden": true
+    },
+    {
+      "input": "@mark.skip\ndef test_skip_no_reason():\n    pass\nfr = FilterRunner({'test_skip_no_reason': test_skip_no_reason})\nr = fr.run()\nr[0].error",
+      "expected": "'SKIPPED: '",
+      "is_hidden": true
+    }
+  ],
+  "time_limit_minutes": 35,
+  "tags": ["pytest", "markers", "filtering", "decorator", "xfail", "skip"]
+}
