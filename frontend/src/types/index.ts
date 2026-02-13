@@ -7,7 +7,7 @@ export interface TestCase {
 export interface Problem {
   id: string
   title: string
-  category: 'algorithms' | 'fastapi' | 'django'
+  category: 'algorithms' | 'fastapi' | 'django' | 'pytest'
   difficulty: 'easy' | 'medium' | 'hard'
   description: string
   examples: { input: string; output: string; explanation?: string }[]

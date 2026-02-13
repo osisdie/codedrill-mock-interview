@@ -18,6 +18,7 @@ const categories = [
   { value: 'algorithms', label: 'Algorithms' },
   { value: 'fastapi', label: 'FastAPI' },
   { value: 'django', label: 'Django' },
+  { value: 'pytest', label: 'Pytest' },
 ]
 
 const difficulties = [

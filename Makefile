@@ -1,4 +1,4 @@
-.PHONY: install dev-backend dev-frontend dev clean
+.PHONY: install dev-backend dev-frontend dev up down logs clean
 
 install:
 	cd backend && pip install -r requirements.txt
@@ -14,6 +14,15 @@ dev:
 	@echo "Run these in separate terminals:"
 	@echo "  make dev-backend"
 	@echo "  make dev-frontend"
+
+up:
+	docker compose up --build -d
+
+down:
+	docker compose down
+
+logs:
+	docker compose logs -f
 
 clean:
 	rm -rf frontend/dist frontend/node_modules

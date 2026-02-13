@@ -1,0 +1,69 @@
+{
+  "id": "monkeypatch-mock",
+  "title": "Implement Monkeypatch and Mock Objects for Testing",
+  "category": "pytest",
+  "difficulty": "medium",
+  "description": "Pytest provides `monkeypatch` for safely modifying objects during tests and automatically restoring them after. The `unittest.mock.Mock` class creates flexible stand-in objects that record how they're used.\n\nImplement simplified versions of both.\n\n**Implement the following:**\n\n1. **`MonkeyPatch`** class:\n   - `__init__(self)`: Initializes internal undo stack.\n   - `setattr(self, obj, name: str, value)`: Sets `obj.name = value`, saving the original value (or noting that it didn't exist) so it can be undone. If the attribute doesn't exist yet, it should be created and later removed on undo.\n   - `delattr(self, obj, name: str)`: Deletes `obj.name`, saving the original value so it can be restored on undo. Raises `AttributeError` if the attribute does not exist.\n   - `setitem(self, mapping, key, value)`: Sets `mapping[key] = value`, saving the original state for undo. If the key didn't exist before, it should be removed on undo.\n   - `delitem(self, mapping, key)`: Deletes `mapping[key]`, saving the original value for undo. Raises `KeyError` if the key does not exist.\n   - `undo(self)`: Reverts **all** changes in reverse order (LIFO). After undo, the internal stack is cleared.\n   - Context manager support: `__enter__` returns `self`, `__exit__` calls `undo()`.\n\n2. **`Mock`** class:\n   - `__init__(self, return_value=None)`: Creates a mock that, when called, returns `return_value`.\n   - `__call__(self, *args, **kwargs)`: Records the call and returns `return_value`. Each call is stored as a tuple `(args, kwargs)`.\n   - `call_count` (property): Number of times the mock has been called.\n   - `call_args_list` (attribute): List of `(args, kwargs)` tuples for all calls.\n   - `called` (property): `True` if called at least once.\n   - `assert_called_once()`: Raises `AssertionError` if not called exactly once.\n   - `assert_called_with(*args, **kwargs)`: Raises `AssertionError` if the **most recent** call doesn't match the given args/kwargs.\n   - `reset()`: Clears all call records.\n\nExample usage:\n```python\nclass Config:\n    debug = False\n\nmp = MonkeyPatch()\nmp.setattr(Config, 'debug', True)\nassert Config.debug == True\nmp.undo()\nassert Config.debug == False\n```",
+  "examples": [
+    {
+      "input": "class Obj:\n    x = 10\nmp = MonkeyPatch()\nmp.setattr(Obj, 'x', 99)\nbefore_undo = Obj.x\nmp.undo()\nafter_undo = Obj.x\n(before_undo, after_undo)",
+      "output": "(99, 10)",
+      "explanation": "setattr changes the value, undo restores it."
+    },
+    {
+      "input": "m = Mock(return_value='ok')\nm(1, 2, key='val')\n(m.call_count, m.call_args_list)",
+      "output": "(1, [((1, 2), {'key': 'val'})])",
+      "explanation": "The mock records each call's positional and keyword arguments."
+    }
+  ],
+  "constraints": [
+    "MonkeyPatch.undo() must revert changes in reverse order (LIFO).",
+    "setattr on a non-existing attribute should create it, and undo should remove it.",
+    "delattr on a non-existing attribute should raise AttributeError.",
+    "delitem on a non-existing key should raise KeyError.",
+    "MonkeyPatch must support context manager protocol (__enter__/__exit__).",
+    "Mock.assert_called_once() raises AssertionError if call_count != 1.",
+    "Mock.assert_called_with() checks only the most recent call.",
+    "Mock.reset() clears call_args_list and resets call_count to 0."
+  ],
+  "starter_code": "class MonkeyPatch:\n    def __init__(self):\n        # Initialize undo stack\n        pass\n\n    def setattr(self, obj, name: str, value):\n        # Set attribute, save original for undo\n        pass\n\n    def delattr(self, obj, name: str):\n        # Delete attribute, save original for undo\n        pass\n\n    def setitem(self, mapping, key, value):\n        # Set item in mapping, save original for undo\n        pass\n\n    def delitem(self, mapping, key):\n        # Delete item from mapping, save original for undo\n        pass\n\n    def undo(self):\n        # Revert all changes in reverse order\n        pass\n\n    def __enter__(self):\n        pass\n\n    def __exit__(self, *args):\n        pass\n\n\nclass Mock:\n    def __init__(self, return_value=None):\n        # Initialize mock with return value and call tracking\n        pass\n\n    def __call__(self, *args, **kwargs):\n        # Record the call and return return_value\n        pass\n\n    @property\n    def call_count(self):\n        pass\n\n    @property\n    def called(self):\n        pass\n\n    def assert_called_once(self):\n        pass\n\n    def assert_called_with(self, *args, **kwargs):\n        pass\n\n    def reset(self):\n        pass\n",
+  "test_cases": [
+    {
+      "input": "class S:\n    val = 1\nmp = MonkeyPatch()\nmp.setattr(S, 'val', 2)\nmp.setattr(S, 'val', 3)\nbefore = S.val\nmp.undo()\n(before, S.val)",
+      "expected": "(3, 1)",
+      "is_hidden": false
+    },
+    {
+      "input": "d = {'a': 1, 'b': 2}\nmp = MonkeyPatch()\nmp.setitem(d, 'a', 99)\nmp.delitem(d, 'b')\nmid = dict(d)\nmp.undo()\n(mid, dict(d))",
+      "expected": "({'a': 99}, {'a': 1, 'b': 2})",
+      "is_hidden": false
+    },
+    {
+      "input": "m = Mock(return_value=42)\nm(1)\nm(2, x=3)\n(m.call_count, m.called, m.call_args_list)",
+      "expected": "(2, True, [((1,), {}), ((2,), {'x': 3})])",
+      "is_hidden": false
+    },
+    {
+      "input": "class T:\n    pass\nwith MonkeyPatch() as mp:\n    mp.setattr(T, 'new_attr', 'hello')\n    inside = T.new_attr\nhas_attr = hasattr(T, 'new_attr')\n(inside, has_attr)",
+      "expected": "('hello', False)",
+      "is_hidden": true
+    },
+    {
+      "input": "m = Mock(return_value='x')\nm(1)\nm(2)\ntry:\n    m.assert_called_once()\n    once_ok = True\nexcept AssertionError:\n    once_ok = False\ntry:\n    m.assert_called_with(2)\n    with_ok = True\nexcept AssertionError:\n    with_ok = False\n(once_ok, with_ok)",
+      "expected": "(False, True)",
+      "is_hidden": true
+    },
+    {
+      "input": "m = Mock()\nm(1)\nm.reset()\n(m.call_count, m.called, m.call_args_list)",
+      "expected": "(0, False, [])",
+      "is_hidden": true
+    },
+    {
+      "input": "d = {'x': 10}\nmp = MonkeyPatch()\nmp.setitem(d, 'y', 20)\nmid = dict(d)\nmp.undo()\n(mid, dict(d))",
+      "expected": "({'x': 10, 'y': 20}, {'x': 10})",
+      "is_hidden": true
+    }
+  ],
+  "time_limit_minutes": 30,
+  "tags": ["pytest", "monkeypatch", "mock", "testing", "context-manager"]
+}

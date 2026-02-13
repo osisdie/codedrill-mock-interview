@@ -19,6 +19,11 @@
     {"id": "class-based-views", "file": "django/class-based-views.json"},
     {"id": "serializer-logic", "file": "django/serializer-logic.json"},
     {"id": "custom-middleware", "file": "django/custom-middleware.json"},
-    {"id": "signals-handlers", "file": "django/signals-handlers.json"}
+    {"id": "signals-handlers", "file": "django/signals-handlers.json"},
+    {"id": "test-fixtures", "file": "pytest/test-fixtures.json"},
+    {"id": "parametrize-decorator", "file": "pytest/parametrize-decorator.json"},
+    {"id": "test-discovery-runner", "file": "pytest/test-discovery-runner.json"},
+    {"id": "monkeypatch-mock", "file": "pytest/monkeypatch-mock.json"},
+    {"id": "markers-and-filtering", "file": "pytest/markers-and-filtering.json"}
   ]
 }
