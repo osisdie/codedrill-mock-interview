@@ -1,6 +1,7 @@
 stages:
   - check
   - build
+  - e2e
   - docker
 
 variables:
@@ -51,6 +52,41 @@ frontend:build:
     - pnpm install
   script:
     - pnpm build
+
+# ─── E2E Tests ─────────────────────────────────
+
+e2e:playwright:
+  stage: e2e
+  image: docker:27
+  services:
+    - docker:27-dind
+  variables:
+    DOCKER_TLS_CERTDIR: "/certs"
+  needs:
+    - backend:check
+    - frontend:build
+  before_script:
+    - cp backend/.env.example backend/.env
+    - docker compose up --build -d
+    - |
+      echo "Waiting for services..."
+      for i in $(seq 1 30); do
+        if docker compose exec -T backend python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')" 2>/dev/null; then
+          echo "Backend ready"
+          break
+        fi
+        sleep 2
+      done
+  script:
+    - docker compose exec -T frontend pnpm exec playwright install --with-deps chromium
+    - docker compose exec -T -e CI=true -e BASE_URL=http://localhost:5173 frontend pnpm test:e2e
+  after_script:
+    - docker compose down
+  artifacts:
+    when: on_failure
+    paths:
+      - frontend/test-results/
+    expire_in: 7 days
 
 # ─── Docker ─────────────────────────────────────
 

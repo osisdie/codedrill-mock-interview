@@ -1,0 +1,60 @@
+{
+  "id": "class-inheritance-mro",
+  "title": "Design a Class Hierarchy with Multiple Inheritance",
+  "category": "algorithms",
+  "difficulty": "medium",
+  "description": "Design a class hierarchy for a notification system that demonstrates Python's multiple inheritance and Method Resolution Order (MRO).\n\nImplement the following classes:\n\n1. **`Notifier`** (base class) - Has a method `send(message: str) -> list[str]` that returns `[f\"Notifier: {message}\"]`.\n\n2. **`EmailNotifier(Notifier)`** - Overrides `send()` to return the parent's result plus `f\"Email: {message}\"`.\n\n3. **`SMSNotifier(Notifier)`** - Overrides `send()` to return the parent's result plus `f\"SMS: {message}\"`.\n\n4. **`UrgentNotifier(EmailNotifier, SMSNotifier)`** - Uses multiple inheritance. Overrides `send()` to call `super().send(message)` and append `f\"Urgent: {message}\"`. Due to MRO, `super()` chains through EmailNotifier -> SMSNotifier -> Notifier.\n\n5. **`get_mro_names(cls) -> list[str]`** - A function that returns the MRO of a class as a list of class names (strings).\n\nEach `send()` method should call `super().send(message)` first and extend (not replace) the result list.",
+  "examples": [
+    {
+      "input": "EmailNotifier().send('Hello')",
+      "output": "['Notifier: Hello', 'Email: Hello']",
+      "explanation": "EmailNotifier calls super (Notifier) first, then appends its own message."
+    },
+    {
+      "input": "UrgentNotifier().send('Alert')",
+      "output": "['Notifier: Alert', 'SMS: Alert', 'Email: Alert', 'Urgent: Alert']",
+      "explanation": "MRO: UrgentNotifier -> EmailNotifier -> SMSNotifier -> Notifier. Each level appends."
+    }
+  ],
+  "constraints": [
+    "Each send() must call super().send(message) and extend the result.",
+    "Notifier.send() returns a new list (base case).",
+    "get_mro_names should return class names as strings, including 'object'.",
+    "Follow Python's C3 linearization for MRO."
+  ],
+  "starter_code": "class Notifier:\n    def send(self, message: str) -> list[str]:\n        # Base notifier\n        pass\n\n\nclass EmailNotifier(Notifier):\n    def send(self, message: str) -> list[str]:\n        # Call super, then append Email message\n        pass\n\n\nclass SMSNotifier(Notifier):\n    def send(self, message: str) -> list[str]:\n        # Call super, then append SMS message\n        pass\n\n\nclass UrgentNotifier(EmailNotifier, SMSNotifier):\n    def send(self, message: str) -> list[str]:\n        # Call super, then append Urgent message\n        pass\n\n\ndef get_mro_names(cls) -> list[str]:\n    # Return the MRO of cls as a list of class name strings\n    pass\n",
+  "test_cases": [
+    {
+      "input": "Notifier().send('Hi')",
+      "expected": "['Notifier: Hi']",
+      "is_hidden": false
+    },
+    {
+      "input": "EmailNotifier().send('Hello')",
+      "expected": "['Notifier: Hello', 'Email: Hello']",
+      "is_hidden": false
+    },
+    {
+      "input": "UrgentNotifier().send('Alert')",
+      "expected": "['Notifier: Alert', 'SMS: Alert', 'Email: Alert', 'Urgent: Alert']",
+      "is_hidden": false
+    },
+    {
+      "input": "get_mro_names(UrgentNotifier)",
+      "expected": "['UrgentNotifier', 'EmailNotifier', 'SMSNotifier', 'Notifier', 'object']",
+      "is_hidden": true
+    },
+    {
+      "input": "SMSNotifier().send('Test')",
+      "expected": "['Notifier: Test', 'SMS: Test']",
+      "is_hidden": true
+    },
+    {
+      "input": "get_mro_names(EmailNotifier)",
+      "expected": "['EmailNotifier', 'Notifier', 'object']",
+      "is_hidden": true
+    }
+  ],
+  "time_limit_minutes": 25,
+  "tags": ["oop", "inheritance", "mro", "python-advanced"]
+}

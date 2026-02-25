@@ -1,6 +1,10 @@
 from fastapi import APIRouter, HTTPException
 
-from app.models.chat import InterviewStartRequest, InterviewChatRequest, InterviewResponse
+from app.models.chat import (
+    InterviewStartRequest,
+    InterviewChatRequest,
+    InterviewResponse,
+)
 from app.services.session_service import get_session, _save_session
 from app.services.problem_service import get_problem
 from app.services.ai_service import chat_completion
@@ -72,9 +76,7 @@ async def start_interview(req: InterviewStartRequest):
     session.interview_messages = []
     _save_session(session)
 
-    messages_for_ai = messages + [
-        {"role": "user", "content": "I'm ready for the interview. Please begin."}
-    ]
+    messages_for_ai = messages + [{"role": "user", "content": "I'm ready for the interview. Please begin."}]
 
     reply = await chat_completion(messages_for_ai)
     is_complete = "[INTERVIEW_COMPLETE]" in reply

@@ -10,7 +10,7 @@ const categories = [
     description: 'Classic LeetCode-style problems to sharpen your problem-solving skills. Practice array manipulation, dynamic programming, and more.',
     icon: '&#x1F9E9;',
     color: 'from-blue-600 to-blue-800',
-    count: '10 problems',
+    count: '16 problems',
   },
   {
     id: 'fastapi',
@@ -18,7 +18,7 @@ const categories = [
     description: 'Build REST APIs, handle validation, middleware, authentication, and dependency injection with FastAPI.',
     icon: '&#x26A1;',
     color: 'from-emerald-600 to-emerald-800',
-    count: '5 problems',
+    count: '7 problems',
   },
   {
     id: 'django',

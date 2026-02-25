@@ -1,0 +1,37 @@
+{
+  "id": "string-duplicate-chars",
+  "title": "Find Duplicate Characters in a String",
+  "category": "algorithms",
+  "difficulty": "easy",
+  "description": "Given a string `s`, return a sorted list of characters that appear more than once in the string.\n\nThe result should contain each duplicate character exactly once, sorted in alphabetical order. The comparison is case-sensitive (i.e., 'A' and 'a' are different characters). Ignore spaces.",
+  "examples": [
+    {
+      "input": "s = \"programming\"",
+      "output": "['g', 'm', 'r']",
+      "explanation": "'r', 'g', and 'm' each appear twice. Returned sorted alphabetically."
+    },
+    {
+      "input": "s = \"hello world\"",
+      "output": "['l', 'o']",
+      "explanation": "'l' appears 3 times, 'o' appears 2 times. Spaces are ignored."
+    }
+  ],
+  "constraints": [
+    "0 <= len(s) <= 10^5",
+    "s consists of printable ASCII characters.",
+    "Spaces should be ignored.",
+    "Return characters sorted in alphabetical order."
+  ],
+  "starter_code": "def find_duplicate_chars(s: str) -> list[str]:\n    # Write your solution here\n    pass\n",
+  "test_cases": [
+    {"input": "find_duplicate_chars('programming')", "expected": "['g', 'm', 'r']", "is_hidden": false},
+    {"input": "find_duplicate_chars('hello world')", "expected": "['l', 'o']", "is_hidden": false},
+    {"input": "find_duplicate_chars('abcdef')", "expected": "[]", "is_hidden": false},
+    {"input": "find_duplicate_chars('')", "expected": "[]", "is_hidden": true},
+    {"input": "find_duplicate_chars('aAbBcC')", "expected": "[]", "is_hidden": true},
+    {"input": "find_duplicate_chars('aabbcc')", "expected": "['a', 'b', 'c']", "is_hidden": true},
+    {"input": "find_duplicate_chars('  a  b  a  ')", "expected": "['a']", "is_hidden": true}
+  ],
+  "time_limit_minutes": 15,
+  "tags": ["hash-map", "string", "counting"]
+}

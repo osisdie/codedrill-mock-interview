@@ -1,0 +1,55 @@
+{
+  "id": "implement-decorator",
+  "title": "Implement a Memoization Decorator",
+  "category": "algorithms",
+  "difficulty": "medium",
+  "description": "Implement a `memoize` decorator that caches the results of a function based on its arguments.\n\nWhen a decorated function is called with the same arguments again, it should return the cached result instead of re-executing the function.\n\nYour decorator must:\n1. Work with functions that take any number of positional arguments.\n2. Cache results in a dictionary attribute called `cache` on the wrapper function (i.e., `wrapper.cache`).\n3. Return the cached result when the same arguments are passed again.\n4. Support a `cache_clear()` method on the wrapper that resets the cache.\n\nAdditionally, implement a `call_counter` decorator that counts how many times a function is actually executed (not cache hits). It should store the count in a `call_count` attribute on the wrapper.\n\nWhen both decorators are applied (`@call_counter` on the outside, `@memoize` on the inside), the counter should only increment on cache misses.",
+  "examples": [
+    {
+      "input": "@memoize\ndef add(a, b): return a + b\nadd(1, 2)  # computes\nadd(1, 2)  # returns cached",
+      "output": "3 (both calls), cache = {(1, 2): 3}",
+      "explanation": "First call computes and caches. Second call returns from cache."
+    },
+    {
+      "input": "@call_counter\n@memoize\ndef multiply(a, b): return a * b\nmultiply(3, 4)  # call_count = 1\nmultiply(3, 4)  # call_count still 1 (cached)",
+      "output": "multiply.call_count == 1",
+      "explanation": "The counter only increments on actual execution, not cache hits."
+    }
+  ],
+  "constraints": [
+    "Functions will only receive hashable positional arguments.",
+    "The cache dictionary must be accessible as wrapper.cache.",
+    "cache_clear() must reset the cache to an empty dict.",
+    "call_counter must track actual executions in wrapper.call_count."
+  ],
+  "starter_code": "def memoize(func):\n    # Implement a memoization decorator\n    # - Cache results in wrapper.cache (dict)\n    # - Add wrapper.cache_clear() method\n    pass\n\n\ndef call_counter(func):\n    # Implement a call-counting decorator\n    # - Track count in wrapper.call_count (int)\n    pass\n",
+  "test_cases": [
+    {
+      "input": "@memoize\ndef add(a, b):\n    return a + b\nr1 = add(1, 2)\nr2 = add(1, 2)\n(r1, r2, add.cache)",
+      "expected": "(3, 3, {(1, 2): 3})",
+      "is_hidden": false
+    },
+    {
+      "input": "@memoize\ndef square(n):\n    return n * n\nsquare(3)\nsquare(4)\nsquare(3)\nlen(square.cache)",
+      "expected": "2",
+      "is_hidden": false
+    },
+    {
+      "input": "@call_counter\n@memoize\ndef multiply(a, b):\n    return a * b\nmultiply(3, 4)\nmultiply(3, 4)\nmultiply(5, 6)\n(multiply.call_count, multiply(3, 4))",
+      "expected": "(2, 12)",
+      "is_hidden": false
+    },
+    {
+      "input": "@memoize\ndef greet(name):\n    return f'Hello {name}'\ngreet('Alice')\ngreet('Bob')\ngreet.cache_clear()\nlen(greet.cache)",
+      "expected": "0",
+      "is_hidden": true
+    },
+    {
+      "input": "@call_counter\ndef no_memo(x):\n    return x + 1\nno_memo(1)\nno_memo(1)\nno_memo(2)\nno_memo.call_count",
+      "expected": "3",
+      "is_hidden": true
+    }
+  ],
+  "time_limit_minutes": 25,
+  "tags": ["decorator", "closure", "caching", "python-advanced"]
+}

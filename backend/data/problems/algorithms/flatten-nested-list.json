@@ -1,0 +1,38 @@
+{
+  "id": "flatten-nested-list",
+  "title": "Flatten Arbitrarily Nested List",
+  "category": "algorithms",
+  "difficulty": "medium",
+  "description": "Write a function `flatten(data)` that takes an arbitrarily nested list and returns a single flat list containing all non-list elements in order.\n\nThe input can contain integers, strings, or other non-list values nested to any depth. Your solution should handle:\n- Empty lists at any level\n- Mixed types (integers, strings)\n- Deeply nested structures\n\nImplement both a **recursive** version (`flatten`) and an **iterative** version (`flatten_iterative`).\n\nBoth functions should produce identical output for the same input.",
+  "examples": [
+    {
+      "input": "flatten([1, [2, [3, 4], 5], 6])",
+      "output": "[1, 2, 3, 4, 5, 6]",
+      "explanation": "All nested levels are flattened into a single list."
+    },
+    {
+      "input": "flatten([1, [], [2, [[], 3]]])",
+      "output": "[1, 2, 3]",
+      "explanation": "Empty lists are ignored; nested elements are preserved in order."
+    }
+  ],
+  "constraints": [
+    "Input contains only lists, integers, and strings.",
+    "Nesting depth can be up to 100 levels.",
+    "Total number of elements <= 10^4.",
+    "Preserve the original left-to-right order."
+  ],
+  "starter_code": "def flatten(data) -> list:\n    # Recursive solution\n    pass\n\n\ndef flatten_iterative(data) -> list:\n    # Iterative solution (no recursion)\n    pass\n",
+  "test_cases": [
+    {"input": "flatten([1, [2, [3, 4], 5], 6])", "expected": "[1, 2, 3, 4, 5, 6]", "is_hidden": false},
+    {"input": "flatten([1, [], [2, [[], 3]]])", "expected": "[1, 2, 3]", "is_hidden": false},
+    {"input": "flatten_iterative([1, [2, [3, 4], 5], 6])", "expected": "[1, 2, 3, 4, 5, 6]", "is_hidden": false},
+    {"input": "flatten([])", "expected": "[]", "is_hidden": true},
+    {"input": "flatten([[[[[1]]]]])", "expected": "[1]", "is_hidden": true},
+    {"input": "flatten(['a', ['b', ['c']], 'd'])", "expected": "['a', 'b', 'c', 'd']", "is_hidden": true},
+    {"input": "flatten_iterative([1, [], [2, [[], 3]]])", "expected": "[1, 2, 3]", "is_hidden": true},
+    {"input": "flatten_iterative(['x', [1, ['y', [2]]]])", "expected": "['x', 1, 'y', 2]", "is_hidden": true}
+  ],
+  "time_limit_minutes": 20,
+  "tags": ["recursion", "iteration", "list", "stack"]
+}
