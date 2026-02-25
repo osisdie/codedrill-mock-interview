@@ -1,0 +1,55 @@
+{
+  "id": "async-data-pipeline",
+  "title": "Build an Async Data Processing Pipeline",
+  "category": "fastapi",
+  "difficulty": "medium",
+  "description": "Build a data processing pipeline that simulates async-style data transformation, similar to what you'd implement in a FastAPI background task or async endpoint.\n\nImplement the following functions:\n\n1. **`Pipeline`** class - A chainable pipeline that processes data through a series of transformation steps.\n   - `__init__(self)` - Initialize with an empty list of steps.\n   - `add_step(self, name: str, transform_fn)` - Add a named transformation function. Returns `self` for chaining.\n   - `execute(self, data: list) -> dict`** - Run all steps sequentially on the data. Return a dict with:\n     - `\"result\"`: the final transformed data\n     - `\"steps_executed\"`: list of step names that were executed\n     - `\"record_count\"`: number of items in the final result\n\n2. **`transform_filter(field: str, value)`** - Returns a function that filters a list of dicts, keeping only those where `dict[field] == value`.\n\n3. **`transform_map(field: str, fn)`** - Returns a function that applies `fn` to `dict[field]` for each dict in the list, returning new dicts with the updated field.\n\n4. **`transform_sort(field: str, reverse: bool = False)`** - Returns a function that sorts a list of dicts by `dict[field]`.",
+  "examples": [
+    {
+      "input": "Pipeline().add_step('filter', transform_filter('status', 'active')).execute([{'name': 'Alice', 'status': 'active'}, {'name': 'Bob', 'status': 'inactive'}])",
+      "output": "{'result': [{'name': 'Alice', 'status': 'active'}], 'steps_executed': ['filter'], 'record_count': 1}",
+      "explanation": "The pipeline filters to only active records."
+    }
+  ],
+  "constraints": [
+    "Pipeline must support method chaining (add_step returns self).",
+    "Each transform function returns a new function (closure pattern).",
+    "transform_map must return new dicts, not mutate the originals.",
+    "Pipeline.execute must process steps in the order they were added."
+  ],
+  "starter_code": "class Pipeline:\n    def __init__(self):\n        # Initialize pipeline\n        pass\n\n    def add_step(self, name: str, transform_fn):\n        # Add a processing step, return self for chaining\n        pass\n\n    def execute(self, data: list) -> dict:\n        # Execute all steps and return results\n        pass\n\n\ndef transform_filter(field: str, value):\n    # Return a function that filters dicts by field == value\n    pass\n\n\ndef transform_map(field: str, fn):\n    # Return a function that applies fn to a field in each dict\n    pass\n\n\ndef transform_sort(field: str, reverse: bool = False):\n    # Return a function that sorts dicts by a field\n    pass\n",
+  "test_cases": [
+    {
+      "input": "data = [{'name': 'Alice', 'status': 'active', 'score': 85}, {'name': 'Bob', 'status': 'inactive', 'score': 92}, {'name': 'Carol', 'status': 'active', 'score': 78}]\nresult = Pipeline().add_step('filter_active', transform_filter('status', 'active')).execute(data)\n(result['record_count'], result['steps_executed'])",
+      "expected": "(2, ['filter_active'])",
+      "is_hidden": false
+    },
+    {
+      "input": "data = [{'name': 'Alice', 'score': 85}, {'name': 'Bob', 'score': 92}]\nresult = Pipeline().add_step('double', transform_map('score', lambda x: x * 2)).execute(data)\n[d['score'] for d in result['result']]",
+      "expected": "[170, 184]",
+      "is_hidden": false
+    },
+    {
+      "input": "data = [{'name': 'Charlie', 'age': 30}, {'name': 'Alice', 'age': 25}, {'name': 'Bob', 'age': 35}]\nresult = Pipeline().add_step('sort_name', transform_sort('name')).execute(data)\n[d['name'] for d in result['result']]",
+      "expected": "['Alice', 'Bob', 'Charlie']",
+      "is_hidden": false
+    },
+    {
+      "input": "data = [{'name': 'A', 'dept': 'eng', 'salary': 100}, {'name': 'B', 'dept': 'hr', 'salary': 90}, {'name': 'C', 'dept': 'eng', 'salary': 120}]\npipe = Pipeline()\npipe.add_step('filter_eng', transform_filter('dept', 'eng'))\npipe.add_step('sort_salary', transform_sort('salary', reverse=True))\nresult = pipe.execute(data)\n[(d['name'], d['salary']) for d in result['result']]",
+      "expected": "[('C', 120), ('A', 100)]",
+      "is_hidden": true
+    },
+    {
+      "input": "result = Pipeline().execute([])\n(result['result'], result['record_count'], result['steps_executed'])",
+      "expected": "([], 0, [])",
+      "is_hidden": true
+    },
+    {
+      "input": "data = [{'v': 1}, {'v': 2}, {'v': 3}]\norig = [d.copy() for d in data]\nPipeline().add_step('triple', transform_map('v', lambda x: x * 3)).execute(data)\ndata == orig",
+      "expected": "True",
+      "is_hidden": true
+    }
+  ],
+  "time_limit_minutes": 30,
+  "tags": ["fastapi", "async", "pipeline", "closures", "data-processing"]
+}

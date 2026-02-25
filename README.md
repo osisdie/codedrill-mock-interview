@@ -20,7 +20,7 @@ Screenshots of the main workflow: home → problems → coding arena → test re
 
 ## Features
 
-- **Coding Problems** — Algorithms, FastAPI, and Django problems with automated test cases
+- **33 Coding Problems** — Algorithms, FastAPI, Django, and Pytest problems with automated test cases
 - **Python Sandbox** — Secure, isolated code execution for your solutions
 - **AI Mock Interview** — Senior technical interviewer powered by LLM (OpenRouter)
 - **Scored Feedback** — Detailed evaluation of your code and interview performance
@@ -32,13 +32,14 @@ Screenshots of the main workflow: home → problems → coding arena → test re
 | Backend | FastAPI, Python 3.x             |
 | Frontend| Vue 3, Vite, Tailwind CSS, Monaco Editor |
 | AI      | OpenRouter (Claude)             |
+| E2E Test| Playwright                     |
 
 ## Getting Started
 
 ### Prerequisites
 
 - Python 3.10+
-- Node.js 18+ (pnpm recommended)
+- Node.js 18+ with [pnpm](https://pnpm.io/) (`corepack enable && corepack prepare pnpm@latest --activate`)
 - [OpenRouter](https://openrouter.ai/) API key
 
 ### Installation
@@ -69,7 +70,7 @@ make install
 3. (Optional) Frontend API base URL — edit `frontend/.env.example` if needed:
 
    ```
-   VITE_API_BASE_URL=http://localhost:8000
+   VITE_API_BASE_URL=http://localhost:8001
    ```
 
 ### Run
@@ -82,9 +83,11 @@ make dev-backend
 make dev-frontend
 ```
 
-- Backend: http://localhost:8000  
-- Frontend: http://localhost:5173  
-- API docs: http://localhost:8000/docs  
+- Backend: http://localhost:8001
+- Frontend: http://localhost:5573
+- API docs: http://localhost:8001/docs
+
+**Docker** (`make up`): Same URLs — backend 8001, frontend 5573.
 
 ## Project Structure
 
@@ -98,10 +101,18 @@ ai-mock-interview/
 │   │   └── data/      # Problem definitions (JSON)
 │   └── main.py
 ├── frontend/          # Vue 3 SPA
-│   └── src/
-├── scripts/           # Utilities (TTS, audio generation)
+│   ├── src/
+│   └── e2e/           # Playwright E2E tests
+├── scripts/           # Start scripts
 └── docs/
 ```
+
+## Ports
+
+| Service  | Host  | Container (Docker) |
+|----------|-------|--------------------|
+| Backend  | 8001  | 8000               |
+| Frontend | 5573  | 5173               |
 
 ## Environment Variables
 
@@ -109,7 +120,7 @@ ai-mock-interview/
 |--------------------|--------------------------------------|---------|
 | `OPENROUTER_API_KEY` | OpenRouter API key (required for AI) | —       |
 | `OPENROUTER_MODEL` | Model to use                         | `anthropic/claude-sonnet-4-20250514` |
-| `CORS_ORIGINS`     | Allowed CORS origins                 | `["http://localhost:5173"]` |
+| `CORS_ORIGINS`     | Allowed CORS origins (frontend URL)   | `["http://localhost:5573"]` |
 | `SANDBOX_TIMEOUT`  | Code execution timeout (seconds)    | `10`    |
 | `SANDBOX_MAX_MEMORY_MB` | Max memory per run (MB)         | `256`   |
 

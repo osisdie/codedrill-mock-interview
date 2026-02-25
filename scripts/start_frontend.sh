@@ -13,5 +13,5 @@ if [ ! -d node_modules ]; then
   pnpm install
 fi
 
-echo "Starting Vue dev server on http://localhost:5173"
+echo "Starting Vue dev server on http://localhost:5573"
 exec pnpm dev

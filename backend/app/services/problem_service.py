@@ -39,14 +39,16 @@ def list_problems(category: str | None = None, difficulty: str | None = None) ->
             continue
         if difficulty and p.difficulty != difficulty:
             continue
-        result.append(ProblemSummary(
-            id=p.id,
-            title=p.title,
-            category=p.category,
-            difficulty=p.difficulty,
-            tags=p.tags,
-            time_limit_minutes=p.time_limit_minutes,
-        ))
+        result.append(
+            ProblemSummary(
+                id=p.id,
+                title=p.title,
+                category=p.category,
+                difficulty=p.difficulty,
+                tags=p.tags,
+                time_limit_minutes=p.time_limit_minutes,
+            )
+        )
     return result
 
 

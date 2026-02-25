@@ -1,4 +1,4 @@
-WRAPPER_TEMPLATE = '''
+WRAPPER_TEMPLATE = """
 import json
 
 # === User code ===
@@ -33,4 +33,4 @@ for i, test in enumerate(tests):
         }})
 
 print("__RESULTS__" + json.dumps(results))
-'''
+"""

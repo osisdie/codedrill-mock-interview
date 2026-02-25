@@ -1,6 +1,7 @@
 # Dependencies
 node_modules/
 npm-debug.log*
+pnpm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
@@ -75,14 +76,14 @@ __pycache__/
 .coverage.*
 .vite/
 
-# Playwright MCP screenshots
+# Playwright
 .playwright-mcp/
+frontend/test-results/
+frontend/playwright-report/
+frontend/blob-report/
 
 # Python egg-info
 *.egg-info/
 
 # CodeDrill - runtime sessions
 backend/sessions/
-
-# pnpm
-pnpm-lock.yaml

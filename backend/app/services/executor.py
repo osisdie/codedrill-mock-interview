@@ -19,11 +19,7 @@ def execute_run(session_id: str) -> dict:
     if not problem:
         raise ExecutionError("Problem not found")
 
-    visible_tests = [
-        {"input": tc.input, "expected": tc.expected}
-        for tc in problem.test_cases
-        if not tc.is_hidden
-    ]
+    visible_tests = [{"input": tc.input, "expected": tc.expected} for tc in problem.test_cases if not tc.is_hidden]
 
     results = run_code(session.code, visible_tests)
     all_passed = all(r.passed for r in results)
@@ -45,10 +41,7 @@ def execute_submit(session_id: str) -> dict:
     if not problem:
         raise ExecutionError("Problem not found")
 
-    all_tests = [
-        {"input": tc.input, "expected": tc.expected}
-        for tc in problem.test_cases
-    ]
+    all_tests = [{"input": tc.input, "expected": tc.expected} for tc in problem.test_cases]
 
     results = run_code(session.code, all_tests)
     all_passed = all(r.passed for r in results)

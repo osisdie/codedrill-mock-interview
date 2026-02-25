@@ -87,9 +87,21 @@ async def evaluate_session(session_id: str) -> EvaluationResult:
         data = {
             "overall_score": correctness_score,
             "categories": [
-                {"name": "Correctness", "score": correctness_score, "feedback": f"Passed {passed}/{total} test cases."},
-                {"name": "Code Quality", "score": 50, "feedback": "AI evaluation unavailable. Review your code for readability and efficiency."},
-                {"name": "Communication", "score": 50, "feedback": "AI evaluation unavailable."},
+                {
+                    "name": "Correctness",
+                    "score": correctness_score,
+                    "feedback": f"Passed {passed}/{total} test cases.",
+                },
+                {
+                    "name": "Code Quality",
+                    "score": 50,
+                    "feedback": "AI evaluation unavailable. Review your code for readability and efficiency.",
+                },
+                {
+                    "name": "Communication",
+                    "score": 50,
+                    "feedback": "AI evaluation unavailable.",
+                },
             ],
             "summary": f"Passed {passed}/{total} tests. AI detailed evaluation was unavailable.",
             "strengths": ["Attempted the problem"],

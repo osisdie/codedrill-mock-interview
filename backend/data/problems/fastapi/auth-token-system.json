@@ -1,0 +1,66 @@
+{
+  "id": "auth-token-system",
+  "title": "Build a Token-Based Authentication System",
+  "category": "fastapi",
+  "difficulty": "medium",
+  "description": "Build a simple token-based authentication system using in-memory storage, simulating the pattern commonly used in FastAPI with OAuth2.\n\nImplement the following:\n\n1. **`hash_password(password: str) -> str`** - Simple hash: reverse the password and append its length (e.g., `\"abc\"` -> `\"cba3\"`). This simulates bcrypt without external dependencies.\n\n2. **`register_user(username: str, password: str) -> dict`** - Register a new user. Store the hashed password in `users_db`. Return `{\"username\": username, \"message\": \"registered\"}`. Raise `ValueError` if username already exists.\n\n3. **`login(username: str, password: str) -> dict`** - Verify credentials. If valid, generate a token as `f\"{username}:token:{len(tokens_db)}\"`, store it in `tokens_db` mapping token -> username, and return `{\"access_token\": token, \"token_type\": \"bearer\"}`. Raise `ValueError` if credentials are invalid.\n\n4. **`get_current_user(token: str) -> str`** - Look up the token in `tokens_db`. Return the username if valid. Raise `ValueError` if token is invalid.\n\n5. **`revoke_token(token: str) -> bool`** - Remove a token from `tokens_db`. Return `True` if revoked, `False` if token didn't exist.",
+  "examples": [
+    {
+      "input": "register_user('alice', 'secret123')",
+      "output": "{\"username\": \"alice\", \"message\": \"registered\"}",
+      "explanation": "Alice is registered with hashed password stored in users_db."
+    },
+    {
+      "input": "login('alice', 'secret123')",
+      "output": "{\"access_token\": \"alice:token:0\", \"token_type\": \"bearer\"}",
+      "explanation": "Valid credentials generate a token stored in tokens_db."
+    }
+  ],
+  "constraints": [
+    "users_db maps username (str) to hashed_password (str).",
+    "tokens_db maps token (str) to username (str).",
+    "hash_password must be deterministic for the same input.",
+    "Raise ValueError with descriptive messages for invalid operations.",
+    "Both dbs must be clearable between test scenarios."
+  ],
+  "starter_code": "users_db: dict[str, str] = {}   # username -> hashed_password\ntokens_db: dict[str, str] = {}  # token -> username\n\n\ndef hash_password(password: str) -> str:\n    # Simple hash: reverse + length\n    pass\n\n\ndef register_user(username: str, password: str) -> dict:\n    # Register a new user, store hashed password\n    pass\n\n\ndef login(username: str, password: str) -> dict:\n    # Verify credentials, generate and store token\n    pass\n\n\ndef get_current_user(token: str) -> str:\n    # Look up token and return username\n    pass\n\n\ndef revoke_token(token: str) -> bool:\n    # Revoke a token, return True/False\n    pass\n",
+  "test_cases": [
+    {
+      "input": "users_db.clear()\ntokens_db.clear()\nregister_user('alice', 'secret123')",
+      "expected": "{'username': 'alice', 'message': 'registered'}",
+      "is_hidden": false
+    },
+    {
+      "input": "users_db.clear()\ntokens_db.clear()\nregister_user('alice', 'secret123')\nresult = login('alice', 'secret123')\n(result['token_type'], 'alice' in result['access_token'])",
+      "expected": "('bearer', True)",
+      "is_hidden": false
+    },
+    {
+      "input": "users_db.clear()\ntokens_db.clear()\nregister_user('bob', 'pass')\ntok = login('bob', 'pass')['access_token']\nget_current_user(tok)",
+      "expected": "'bob'",
+      "is_hidden": false
+    },
+    {
+      "input": "users_db.clear()\ntokens_db.clear()\nregister_user('alice', 'pw')\ntry:\n    register_user('alice', 'other')\nexcept ValueError:\n    'duplicate_caught'",
+      "expected": "'duplicate_caught'",
+      "is_hidden": true
+    },
+    {
+      "input": "users_db.clear()\ntokens_db.clear()\ntry:\n    login('ghost', 'nope')\nexcept ValueError:\n    'invalid_caught'",
+      "expected": "'invalid_caught'",
+      "is_hidden": true
+    },
+    {
+      "input": "users_db.clear()\ntokens_db.clear()\nregister_user('carol', 'abc')\ntok = login('carol', 'abc')['access_token']\n(revoke_token(tok), revoke_token(tok))",
+      "expected": "(True, False)",
+      "is_hidden": true
+    },
+    {
+      "input": "hash_password('hello')",
+      "expected": "'olleh5'",
+      "is_hidden": true
+    }
+  ],
+  "time_limit_minutes": 30,
+  "tags": ["fastapi", "authentication", "token", "security"]
+}
