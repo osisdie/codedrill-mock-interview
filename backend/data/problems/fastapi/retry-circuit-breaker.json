@@ -1,0 +1,73 @@
+{
+  "id": "retry-circuit-breaker",
+  "title": "Implement Retry with Backoff & Circuit Breaker Pattern",
+  "category": "fastapi",
+  "difficulty": "hard",
+  "description": "Implement the **Retry with Exponential Backoff** and **Circuit Breaker** patterns for resilient microservice communication. These are critical in production FastAPI apps that call external services.\n\nBuild the following:\n\n1. **`RetryConfig`** (Pydantic model) — `max_retries: int = 3`, `base_delay: float = 1.0`, `max_delay: float = 30.0`, `backoff_factor: float = 2.0`, `retry_on: list[type] = []` (exception types to retry on; empty = retry on all).\n\n2. **`RetryResult`** (Pydantic model) — `success: bool`, `result: Any = None`, `attempts: int`, `total_delay: float`, `errors: list[str]`.\n\n3. **`retry_with_backoff(func, config: RetryConfig | None = None) -> RetryResult`** — Execute `func()` with retry logic:\n   - On success: return immediately with result.\n   - On failure: if the exception type is in `retry_on` (or `retry_on` is empty), wait and retry.\n   - Delay between retries: `min(base_delay * (backoff_factor ** attempt), max_delay)` where attempt starts at 0.\n   - Track all error messages and total delay spent.\n   - After exhausting retries: return `success=False` with last error.\n   - **Note**: Use `time.sleep()` for delays (tests will use small values).\n\n4. **`CircuitState`** — Constants: `CLOSED = 'closed'` (normal), `OPEN = 'open'` (blocking), `HALF_OPEN = 'half_open'` (testing).\n\n5. **`CircuitBreaker`** — Implements the circuit breaker pattern:\n   - `__init__(self, failure_threshold: int = 5, recovery_timeout: float = 30.0, success_threshold: int = 2)` — Configure thresholds.\n   - `state` property — Return current state.\n   - `call(self, func: Callable) -> Any` — Execute through the circuit:\n     - **CLOSED**: Execute func. On success: reset failure count. On failure: increment failure count. If failures >= threshold: transition to OPEN.\n     - **OPEN**: Check if `recovery_timeout` has elapsed since the circuit opened. If yes: transition to HALF_OPEN and try the call. If no: raise `CircuitOpenError(\"Circuit is open\")`.\n     - **HALF_OPEN**: Execute func. On success: increment success count. If successes >= success_threshold: transition to CLOSED. On failure: transition back to OPEN immediately.\n   - `reset(self) -> None` — Reset to CLOSED with zero counters.\n   - `get_stats(self) -> dict` — Return `{\"state\": str, \"failure_count\": int, \"success_count\": int, \"total_calls\": int, \"total_failures\": int}`.\n\n6. **`CircuitOpenError(Exception)`** — Raised when calling through an OPEN circuit.\n\n7. **`ResilientClient`** — Combines retry + circuit breaker:\n   - `__init__(self, circuit: CircuitBreaker, retry_config: RetryConfig)` — Store both.\n   - `call(self, func: Callable) -> RetryResult` — Wrap `circuit.call(func)` with `retry_with_backoff`. Retry on `CircuitOpenError` if configured.",
+  "examples": [
+    {
+      "input": "call_count = 0\ndef flaky():\n    global call_count; call_count += 1\n    if call_count < 3: raise ConnectionError('fail')\n    return 'success'\nr = retry_with_backoff(flaky, RetryConfig(max_retries=5, base_delay=0.001))\n(r.success, r.result, r.attempts)",
+      "output": "(True, 'success', 3)",
+      "explanation": "Function fails twice, succeeds on 3rd attempt."
+    },
+    {
+      "input": "cb = CircuitBreaker(failure_threshold=2, recovery_timeout=0.01)\nfor _ in range(2):\n    try: cb.call(lambda: 1/0)\n    except: pass\ncb.state",
+      "output": "'open'",
+      "explanation": "After 2 failures, circuit transitions to OPEN."
+    }
+  ],
+  "constraints": [
+    "Backoff delay = min(base_delay * backoff_factor^attempt, max_delay) starting at attempt=0.",
+    "retry_on=[] means retry on ALL exception types.",
+    "retry_on=[ConnectionError] means only retry on ConnectionError (or subclasses).",
+    "Circuit OPEN must raise CircuitOpenError without calling the function.",
+    "Circuit HALF_OPEN → single failure must immediately go back to OPEN.",
+    "Circuit HALF_OPEN → needs success_threshold consecutive successes to close.",
+    "total_delay in RetryResult must be the sum of all sleep delays."
+  ],
+  "starter_code": "import time\nfrom typing import Any, Callable\nfrom pydantic import BaseModel, Field\n\n\nclass RetryConfig(BaseModel):\n    max_retries: int = 3\n    base_delay: float = 1.0\n    max_delay: float = 30.0\n    backoff_factor: float = 2.0\n    retry_on: list = Field(default_factory=list)\n\n\nclass RetryResult(BaseModel):\n    success: bool\n    result: Any = None\n    attempts: int = 0\n    total_delay: float = 0.0\n    errors: list[str] = Field(default_factory=list)\n\n\ndef retry_with_backoff(func: Callable, config: RetryConfig | None = None) -> RetryResult:\n    \"\"\"Execute func with retry and exponential backoff.\"\"\"\n    pass\n\n\nclass CircuitState:\n    CLOSED = 'closed'\n    OPEN = 'open'\n    HALF_OPEN = 'half_open'\n\n\nclass CircuitOpenError(Exception):\n    pass\n\n\nclass CircuitBreaker:\n    \"\"\"Circuit breaker for resilient external calls.\"\"\"\n\n    def __init__(self, failure_threshold: int = 5,\n                 recovery_timeout: float = 30.0,\n                 success_threshold: int = 2):\n        pass\n\n    @property\n    def state(self) -> str:\n        pass\n\n    def call(self, func: Callable) -> Any:\n        pass\n\n    def reset(self) -> None:\n        pass\n\n    def get_stats(self) -> dict:\n        pass\n\n\nclass ResilientClient:\n    \"\"\"Combines circuit breaker + retry.\"\"\"\n\n    def __init__(self, circuit: CircuitBreaker, retry_config: RetryConfig):\n        pass\n\n    def call(self, func: Callable) -> RetryResult:\n        pass\n",
+  "test_cases": [
+    {
+      "input": "r = retry_with_backoff(lambda: 42, RetryConfig(max_retries=3, base_delay=0.001))\n(r.success, r.result, r.attempts)",
+      "expected": "(True, 42, 1)",
+      "is_hidden": false
+    },
+    {
+      "input": "r = retry_with_backoff(lambda: 1/0, RetryConfig(max_retries=3, base_delay=0.001))\n(r.success, r.attempts, len(r.errors))",
+      "expected": "(False, 3, 3)",
+      "is_hidden": false
+    },
+    {
+      "input": "cb = CircuitBreaker(failure_threshold=3, recovery_timeout=0.01)\nfor _ in range(3):\n    try: cb.call(lambda: 1/0)\n    except ZeroDivisionError: pass\n(cb.state, cb.get_stats()['failure_count'])",
+      "expected": "('open', 3)",
+      "is_hidden": false
+    },
+    {
+      "input": "count = [0]\ndef flaky():\n    count[0] += 1\n    if count[0] <= 2: raise ConnectionError('down')\n    return 'ok'\ncfg = RetryConfig(max_retries=5, base_delay=0.001, retry_on=[ConnectionError])\nr = retry_with_backoff(flaky, cfg)\n(r.success, r.result, r.attempts, len(r.errors))",
+      "expected": "(True, 'ok', 3, 2)",
+      "is_hidden": true
+    },
+    {
+      "input": "cfg = RetryConfig(max_retries=3, base_delay=0.001, retry_on=[ConnectionError])\nr = retry_with_backoff(lambda: 1/0, cfg)\n(r.success, r.attempts)",
+      "expected": "(False, 1)",
+      "is_hidden": true
+    },
+    {
+      "input": "cb = CircuitBreaker(failure_threshold=2, recovery_timeout=0.01, success_threshold=2)\nfor _ in range(2):\n    try: cb.call(lambda: 1/0)\n    except: pass\nimport time; time.sleep(0.02)\ncb.call(lambda: 'ok')\ncb.state",
+      "expected": "'half_open'",
+      "is_hidden": true
+    },
+    {
+      "input": "cb = CircuitBreaker(failure_threshold=2, recovery_timeout=0.01, success_threshold=2)\nfor _ in range(2):\n    try: cb.call(lambda: 1/0)\n    except: pass\nimport time; time.sleep(0.02)\ncb.call(lambda: 'ok')\ncb.call(lambda: 'ok')\ncb.state",
+      "expected": "'closed'",
+      "is_hidden": true
+    },
+    {
+      "input": "cb = CircuitBreaker(failure_threshold=2, recovery_timeout=100)\nfor _ in range(2):\n    try: cb.call(lambda: 1/0)\n    except: pass\ntry:\n    cb.call(lambda: 'x')\n    result = 'no_error'\nexcept CircuitOpenError:\n    result = 'circuit_open'\nresult",
+      "expected": "'circuit_open'",
+      "is_hidden": true
+    }
+  ],
+  "time_limit_minutes": 40,
+  "tags": ["fastapi", "retry", "circuit-breaker", "resilience", "microservices"]
+}

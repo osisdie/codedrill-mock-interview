@@ -1,0 +1,72 @@
+{
+  "id": "sql-crud-raw",
+  "title": "SQL CRUD with Raw SQL (sqlite3)",
+  "category": "fastapi",
+  "difficulty": "medium",
+  "description": "Implement a complete CRUD data layer using raw SQL queries with Python's built-in `sqlite3` module. This simulates what happens behind the scenes in a FastAPI application that uses raw SQL instead of an ORM.\n\nBuild the following:\n\n1. **`create_tables(conn: sqlite3.Connection) -> None`** — Create a `users` table with columns:\n   - `id` INTEGER PRIMARY KEY AUTOINCREMENT\n   - `name` TEXT NOT NULL\n   - `email` TEXT NOT NULL UNIQUE\n   - `age` INTEGER\n   - `created_at` TEXT DEFAULT CURRENT_TIMESTAMP\n\n2. **`insert_user(conn, name: str, email: str, age: int | None = None) -> dict`** — Insert a user using a **parameterized query** (no string formatting!). Return the inserted user as a dict with keys: `id`, `name`, `email`, `age`.\n\n3. **`get_user(conn, user_id: int) -> dict | None`** — Fetch a single user by ID. Return as dict or `None` if not found.\n\n4. **`get_all_users(conn, order_by: str = 'id', limit: int | None = None) -> list[dict]`** — Fetch all users. Support ordering by column name (validate against allowed columns: `id`, `name`, `email`, `age`) and optional LIMIT. Return list of dicts.\n\n5. **`update_user(conn, user_id: int, **fields) -> dict | None`** — Update only the provided fields for a user. Only `name`, `email`, and `age` can be updated. Return the updated user dict or `None` if not found. Use parameterized query.\n\n6. **`delete_user(conn, user_id: int) -> bool`** — Delete a user by ID. Return `True` if a row was deleted, `False` otherwise.\n\n7. **`search_users(conn, name_contains: str | None = None, min_age: int | None = None, max_age: int | None = None) -> list[dict]`** — Search users with optional filters. `name_contains` uses SQL LIKE `%name%` (case-insensitive). Filters are combined with AND. Return list of dicts.\n\n**Important**: All queries must use parameterized queries (`?` placeholders) to prevent SQL injection. Use `conn.row_factory = sqlite3.Row` for dict-like access.",
+  "examples": [
+    {
+      "input": "conn = sqlite3.connect(':memory:')\ncreate_tables(conn)\ninsert_user(conn, 'Alice', 'alice@example.com', 30)",
+      "output": "{'id': 1, 'name': 'Alice', 'email': 'alice@example.com', 'age': 30}",
+      "explanation": "User is inserted with auto-generated ID and returned as a dict."
+    },
+    {
+      "input": "conn = sqlite3.connect(':memory:')\ncreate_tables(conn)\ninsert_user(conn, 'Bob', 'bob@example.com', 25)\nupdate_user(conn, 1, name='Bobby', age=26)",
+      "output": "{'id': 1, 'name': 'Bobby', 'email': 'bob@example.com', 'age': 26}",
+      "explanation": "Only the specified fields (name, age) are updated."
+    }
+  ],
+  "constraints": [
+    "ALL queries must use parameterized queries (? placeholders) — no f-strings or string formatting for SQL.",
+    "get_all_users must validate order_by against allowed columns ['id', 'name', 'email', 'age'] and raise ValueError for invalid columns.",
+    "update_user must only accept 'name', 'email', 'age' as updatable fields.",
+    "search_users name_contains must be case-insensitive (use LIKE with LOWER()).",
+    "insert_user with a duplicate email must raise sqlite3.IntegrityError.",
+    "Use sqlite3.Row or manual dict conversion for return values."
+  ],
+  "starter_code": "import sqlite3\n\n\ndef create_tables(conn: sqlite3.Connection) -> None:\n    \"\"\"Create the users table.\"\"\"\n    pass\n\n\ndef insert_user(conn: sqlite3.Connection, name: str, email: str, age: int | None = None) -> dict:\n    \"\"\"Insert a user and return the created user dict.\"\"\"\n    pass\n\n\ndef get_user(conn: sqlite3.Connection, user_id: int) -> dict | None:\n    \"\"\"Get a user by ID.\"\"\"\n    pass\n\n\ndef get_all_users(conn: sqlite3.Connection, order_by: str = 'id', limit: int | None = None) -> list[dict]:\n    \"\"\"Get all users with optional ordering and limit.\"\"\"\n    pass\n\n\ndef update_user(conn: sqlite3.Connection, user_id: int, **fields) -> dict | None:\n    \"\"\"Update specified fields of a user.\"\"\"\n    pass\n\n\ndef delete_user(conn: sqlite3.Connection, user_id: int) -> bool:\n    \"\"\"Delete a user by ID. Return True if deleted.\"\"\"\n    pass\n\n\ndef search_users(conn: sqlite3.Connection, name_contains: str | None = None, min_age: int | None = None, max_age: int | None = None) -> list[dict]:\n    \"\"\"Search users with optional filters.\"\"\"\n    pass\n",
+  "test_cases": [
+    {
+      "input": "conn = sqlite3.connect(':memory:')\ncreate_tables(conn)\nu = insert_user(conn, 'Alice', 'alice@test.com', 30)\n(u['id'], u['name'], u['email'], u['age'])",
+      "expected": "(1, 'Alice', 'alice@test.com', 30)",
+      "is_hidden": false
+    },
+    {
+      "input": "conn = sqlite3.connect(':memory:')\ncreate_tables(conn)\ninsert_user(conn, 'A', 'a@t.com', 20)\ninsert_user(conn, 'B', 'b@t.com', 30)\nusers = get_all_users(conn)\n[(u['id'], u['name']) for u in users]",
+      "expected": "[(1, 'A'), (2, 'B')]",
+      "is_hidden": false
+    },
+    {
+      "input": "conn = sqlite3.connect(':memory:')\ncreate_tables(conn)\ninsert_user(conn, 'Alice', 'a@t.com', 25)\nupdated = update_user(conn, 1, name='Alicia', age=26)\n(updated['name'], updated['age'], updated['email'])",
+      "expected": "('Alicia', 26, 'a@t.com')",
+      "is_hidden": false
+    },
+    {
+      "input": "conn = sqlite3.connect(':memory:')\ncreate_tables(conn)\ninsert_user(conn, 'Alice', 'a@t.com', 25)\ninsert_user(conn, 'Bob', 'b@t.com', 35)\ninsert_user(conn, 'Charlie', 'c@t.com', 28)\nresult = search_users(conn, name_contains='li')\n[u['name'] for u in result]",
+      "expected": "['Alice', 'Charlie']",
+      "is_hidden": true
+    },
+    {
+      "input": "conn = sqlite3.connect(':memory:')\ncreate_tables(conn)\ninsert_user(conn, 'A', 'a@t.com', 20)\ninsert_user(conn, 'B', 'b@t.com', 30)\ninsert_user(conn, 'C', 'c@t.com', 40)\nresult = search_users(conn, min_age=25, max_age=35)\n[u['name'] for u in result]",
+      "expected": "['B']",
+      "is_hidden": true
+    },
+    {
+      "input": "conn = sqlite3.connect(':memory:')\ncreate_tables(conn)\ninsert_user(conn, 'Del', 'del@t.com', 20)\n(delete_user(conn, 1), delete_user(conn, 1), get_user(conn, 1))",
+      "expected": "(True, False, None)",
+      "is_hidden": true
+    },
+    {
+      "input": "conn = sqlite3.connect(':memory:')\ncreate_tables(conn)\ntry:\n    get_all_users(conn, order_by='DROP TABLE users')\n    result = 'no_error'\nexcept ValueError:\n    result = 'value_error'\nresult",
+      "expected": "'value_error'",
+      "is_hidden": true
+    },
+    {
+      "input": "conn = sqlite3.connect(':memory:')\ncreate_tables(conn)\ninsert_user(conn, 'A', 'same@t.com', 20)\ntry:\n    insert_user(conn, 'B', 'same@t.com', 30)\n    result = 'no_error'\nexcept sqlite3.IntegrityError:\n    result = 'integrity_error'\nresult",
+      "expected": "'integrity_error'",
+      "is_hidden": true
+    }
+  ],
+  "time_limit_minutes": 30,
+  "tags": ["fastapi", "sql", "sqlite", "crud", "raw-sql"]
+}

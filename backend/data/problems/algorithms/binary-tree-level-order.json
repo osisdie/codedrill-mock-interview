@@ -1,0 +1,24 @@
+{
+  "id": "binary-tree-level-order",
+  "title": "Binary Tree Level Order Traversal",
+  "category": "algorithms",
+  "difficulty": "medium",
+  "description": "Given the root of a binary tree represented as a nested list, return the **level order traversal** of its nodes' values (i.e., from left to right, level by level).\n\nThe tree is represented as a list where `None` indicates an absent node. For example, `[3, 9, 20, None, None, 15, 7]` represents:\n\n```\n    3\n   / \\\n  9  20\n    /  \\\n   15   7\n```\n\nImplement a function that builds the tree from this list and returns the level-order traversal as a list of lists.",
+  "examples": [
+    {"input": "root = [3, 9, 20, None, None, 15, 7]", "output": "[[3], [9, 20], [15, 7]]"},
+    {"input": "root = [1]", "output": "[[1]]"},
+    {"input": "root = []", "output": "[]"}
+  ],
+  "constraints": ["The number of nodes is in the range [0, 2000].", "-1000 <= Node.val <= 1000"],
+  "starter_code": "def level_order(root_list: list) -> list[list[int]]:\n    # Build tree from list representation, then return level-order traversal\n    # Write your solution here\n    pass\n",
+  "test_cases": [
+    {"input": "level_order([3, 9, 20, None, None, 15, 7])", "expected": "[[3], [9, 20], [15, 7]]", "is_hidden": false},
+    {"input": "level_order([1])", "expected": "[[1]]", "is_hidden": false},
+    {"input": "level_order([])", "expected": "[]", "is_hidden": false},
+    {"input": "level_order([1, 2, 3, 4, 5])", "expected": "[[1], [2, 3], [4, 5]]", "is_hidden": true},
+    {"input": "level_order([1, None, 2, None, 3])", "expected": "[[1], [2], [3]]", "is_hidden": true},
+    {"input": "level_order([5, 4, 7, 3, None, 2, None, -1, None, 9])", "expected": "[[5], [4, 7], [3, 2], [-1, 9]]", "is_hidden": true}
+  ],
+  "time_limit_minutes": 25,
+  "tags": ["tree", "bfs", "breadth-first-search"]
+}

@@ -1,0 +1,67 @@
+{
+  "id": "sql-crud-sqlmodel",
+  "title": "SQL CRUD with SQLModel-Style Pydantic + DB Pattern",
+  "category": "fastapi",
+  "difficulty": "hard",
+  "description": "Implement a CRUD data layer following the **SQLModel pattern** — a hybrid of Pydantic validation and database persistence. SQLModel combines Pydantic `BaseModel` with SQLAlchemy's ORM, giving you validated, type-safe models that auto-persist to a database.\n\nYou will build a mini SQLModel-like framework using `pydantic.BaseModel` + `sqlite3`.\n\nBuild the following:\n\n1. **`DatabaseManager`** — Manages the sqlite3 connection and table creation:\n   - `__init__(self, db_path: str = ':memory:')` — Create a sqlite3 connection.\n   - `create_table(self, model_cls) -> None` — Create a table based on the model's fields and `__table_config__`.\n   - `get_connection(self) -> sqlite3.Connection` — Return the connection.\n\n2. **`TableModel`** (extends `pydantic.BaseModel`) — A base model that auto-maps to a DB table:\n   - Class variable `__tablename__: str` — Table name (set on each subclass).\n   - Class variable `__table_config__: dict` — A dict mapping field names to column config dicts, e.g. `{'id': {'primary_key': True}, 'email': {'unique': True}}`.\n   - `save(self, db: DatabaseManager) -> 'TableModel'` — INSERT if `id` is None, UPDATE if `id` is set. Return self with id populated.\n   - `delete(self, db: DatabaseManager) -> bool` — DELETE the row. Return `True` if deleted.\n   - Class method `find_by_id(cls, db: DatabaseManager, id: int) -> 'TableModel' | None` — SELECT one.\n   - Class method `find_all(cls, db: DatabaseManager) -> list['TableModel']` — SELECT all.\n   - Class method `find_where(cls, db: DatabaseManager, **filters) -> list['TableModel']` — SELECT with WHERE clause. Each kwarg is a `column=value` equality check combined with AND.\n\n3. **`UserCreate`** (Pydantic BaseModel) — A creation schema:\n   - `name: str`, `email: str`, `age: int | None = None`\n\n4. **`UserRecord(TableModel)`** — The database model:\n   - `id: int | None = None`\n   - `name: str`, `email: str`, `age: int | None = None`\n   - `__tablename__ = 'users'`\n   - `__table_config__ = {'id': {'primary_key': True}, 'email': {'unique': True}}`\n\n5. **`create_user(db: DatabaseManager, data: UserCreate) -> UserRecord`** — Validate with `UserCreate`, create a `UserRecord`, save, and return it.\n\n6. **`update_user(db: DatabaseManager, user_id: int, **fields) -> UserRecord | None`** — Fetch by id, update fields via Pydantic's `model_copy(update=...)`, save, and return. Return `None` if not found.",
+  "examples": [
+    {
+      "input": "db = DatabaseManager()\ndb.create_table(UserRecord)\nu = create_user(db, UserCreate(name='Alice', email='a@t.com', age=30))\n(u.id, u.name, u.email)",
+      "output": "(1, 'Alice', 'a@t.com')",
+      "explanation": "UserCreate validates input, UserRecord persists to DB with auto-incremented id."
+    },
+    {
+      "input": "db = DatabaseManager()\ndb.create_table(UserRecord)\ncreate_user(db, UserCreate(name='Alice', email='a@t.com'))\nupdated = update_user(db, 1, name='Alicia')\nupdated.name",
+      "output": "'Alicia'",
+      "explanation": "update_user fetches, copies with new fields, saves, and returns."
+    }
+  ],
+  "constraints": [
+    "TableModel must extend pydantic.BaseModel — use Pydantic's validation.",
+    "save() must INSERT when id is None, UPDATE when id is set.",
+    "find_where must build parameterized WHERE clauses (no string formatting).",
+    "create_user must validate through UserCreate before creating UserRecord.",
+    "update_user must use model_copy(update=...) for immutable update pattern.",
+    "All SQL must use parameterized queries."
+  ],
+  "starter_code": "import sqlite3\nfrom pydantic import BaseModel\n\n\nclass DatabaseManager:\n    \"\"\"Manages sqlite3 connection and table operations.\"\"\"\n\n    def __init__(self, db_path: str = ':memory:'):\n        # Create connection\n        pass\n\n    def create_table(self, model_cls) -> None:\n        # Create table from model's fields and __table_config__\n        pass\n\n    def get_connection(self) -> sqlite3.Connection:\n        # Return connection\n        pass\n\n\nclass TableModel(BaseModel):\n    \"\"\"Base model with database persistence (SQLModel-style).\"\"\"\n    __tablename__: str = ''\n    __table_config__: dict = {}\n\n    def save(self, db: DatabaseManager) -> 'TableModel':\n        # INSERT if id is None, UPDATE if id is set\n        pass\n\n    def delete(self, db: DatabaseManager) -> bool:\n        # DELETE this record\n        pass\n\n    @classmethod\n    def find_by_id(cls, db: DatabaseManager, id: int):\n        # SELECT by id\n        pass\n\n    @classmethod\n    def find_all(cls, db: DatabaseManager) -> list:\n        # SELECT all\n        pass\n\n    @classmethod\n    def find_where(cls, db: DatabaseManager, **filters) -> list:\n        # SELECT with WHERE filters\n        pass\n\n\nclass UserCreate(BaseModel):\n    name: str\n    email: str\n    age: int | None = None\n\n\nclass UserRecord(TableModel):\n    __tablename__ = 'users'\n    __table_config__ = {'id': {'primary_key': True}, 'email': {'unique': True}}\n\n    id: int | None = None\n    name: str\n    email: str\n    age: int | None = None\n\n\ndef create_user(db: DatabaseManager, data: UserCreate) -> UserRecord:\n    \"\"\"Create a user from validated data.\"\"\"\n    pass\n\n\ndef update_user(db: DatabaseManager, user_id: int, **fields) -> UserRecord | None:\n    \"\"\"Update a user by ID with given fields.\"\"\"\n    pass\n",
+  "test_cases": [
+    {
+      "input": "db = DatabaseManager()\ndb.create_table(UserRecord)\nu = create_user(db, UserCreate(name='Alice', email='a@t.com', age=30))\n(u.id, u.name, u.email, u.age)",
+      "expected": "(1, 'Alice', 'a@t.com', 30)",
+      "is_hidden": false
+    },
+    {
+      "input": "db = DatabaseManager()\ndb.create_table(UserRecord)\ncreate_user(db, UserCreate(name='A', email='a@t.com', age=20))\ncreate_user(db, UserCreate(name='B', email='b@t.com', age=30))\nall_u = UserRecord.find_all(db)\n[(u.id, u.name) for u in all_u]",
+      "expected": "[(1, 'A'), (2, 'B')]",
+      "is_hidden": false
+    },
+    {
+      "input": "db = DatabaseManager()\ndb.create_table(UserRecord)\ncreate_user(db, UserCreate(name='Alice', email='a@t.com', age=25))\nupdated = update_user(db, 1, name='Alicia', age=26)\n(updated.name, updated.age, updated.email)",
+      "expected": "('Alicia', 26, 'a@t.com')",
+      "is_hidden": false
+    },
+    {
+      "input": "db = DatabaseManager()\ndb.create_table(UserRecord)\ncreate_user(db, UserCreate(name='A', email='a@t.com', age=20))\ncreate_user(db, UserCreate(name='B', email='b@t.com', age=30))\ncreate_user(db, UserCreate(name='C', email='c@t.com', age=20))\nresults = UserRecord.find_where(db, age=20)\n[(u.name) for u in results]",
+      "expected": "['A', 'C']",
+      "is_hidden": true
+    },
+    {
+      "input": "db = DatabaseManager()\ndb.create_table(UserRecord)\nu = create_user(db, UserCreate(name='Del', email='d@t.com'))\n(u.delete(db), UserRecord.find_by_id(db, 1))",
+      "expected": "(True, None)",
+      "is_hidden": true
+    },
+    {
+      "input": "db = DatabaseManager()\ndb.create_table(UserRecord)\ncreate_user(db, UserCreate(name='X', email='x@t.com', age=10))\nu = UserRecord.find_by_id(db, 1)\nu.name = 'Y'\nu.save(db)\nrefresh = UserRecord.find_by_id(db, 1)\n(refresh.name, refresh.id)",
+      "expected": "('Y', 1)",
+      "is_hidden": true
+    },
+    {
+      "input": "db = DatabaseManager()\ndb.create_table(UserRecord)\nresult = update_user(db, 999, name='Ghost')\nresult",
+      "expected": "None",
+      "is_hidden": true
+    }
+  ],
+  "time_limit_minutes": 40,
+  "tags": ["fastapi", "sql", "sqlmodel", "pydantic", "orm"]
+}

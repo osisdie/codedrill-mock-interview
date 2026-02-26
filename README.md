@@ -18,12 +18,25 @@ Screenshots of the main workflow: home → problems → coding arena → test re
 |:---:|:---:|
 | ![History](docs/screenshots/mock-interview-history.png) | ![API](docs/screenshots/mock-interview-api.png) |
 
+### New: Show Answer, Code Chat & Ask AI
+
+| Show Answer — AI types the solution | Chat Panel — Ask questions about code |
+|:---:|:---:|
+| ![Show Answer](docs/screenshots/feature-show-answer.png) | ![Chat Panel](docs/screenshots/feature-chat-panel.png) |
+
+| Chat Conversation — AI explains approaches | Ask AI — Select code for explanation |
+|:---:|:---:|
+| ![Chat Conversation](docs/screenshots/feature-chat-conversation.png) | ![Ask AI](docs/screenshots/feature-ask-ai-selection.png) |
+
 ## Features
 
-- **33 Coding Problems** — Algorithms, FastAPI, Django, and Pytest problems with automated test cases
+- **63 Coding Problems** — Algorithms (LeetCode medium), FastAPI, Django, and Pytest problems with automated test cases
 - **Python Sandbox** — Secure, isolated code execution for your solutions
 - **AI Mock Interview** — Senior technical interviewer powered by LLM (OpenRouter)
 - **Scored Feedback** — Detailed evaluation of your code and interview performance
+- **Show Answer** — AI-generated solutions typed out character by character with block-aware pacing
+- **Code Chat** — In-editor AI chatroom to ask questions about the problem or your code
+- **Ask AI** — Select any code block in the editor and ask AI for an explanation
 
 ## Tech Stack
 

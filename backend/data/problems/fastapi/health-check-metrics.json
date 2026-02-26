@@ -1,0 +1,72 @@
+{
+  "id": "health-check-metrics",
+  "title": "Health Check Endpoints & Application Metrics",
+  "category": "fastapi",
+  "difficulty": "medium",
+  "description": "Implement a comprehensive **health check** and **metrics** system for a FastAPI application. Production APIs need `/health` endpoints for load balancers and monitoring systems, plus detailed metrics for observability.\n\nBuild the following:\n\n1. **`ComponentStatus`** — Constants: `HEALTHY = 'healthy'`, `DEGRADED = 'degraded'`, `UNHEALTHY = 'unhealthy'`.\n\n2. **`HealthCheck`** (Pydantic model) — `name: str`, `status: str`, `response_time_ms: float | None = None`, `details: dict | None = None`.\n\n3. **`HealthChecker`** — Manages component health:\n   - `register(self, name: str, check_func: Callable) -> None` — Register a check function. `check_func()` returns a `HealthCheck` object.\n   - `run_all(self) -> dict` — Run all checks. Return `{\"status\": overall, \"checks\": {name: HealthCheck.model_dump()}, \"timestamp\": time.time()}`. Overall status: `HEALTHY` if all healthy, `DEGRADED` if any degraded, `UNHEALTHY` if any unhealthy.\n   - `run_one(self, name: str) -> HealthCheck` — Run a single named check. Raise `KeyError` if not found.\n\n4. **`RequestMetrics`** — Tracks API request statistics:\n   - `record(self, method: str, path: str, status_code: int, duration_ms: float) -> None` — Record a request.\n   - `get_summary(self) -> dict` — Return `{\"total_requests\": int, \"by_method\": {method: count}, \"by_status\": {status_code: count}, \"avg_duration_ms\": float, \"p95_duration_ms\": float, \"error_rate\": float}`. Error rate = count of 4xx+5xx / total. p95 = 95th percentile duration.\n   - `get_endpoint_stats(self) -> list[dict]` — Return per-endpoint stats: `[{\"method\": str, \"path\": str, \"count\": int, \"avg_ms\": float, \"max_ms\": float}]` sorted by count descending.\n   - `reset(self) -> None` — Clear all metrics.\n\n5. **`SystemMetrics`** — Tracks system-level metrics:\n   - `__init__(self)` — Record `start_time = time.time()`.\n   - `get_uptime_seconds(self) -> float` — Return current uptime.\n   - `record_event(self, event_type: str) -> None` — Increment a counter for the event type.\n   - `get_event_counts(self) -> dict[str, int]` — Return event type counters.\n   - `get_system_info(self) -> dict` — Return `{\"uptime_seconds\": float, \"events\": dict, \"python_version\": str}`. Use `sys.version` for python_version.\n\n6. **Sample check functions:**\n   - `check_database(healthy: bool = True) -> HealthCheck` — Return healthy or unhealthy status with `response_time_ms`.\n   - `check_redis(healthy: bool = True, degraded: bool = False) -> HealthCheck` — Return healthy, degraded, or unhealthy status.\n   - `check_disk(usage_percent: float = 50.0) -> HealthCheck` — Healthy if < 80%, degraded if < 95%, unhealthy otherwise. Include `{\"usage_percent\": usage_percent}` in details.",
+  "examples": [
+    {
+      "input": "hc = HealthChecker()\nhc.register('db', lambda: check_database(True))\nresult = hc.run_all()\nresult['status']",
+      "output": "'healthy'",
+      "explanation": "All checks pass, overall status is healthy."
+    },
+    {
+      "input": "m = RequestMetrics()\nm.record('GET', '/api/users', 200, 15.0)\nm.record('POST', '/api/users', 201, 45.0)\nm.get_summary()['total_requests']",
+      "output": "2",
+      "explanation": "Two requests recorded, summary shows total count."
+    }
+  ],
+  "constraints": [
+    "Overall health: UNHEALTHY > DEGRADED > HEALTHY (worst status wins).",
+    "p95 must use the correct 95th percentile calculation (sorted values, index = ceil(0.95 * n) - 1).",
+    "Error rate must count status codes >= 400 as errors.",
+    "get_endpoint_stats must be sorted by count descending.",
+    "check_disk thresholds: < 80% healthy, < 95% degraded, >= 95% unhealthy.",
+    "SystemMetrics.get_system_info must include actual Python version from sys.version."
+  ],
+  "starter_code": "import sys\nimport time\nimport math\nfrom typing import Callable\nfrom pydantic import BaseModel\n\n\nclass ComponentStatus:\n    HEALTHY = 'healthy'\n    DEGRADED = 'degraded'\n    UNHEALTHY = 'unhealthy'\n\n\nclass HealthCheck(BaseModel):\n    name: str\n    status: str\n    response_time_ms: float | None = None\n    details: dict | None = None\n\n\nclass HealthChecker:\n    def __init__(self):\n        pass\n\n    def register(self, name: str, check_func: Callable) -> None:\n        pass\n\n    def run_all(self) -> dict:\n        pass\n\n    def run_one(self, name: str) -> HealthCheck:\n        pass\n\n\nclass RequestMetrics:\n    def __init__(self):\n        pass\n\n    def record(self, method: str, path: str, status_code: int, duration_ms: float) -> None:\n        pass\n\n    def get_summary(self) -> dict:\n        pass\n\n    def get_endpoint_stats(self) -> list[dict]:\n        pass\n\n    def reset(self) -> None:\n        pass\n\n\nclass SystemMetrics:\n    def __init__(self):\n        pass\n\n    def get_uptime_seconds(self) -> float:\n        pass\n\n    def record_event(self, event_type: str) -> None:\n        pass\n\n    def get_event_counts(self) -> dict[str, int]:\n        pass\n\n    def get_system_info(self) -> dict:\n        pass\n\n\ndef check_database(healthy: bool = True) -> HealthCheck:\n    pass\n\n\ndef check_redis(healthy: bool = True, degraded: bool = False) -> HealthCheck:\n    pass\n\n\ndef check_disk(usage_percent: float = 50.0) -> HealthCheck:\n    pass\n",
+  "test_cases": [
+    {
+      "input": "hc = HealthChecker()\nhc.register('db', lambda: check_database(True))\nhc.register('redis', lambda: check_redis(True))\nr = hc.run_all()\n(r['status'], r['checks']['db']['status'], r['checks']['redis']['status'])",
+      "expected": "('healthy', 'healthy', 'healthy')",
+      "is_hidden": false
+    },
+    {
+      "input": "hc = HealthChecker()\nhc.register('db', lambda: check_database(False))\nhc.register('redis', lambda: check_redis(True))\nr = hc.run_all()\nr['status']",
+      "expected": "'unhealthy'",
+      "is_hidden": false
+    },
+    {
+      "input": "m = RequestMetrics()\nfor _ in range(3): m.record('GET', '/users', 200, 10.0)\nm.record('POST', '/users', 201, 50.0)\nm.record('GET', '/users', 500, 100.0)\ns = m.get_summary()\n(s['total_requests'], s['by_method']['GET'], s['error_rate'])",
+      "expected": "(5, 4, 0.2)",
+      "is_hidden": false
+    },
+    {
+      "input": "(check_disk(50.0).status, check_disk(85.0).status, check_disk(96.0).status)",
+      "expected": "('healthy', 'degraded', 'unhealthy')",
+      "is_hidden": true
+    },
+    {
+      "input": "m = RequestMetrics()\ndurations = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]\nfor d in durations:\n    m.record('GET', '/test', 200, float(d))\ns = m.get_summary()\ns['p95_duration_ms']",
+      "expected": "100.0",
+      "is_hidden": true
+    },
+    {
+      "input": "m = RequestMetrics()\nm.record('GET', '/a', 200, 10.0)\nm.record('GET', '/a', 200, 20.0)\nm.record('POST', '/b', 201, 30.0)\nstats = m.get_endpoint_stats()\n(stats[0]['path'], stats[0]['count'], stats[1]['path'])",
+      "expected": "('/a', 2, '/b')",
+      "is_hidden": true
+    },
+    {
+      "input": "sm = SystemMetrics()\nsm.record_event('login')\nsm.record_event('login')\nsm.record_event('error')\ninfo = sm.get_system_info()\n(info['events']['login'], info['events']['error'], 'python_version' in info)",
+      "expected": "(2, 1, True)",
+      "is_hidden": true
+    },
+    {
+      "input": "hc = HealthChecker()\nhc.register('db', lambda: check_database(True))\nhc.register('redis', lambda: check_redis(True, degraded=True))\nr = hc.run_all()\nr['status']",
+      "expected": "'degraded'",
+      "is_hidden": true
+    }
+  ],
+  "time_limit_minutes": 35,
+  "tags": ["fastapi", "health-check", "metrics", "monitoring", "observability"]
+}

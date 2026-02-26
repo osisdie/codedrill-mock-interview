@@ -1,0 +1,73 @@
+{
+  "id": "oauth2-rbac",
+  "title": "Implement OAuth2 Flow & Role-Based Access Control",
+  "category": "fastapi",
+  "difficulty": "hard",
+  "description": "Implement an **OAuth2-like authentication flow** with **Role-Based Access Control (RBAC)** as used in production FastAPI applications. You will build the user management, token issuance, scope validation, and permission system.\n\nBuild the following:\n\n1. **`User`** (Pydantic model) — `id: int`, `username: str`, `email: str`, `hashed_password: str`, `roles: list[str] = ['user']`, `is_active: bool = True`.\n\n2. **`TokenData`** (Pydantic model) — `user_id: int`, `username: str`, `scopes: list[str] = []`, `expires_at: float`.\n\n3. **`AuthManager`** — Handles user management and authentication:\n   - `__init__(self)` — Initialize with empty user store and auto-increment ID.\n   - `hash_password(self, password: str) -> str` — Simple hash: `\"hashed_\" + password` (not real crypto, for testing).\n   - `verify_password(self, password: str, hashed: str) -> bool` — Check if `hash_password(password) == hashed`.\n   - `register(self, username: str, email: str, password: str, roles: list[str] | None = None) -> User` — Create and store a user. Raise `ValueError(\"Username already exists\")` if duplicate username.\n   - `authenticate(self, username: str, password: str) -> User | None` — Verify credentials. Return `None` if user not found, inactive, or wrong password.\n   - `get_user(self, user_id: int) -> User | None` — Get user by ID.\n\n4. **`TokenService`** — Issues and validates tokens:\n   - `__init__(self, secret: str, default_expiry: int = 3600)` — Store config.\n   - `create_access_token(self, user: User, scopes: list[str] | None = None) -> str` — Create a base64-encoded JSON token containing `TokenData` fields. If scopes is None, derive from user roles using `ROLE_SCOPES`.\n   - `decode_token(self, token: str) -> TokenData` — Decode and validate. Raise `ValueError(\"Token expired\")` if expired. Raise `ValueError(\"Invalid token\")` if malformed.\n\n5. **`ROLE_SCOPES`** — A dict mapping roles to scopes:\n   - `'user'`: `['read:own', 'write:own']`\n   - `'admin'`: `['read:own', 'write:own', 'read:all', 'write:all', 'delete:all']`\n   - `'moderator'`: `['read:own', 'write:own', 'read:all', 'delete:own']`\n\n6. **`Permission`** — RBAC permission checker:\n   - `require_scope(scope: str, token_data: TokenData) -> bool` — Static method. Return `True` if the scope is in `token_data.scopes`.\n   - `require_any_scope(scopes: list[str], token_data: TokenData) -> bool` — Static method. Return `True` if ANY of the scopes match.\n   - `require_all_scopes(scopes: list[str], token_data: TokenData) -> bool` — Static method. Return `True` if ALL scopes match.\n   - `check_resource_access(token_data: TokenData, resource_owner_id: int, action: str) -> bool` — Static method. Check if user can perform `action` on a resource. Logic: if `\"{action}:all\"` is in scopes, allow. If `\"{action}:own\"` is in scopes AND `token_data.user_id == resource_owner_id`, allow. Otherwise deny.\n\n7. **`build_auth_system(secret: str) -> dict`** — Wire everything:\n   - Create AuthManager, TokenService.\n   - Register an admin user (`admin/admin@test.com/admin123` with `['admin']` role).\n   - Register a regular user (`user1/user1@test.com/pass123` with `['user']` role).\n   - Return `{'auth': auth_manager, 'tokens': token_service, 'admin': admin_user, 'user': regular_user}`.",
+  "examples": [
+    {
+      "input": "sys = build_auth_system('secret')\nuser = sys['auth'].authenticate('user1', 'pass123')\nuser.username",
+      "output": "'user1'",
+      "explanation": "User authenticates successfully with correct credentials."
+    },
+    {
+      "input": "sys = build_auth_system('secret')\ntoken = sys['tokens'].create_access_token(sys['admin'])\ntd = sys['tokens'].decode_token(token)\n'delete:all' in td.scopes",
+      "output": "True",
+      "explanation": "Admin's token includes delete:all scope from ROLE_SCOPES."
+    }
+  ],
+  "constraints": [
+    "hash_password must return 'hashed_' + password for testability.",
+    "register must raise ValueError for duplicate usernames.",
+    "authenticate must return None for inactive users.",
+    "Token encoding must use base64 + JSON.",
+    "ROLE_SCOPES must be used to derive scopes from roles if no explicit scopes given.",
+    "check_resource_access must check ':all' scope before ':own' scope.",
+    "A user with multiple roles gets the UNION of all role scopes."
+  ],
+  "starter_code": "import time\nimport json\nimport base64\nfrom pydantic import BaseModel, Field\n\n\nROLE_SCOPES: dict[str, list[str]] = {\n    'user': ['read:own', 'write:own'],\n    'admin': ['read:own', 'write:own', 'read:all', 'write:all', 'delete:all'],\n    'moderator': ['read:own', 'write:own', 'read:all', 'delete:own'],\n}\n\n\nclass User(BaseModel):\n    id: int\n    username: str\n    email: str\n    hashed_password: str\n    roles: list[str] = ['user']\n    is_active: bool = True\n\n\nclass TokenData(BaseModel):\n    user_id: int\n    username: str\n    scopes: list[str] = Field(default_factory=list)\n    expires_at: float\n\n\nclass AuthManager:\n    def __init__(self):\n        pass\n\n    def hash_password(self, password: str) -> str:\n        pass\n\n    def verify_password(self, password: str, hashed: str) -> bool:\n        pass\n\n    def register(self, username: str, email: str, password: str,\n                 roles: list[str] | None = None) -> User:\n        pass\n\n    def authenticate(self, username: str, password: str) -> User | None:\n        pass\n\n    def get_user(self, user_id: int) -> User | None:\n        pass\n\n\nclass TokenService:\n    def __init__(self, secret: str, default_expiry: int = 3600):\n        pass\n\n    def create_access_token(self, user: User, scopes: list[str] | None = None) -> str:\n        pass\n\n    def decode_token(self, token: str) -> TokenData:\n        pass\n\n\nclass Permission:\n    @staticmethod\n    def require_scope(scope: str, token_data: TokenData) -> bool:\n        pass\n\n    @staticmethod\n    def require_any_scope(scopes: list[str], token_data: TokenData) -> bool:\n        pass\n\n    @staticmethod\n    def require_all_scopes(scopes: list[str], token_data: TokenData) -> bool:\n        pass\n\n    @staticmethod\n    def check_resource_access(token_data: TokenData, resource_owner_id: int, action: str) -> bool:\n        pass\n\n\ndef build_auth_system(secret: str) -> dict:\n    pass\n",
+  "test_cases": [
+    {
+      "input": "sys = build_auth_system('secret')\n(sys['admin'].username, sys['user'].username, sys['admin'].roles)",
+      "expected": "('admin', 'user1', ['admin'])",
+      "is_hidden": false
+    },
+    {
+      "input": "sys = build_auth_system('secret')\nuser = sys['auth'].authenticate('user1', 'pass123')\n(user is not None, user.username)",
+      "expected": "(True, 'user1')",
+      "is_hidden": false
+    },
+    {
+      "input": "sys = build_auth_system('secret')\ntoken = sys['tokens'].create_access_token(sys['user'])\ntd = sys['tokens'].decode_token(token)\nsorted(td.scopes)",
+      "expected": "['read:own', 'write:own']",
+      "is_hidden": false
+    },
+    {
+      "input": "sys = build_auth_system('secret')\ntoken = sys['tokens'].create_access_token(sys['admin'])\ntd = sys['tokens'].decode_token(token)\n(Permission.check_resource_access(td, 999, 'read'), Permission.check_resource_access(td, 999, 'delete'))",
+      "expected": "(True, True)",
+      "is_hidden": true
+    },
+    {
+      "input": "sys = build_auth_system('secret')\ntoken = sys['tokens'].create_access_token(sys['user'])\ntd = sys['tokens'].decode_token(token)\n(Permission.check_resource_access(td, td.user_id, 'read'), Permission.check_resource_access(td, 999, 'read'))",
+      "expected": "(True, False)",
+      "is_hidden": true
+    },
+    {
+      "input": "sys = build_auth_system('secret')\n(sys['auth'].authenticate('user1', 'wrong'), sys['auth'].authenticate('ghost', 'pass'))",
+      "expected": "(None, None)",
+      "is_hidden": true
+    },
+    {
+      "input": "sys = build_auth_system('secret')\ntry:\n    sys['auth'].register('admin', 'dup@test.com', 'pass')\n    result = 'no_error'\nexcept ValueError as e:\n    result = str(e)\nresult",
+      "expected": "'Username already exists'",
+      "is_hidden": true
+    },
+    {
+      "input": "sys = build_auth_system('secret')\nmod = sys['auth'].register('mod', 'mod@test.com', 'pass', roles=['moderator'])\ntoken = sys['tokens'].create_access_token(mod)\ntd = sys['tokens'].decode_token(token)\n(Permission.check_resource_access(td, td.user_id, 'delete'), Permission.check_resource_access(td, 999, 'delete'))",
+      "expected": "(True, False)",
+      "is_hidden": true
+    }
+  ],
+  "time_limit_minutes": 40,
+  "tags": ["fastapi", "oauth2", "rbac", "authentication", "authorization"]
+}

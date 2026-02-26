@@ -1,0 +1,73 @@
+{
+  "id": "http-validation-422",
+  "title": "Model Validation with Structured 422 Error Responses",
+  "category": "fastapi",
+  "difficulty": "medium",
+  "description": "Implement a **validation layer** that returns structured 422 (Unprocessable Entity) error responses, matching the format FastAPI auto-generates when Pydantic validation fails.\n\nIn production FastAPI apps, when a request body fails Pydantic validation, the framework returns a 422 response with a detailed error list. Here you build that validation-to-error-response pipeline from scratch.\n\nBuild the following:\n\n1. **`ValidationErrorDetail`** (Pydantic model) — Represents one validation error:\n   - `loc: list[str]` — Field location path, e.g. `[\"body\", \"email\"]`.\n   - `msg: str` — Human-readable error message.\n   - `type: str` — Error type identifier, e.g. `\"value_error\"`, `\"missing\"`, `\"type_error\"`.\n\n2. **`HTTPValidationError`** (Pydantic model) — The 422 response body:\n   - `detail: list[ValidationErrorDetail]`\n\n3. **`ErrorResponse`** (Pydantic model) — Generic HTTP error:\n   - `status_code: int`\n   - `detail: str | list` — String for simple errors, list for validation errors.\n\n4. **`RequestValidator`** — Validates request data against rules:\n   - `__init__(self)` — Initialize with empty rules dict.\n   - `add_rule(self, field: str, rule_type: str, value: Any, message: str) -> None` — Register a validation rule. `rule_type` is one of: `\"required\"`, `\"min_length\"`, `\"max_length\"`, `\"min_value\"`, `\"max_value\"`, `\"pattern\"`, `\"type\"`, `\"choices\"`.\n   - `validate(self, data: dict) -> tuple[bool, list[ValidationErrorDetail]]` — Validate data against all rules. Return `(True, [])` if valid, `(False, [errors])` if invalid. Check all rules and collect ALL errors (don't stop at first).\n\n5. **`build_422_response(errors: list[ValidationErrorDetail]) -> ErrorResponse`** — Build a 422 response from validation errors.\n\n6. **`validate_create_user(data: dict) -> tuple[bool, ErrorResponse | dict]`** — Validate user creation data. Rules:\n   - `username`: required, min_length=3, max_length=20, pattern=`^[a-zA-Z][a-zA-Z0-9_]*$`\n   - `email`: required, pattern=`^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$`\n   - `age`: required, type=int, min_value=0, max_value=150\n   - `role`: choices=[\"user\", \"admin\", \"moderator\"]\n   Return `(True, cleaned_data_dict)` if valid, `(False, ErrorResponse)` if invalid.\n\n7. **`validate_update_product(data: dict) -> tuple[bool, ErrorResponse | dict]`** — Validate product update. Rules:\n   - `name`: min_length=1, max_length=100 (optional field — only validate if present)\n   - `price`: type=(int, float), min_value=0 (optional)\n   - `category`: choices=[\"electronics\", \"clothing\", \"food\", \"other\"] (optional)\n   Return `(True, cleaned_data_dict)` or `(False, ErrorResponse)`. Cleaned data only includes fields that were present in input.",
+  "examples": [
+    {
+      "input": "ok, result = validate_create_user({'username': 'alice', 'email': 'a@b.com', 'age': 25})\n(ok, result.get('username'))",
+      "output": "(True, 'alice')",
+      "explanation": "All required fields valid, role is optional."
+    },
+    {
+      "input": "ok, result = validate_create_user({'username': 'ab', 'email': 'bad', 'age': -1})\n(ok, result.status_code, len(result.detail))",
+      "output": "(False, 422, 3)",
+      "explanation": "Three validation errors: username too short, email invalid pattern, age below min."
+    }
+  ],
+  "constraints": [
+    "validate() must check ALL rules and return ALL errors, not stop at the first one.",
+    "Rules for 'required' must add a 'missing' type error when field is absent.",
+    "Rules for 'type' must check isinstance against the given type(s).",
+    "Rules for 'pattern' must use re.match (full match not required, just match start).",
+    "validate_update_product must only validate fields that are PRESENT in the input dict.",
+    "loc must use ['body', field_name] format.",
+    "validate_create_user: role is optional (no 'required' rule), only validate choices if present."
+  ],
+  "starter_code": "import re\nfrom typing import Any\nfrom pydantic import BaseModel\n\n\nclass ValidationErrorDetail(BaseModel):\n    loc: list[str]\n    msg: str\n    type: str\n\n\nclass HTTPValidationError(BaseModel):\n    detail: list[ValidationErrorDetail]\n\n\nclass ErrorResponse(BaseModel):\n    status_code: int\n    detail: str | list\n\n\nclass RequestValidator:\n    \"\"\"Validates request data against configurable rules.\"\"\"\n\n    def __init__(self):\n        pass\n\n    def add_rule(self, field: str, rule_type: str, value: Any, message: str) -> None:\n        # Register a validation rule\n        pass\n\n    def validate(self, data: dict) -> tuple[bool, list[ValidationErrorDetail]]:\n        # Validate data against all rules, collect all errors\n        pass\n\n\ndef build_422_response(errors: list[ValidationErrorDetail]) -> ErrorResponse:\n    \"\"\"Build a 422 ErrorResponse from validation errors.\"\"\"\n    pass\n\n\ndef validate_create_user(data: dict) -> tuple[bool, ErrorResponse | dict]:\n    \"\"\"Validate user creation data.\"\"\"\n    pass\n\n\ndef validate_update_product(data: dict) -> tuple[bool, ErrorResponse | dict]:\n    \"\"\"Validate product update data (partial update).\"\"\"\n    pass\n",
+  "test_cases": [
+    {
+      "input": "ok, r = validate_create_user({'username': 'alice', 'email': 'a@b.com', 'age': 25})\n(ok, r['username'], r['email'], r['age'])",
+      "expected": "(True, 'alice', 'a@b.com', 25)",
+      "is_hidden": false
+    },
+    {
+      "input": "ok, r = validate_create_user({})\n(ok, r.status_code, len(r.detail))",
+      "expected": "(False, 422, 3)",
+      "is_hidden": false
+    },
+    {
+      "input": "ok, r = validate_create_user({'username': 'ab', 'email': 'nope', 'age': -5, 'role': 'hacker'})\nerror_types = sorted([e.type for e in r.detail])\n(ok, r.status_code, error_types)",
+      "expected": "(False, 422, ['value_error', 'value_error', 'value_error', 'value_error'])",
+      "is_hidden": false
+    },
+    {
+      "input": "ok, r = validate_create_user({'username': 'valid_user', 'email': 'x@y.com', 'age': 30, 'role': 'admin'})\n(ok, r.get('role'))",
+      "expected": "(True, 'admin')",
+      "is_hidden": true
+    },
+    {
+      "input": "ok, r = validate_update_product({'name': 'Widget', 'price': 9.99})\n(ok, r)",
+      "expected": "(True, {'name': 'Widget', 'price': 9.99})",
+      "is_hidden": true
+    },
+    {
+      "input": "ok, r = validate_update_product({'price': -10, 'category': 'weapons'})\nerror_fields = sorted([e.loc[-1] for e in r.detail])\n(ok, error_fields)",
+      "expected": "(False, ['category', 'price'])",
+      "is_hidden": true
+    },
+    {
+      "input": "ok, r = validate_update_product({})\n(ok, r)",
+      "expected": "(True, {})",
+      "is_hidden": true
+    },
+    {
+      "input": "v = RequestValidator()\nv.add_rule('x', 'required', True, 'x is required')\nv.add_rule('x', 'min_length', 2, 'x too short')\nok, errs = v.validate({'x': 'a'})\n(ok, len(errs), errs[0].type)",
+      "expected": "(False, 1, 'value_error')",
+      "is_hidden": true
+    }
+  ],
+  "time_limit_minutes": 30,
+  "tags": ["fastapi", "validation", "http-422", "pydantic", "error-handling"]
+}

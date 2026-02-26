@@ -1,0 +1,73 @@
+{
+  "id": "sql-crud-sqlalchemy",
+  "title": "SQL CRUD with SQLAlchemy ORM Pattern",
+  "category": "fastapi",
+  "difficulty": "hard",
+  "description": "Implement a CRUD data layer following the **SQLAlchemy ORM pattern** using Python's built-in `sqlite3`. You will build a lightweight ORM that mimics SQLAlchemy's declarative model + session workflow.\n\nIn real FastAPI apps, SQLAlchemy provides a `Base` model class, column descriptors, and a `Session` for database transactions. Here you will implement these patterns from scratch to demonstrate deep understanding.\n\nBuild the following:\n\n1. **`Column`** — A descriptor class representing a database column:\n   - `__init__(self, col_type: str, primary_key=False, nullable=True, unique=False, default=None)` — Store column metadata. `col_type` is one of `'INTEGER'`, `'TEXT'`, `'REAL'`.\n   - Implement `__set_name__` to capture the attribute name.\n\n2. **`ModelMeta`** (metaclass) — A metaclass that:\n   - Collects all `Column` descriptors from the class body into a `__columns__` dict.\n   - Auto-generates `__tablename__` as the lowercase class name + `'s'` if not explicitly set.\n\n3. **`Model`** (using `ModelMeta`) — Base class for ORM models:\n   - `__init__(self, **kwargs)` — Set attributes from kwargs.\n   - `to_dict(self) -> dict` — Return all column values as a dict.\n   - Class method `create_table_sql(cls) -> str` — Generate a `CREATE TABLE IF NOT EXISTS` SQL statement from the columns.\n\n4. **`Session`** — A class managing database operations:\n   - `__init__(self, conn: sqlite3.Connection)` — Store the connection.\n   - `create_table(self, model_cls) -> None` — Execute the model's `create_table_sql()`.\n   - `add(self, instance) -> None` — INSERT the model instance into its table. Set the `id` attribute from `lastrowid`.\n   - `get(self, model_cls, id: int) -> Model | None` — SELECT by id. Return a model instance or `None`.\n   - `all(self, model_cls) -> list[Model]` — SELECT all rows, return as model instances.\n   - `update(self, instance) -> None` — UPDATE the row matching `instance.id` with current attribute values.\n   - `delete(self, instance) -> bool` — DELETE by `instance.id`. Return `True` if deleted.\n   - `commit(self) -> None` — Call `conn.commit()`.\n\n5. **`User(Model)`** — A concrete model:\n   - `id = Column('INTEGER', primary_key=True)`\n   - `name = Column('TEXT', nullable=False)`\n   - `email = Column('TEXT', nullable=False, unique=True)`\n   - `age = Column('INTEGER', nullable=True)`",
+  "examples": [
+    {
+      "input": "User.create_table_sql()",
+      "output": "A CREATE TABLE statement with id, name, email, age columns",
+      "explanation": "The Model generates DDL from Column descriptors."
+    },
+    {
+      "input": "conn = sqlite3.connect(':memory:')\nsession = Session(conn)\nsession.create_table(User)\nu = User(name='Alice', email='a@t.com', age=30)\nsession.add(u)\nsession.commit()\nu.id",
+      "output": "1",
+      "explanation": "After add(), the instance gets its auto-incremented id."
+    }
+  ],
+  "constraints": [
+    "Column must use __set_name__ to capture the attribute name.",
+    "ModelMeta must auto-generate __tablename__ as lowercase_classname + 's' if not explicitly set.",
+    "create_table_sql must include PRIMARY KEY, NOT NULL, UNIQUE constraints based on Column args.",
+    "Session.add must set the id attribute on the instance after INSERT.",
+    "Session.get must return None if the ID does not exist.",
+    "Session.delete must return True/False based on whether a row was deleted.",
+    "All SQL must use parameterized queries."
+  ],
+  "starter_code": "import sqlite3\n\n\nclass Column:\n    \"\"\"Descriptor representing a database column.\"\"\"\n\n    def __init__(self, col_type: str, primary_key: bool = False,\n                 nullable: bool = True, unique: bool = False, default=None):\n        self.col_type = col_type\n        self.primary_key = primary_key\n        self.nullable = nullable\n        self.unique = unique\n        self.default = default\n        self.name = ''  # set by __set_name__\n\n    def __set_name__(self, owner, name):\n        # Capture the attribute name\n        pass\n\n\nclass ModelMeta(type):\n    \"\"\"Metaclass that collects Column descriptors.\"\"\"\n\n    def __new__(mcs, name, bases, namespace):\n        # Collect columns, auto-generate __tablename__\n        pass\n\n\nclass Model(metaclass=ModelMeta):\n    \"\"\"Base ORM model class.\"\"\"\n\n    def __init__(self, **kwargs):\n        # Set attributes from kwargs, apply defaults for missing columns\n        pass\n\n    def to_dict(self) -> dict:\n        # Return all column values as a dict\n        pass\n\n    @classmethod\n    def create_table_sql(cls) -> str:\n        # Generate CREATE TABLE IF NOT EXISTS SQL from columns\n        pass\n\n\nclass Session:\n    \"\"\"Database session managing CRUD operations.\"\"\"\n\n    def __init__(self, conn: sqlite3.Connection):\n        self.conn = conn\n\n    def create_table(self, model_cls) -> None:\n        # Execute CREATE TABLE\n        pass\n\n    def add(self, instance) -> None:\n        # INSERT instance, set instance.id from lastrowid\n        pass\n\n    def get(self, model_cls, id: int):\n        # SELECT by id, return model instance or None\n        pass\n\n    def all(self, model_cls) -> list:\n        # SELECT all, return list of model instances\n        pass\n\n    def update(self, instance) -> None:\n        # UPDATE row with current instance attributes\n        pass\n\n    def delete(self, instance) -> bool:\n        # DELETE by instance.id\n        pass\n\n    def commit(self) -> None:\n        self.conn.commit()\n\n\nclass User(Model):\n    id = Column('INTEGER', primary_key=True)\n    name = Column('TEXT', nullable=False)\n    email = Column('TEXT', nullable=False, unique=True)\n    age = Column('INTEGER', nullable=True)\n",
+  "test_cases": [
+    {
+      "input": "sql = User.create_table_sql()\n'CREATE TABLE' in sql and 'users' in sql and 'PRIMARY KEY' in sql",
+      "expected": "True",
+      "is_hidden": false
+    },
+    {
+      "input": "conn = sqlite3.connect(':memory:')\ns = Session(conn)\ns.create_table(User)\nu = User(name='Alice', email='a@t.com', age=30)\ns.add(u)\ns.commit()\n(u.id, u.name, u.email, u.age)",
+      "expected": "(1, 'Alice', 'a@t.com', 30)",
+      "is_hidden": false
+    },
+    {
+      "input": "conn = sqlite3.connect(':memory:')\ns = Session(conn)\ns.create_table(User)\ns.add(User(name='A', email='a@t.com', age=20))\ns.add(User(name='B', email='b@t.com', age=30))\ns.commit()\nfetched = s.get(User, 2)\n(fetched.name, fetched.email, fetched.age)",
+      "expected": "('B', 'b@t.com', 30)",
+      "is_hidden": false
+    },
+    {
+      "input": "conn = sqlite3.connect(':memory:')\ns = Session(conn)\ns.create_table(User)\ns.add(User(name='Old', email='e@t.com', age=20))\ns.commit()\nu = s.get(User, 1)\nu.name = 'New'\nu.age = 25\ns.update(u)\ns.commit()\nrefresh = s.get(User, 1)\n(refresh.name, refresh.age)",
+      "expected": "('New', 25)",
+      "is_hidden": true
+    },
+    {
+      "input": "conn = sqlite3.connect(':memory:')\ns = Session(conn)\ns.create_table(User)\ns.add(User(name='Del', email='d@t.com', age=20))\ns.commit()\nu = s.get(User, 1)\n(s.delete(u), s.get(User, 1))",
+      "expected": "(True, None)",
+      "is_hidden": true
+    },
+    {
+      "input": "conn = sqlite3.connect(':memory:')\ns = Session(conn)\ns.create_table(User)\nfor i in range(3):\n    s.add(User(name=f'U{i}', email=f'u{i}@t.com', age=20+i))\ns.commit()\nall_users = s.all(User)\n[(u.id, u.name) for u in all_users]",
+      "expected": "[(1, 'U0'), (2, 'U1'), (3, 'U2')]",
+      "is_hidden": true
+    },
+    {
+      "input": "u = User(name='Test', email='test@t.com', age=25)\nu.to_dict()",
+      "expected": "{'id': None, 'name': 'Test', 'email': 'test@t.com', 'age': 25}",
+      "is_hidden": false
+    },
+    {
+      "input": "User.__tablename__",
+      "expected": "'users'",
+      "is_hidden": true
+    }
+  ],
+  "time_limit_minutes": 40,
+  "tags": ["fastapi", "sql", "sqlalchemy", "orm", "metaclass"]
+}

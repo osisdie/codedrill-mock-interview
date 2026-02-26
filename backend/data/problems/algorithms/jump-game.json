@@ -1,0 +1,23 @@
+{
+  "id": "jump-game",
+  "title": "Jump Game",
+  "category": "algorithms",
+  "difficulty": "medium",
+  "description": "You are given an integer array `nums`. You are initially positioned at the array's **first index**, and each element in the array represents your **maximum jump length** at that position.\n\nReturn `True` if you can reach the **last index**, or `False` otherwise.",
+  "examples": [
+    {"input": "nums = [2, 3, 1, 1, 4]", "output": "True", "explanation": "Jump 1 step from index 0 to 1, then 3 steps to the last index."},
+    {"input": "nums = [3, 2, 1, 0, 4]", "output": "False", "explanation": "You will always arrive at index 3 no matter what. Its maximum jump length is 0, which makes it impossible to reach the last index."}
+  ],
+  "constraints": ["1 <= len(nums) <= 10^4", "0 <= nums[i] <= 10^5"],
+  "starter_code": "def can_jump(nums: list[int]) -> bool:\n    # Write your solution here\n    pass\n",
+  "test_cases": [
+    {"input": "can_jump([2, 3, 1, 1, 4])", "expected": "True", "is_hidden": false},
+    {"input": "can_jump([3, 2, 1, 0, 4])", "expected": "False", "is_hidden": false},
+    {"input": "can_jump([0])", "expected": "True", "is_hidden": false},
+    {"input": "can_jump([2, 0, 0])", "expected": "True", "is_hidden": true},
+    {"input": "can_jump([1, 1, 1, 1, 1])", "expected": "True", "is_hidden": true},
+    {"input": "can_jump([1, 0, 1, 0])", "expected": "False", "is_hidden": true}
+  ],
+  "time_limit_minutes": 20,
+  "tags": ["greedy", "dynamic-programming"]
+}

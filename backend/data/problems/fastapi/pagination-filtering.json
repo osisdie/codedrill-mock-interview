@@ -1,0 +1,73 @@
+{
+  "id": "pagination-filtering",
+  "title": "Implement Pagination & Filtering for API Responses",
+  "category": "fastapi",
+  "difficulty": "medium",
+  "description": "Implement three common **pagination** strategies and a **filtering/sorting** engine for API responses. These are essential for any production FastAPI endpoint that returns collections.\n\nBuild the following:\n\n1. **`PagedResponse`** (Pydantic model) — `items: list`, `total: int`, `page: int`, `page_size: int`, `total_pages: int`, `has_next: bool`, `has_prev: bool`.\n\n2. **`CursorResponse`** (Pydantic model) — `items: list`, `next_cursor: str | None`, `prev_cursor: str | None`, `has_more: bool`.\n\n3. **`OffsetPaginator`** — Traditional offset-based pagination:\n   - `paginate(self, data: list, page: int = 1, page_size: int = 10) -> PagedResponse` — Slice data using offset = (page - 1) * page_size. Calculate `total_pages = ceil(total / page_size)`. Return a `PagedResponse` with all metadata. `page` < 1 should be treated as 1.\n\n4. **`CursorPaginator`** — Cursor-based pagination (using item ID as cursor):\n   - `paginate(self, data: list[dict], cursor: str | None = None, page_size: int = 10, id_field: str = 'id') -> CursorResponse` — Data must be sorted by `id_field`. If `cursor` is given, start AFTER the item with that id value. Take `page_size` items. `next_cursor` = last item's id (as string) if there are more items. `prev_cursor` = first item's id if cursor was provided.\n\n5. **`FilterEngine`** — Flexible filtering and sorting:\n   - `filter(self, data: list[dict], filters: dict) -> list[dict]` — Apply filters. Each filter key is a field name, value can be:\n     - Simple value: exact match (`{'name': 'Alice'}`).\n     - Dict with operator: `{'age': {'$gt': 25}}` (greater than), `{'age': {'$gte': 25}}` (greater than or equal), `{'age': {'$lt': 30}}`, `{'age': {'$lte': 30}}`, `{'name': {'$contains': 'ali'}}` (case-insensitive substring), `{'tags': {'$in': ['python', 'js']}}` (value in list).\n   - `sort(self, data: list[dict], sort_by: str, ascending: bool = True) -> list[dict]` — Sort by field. Handle missing fields by sorting them last.\n   - `filter_and_sort(self, data: list[dict], filters: dict | None = None, sort_by: str | None = None, ascending: bool = True) -> list[dict]` — Apply filter then sort.\n\n6. **`build_product_api(products: list[dict]) -> dict`** — Create a sample API:\n   - Return `{'paginator': OffsetPaginator(), 'cursor_paginator': CursorPaginator(), 'filter_engine': FilterEngine(), 'data': products}`.",
+  "examples": [
+    {
+      "input": "p = OffsetPaginator()\ndata = list(range(25))\nresult = p.paginate(data, page=2, page_size=10)\n(result.items, result.has_next, result.has_prev)",
+      "output": "([10, 11, 12, 13, 14, 15, 16, 17, 18, 19], True, True)",
+      "explanation": "Page 2 with size 10 returns items 10-19, with both next and prev pages."
+    },
+    {
+      "input": "f = FilterEngine()\ndata = [{'name': 'Alice', 'age': 30}, {'name': 'Bob', 'age': 25}]\nf.filter(data, {'age': {'$gt': 27}})",
+      "output": "[{'name': 'Alice', 'age': 30}]",
+      "explanation": "Only Alice's age (30) is greater than 27."
+    }
+  ],
+  "constraints": [
+    "OffsetPaginator page < 1 must be treated as page 1.",
+    "total_pages must use ceiling division.",
+    "CursorPaginator must start AFTER the cursor item (exclusive).",
+    "$contains must be case-insensitive.",
+    "$in checks if the field value is in the provided list.",
+    "sort must handle missing fields by placing them at the end.",
+    "All paginators must handle empty data gracefully."
+  ],
+  "starter_code": "import math\nfrom pydantic import BaseModel\n\n\nclass PagedResponse(BaseModel):\n    items: list\n    total: int\n    page: int\n    page_size: int\n    total_pages: int\n    has_next: bool\n    has_prev: bool\n\n\nclass CursorResponse(BaseModel):\n    items: list\n    next_cursor: str | None = None\n    prev_cursor: str | None = None\n    has_more: bool = False\n\n\nclass OffsetPaginator:\n    def paginate(self, data: list, page: int = 1, page_size: int = 10) -> PagedResponse:\n        pass\n\n\nclass CursorPaginator:\n    def paginate(self, data: list[dict], cursor: str | None = None,\n                 page_size: int = 10, id_field: str = 'id') -> CursorResponse:\n        pass\n\n\nclass FilterEngine:\n    def filter(self, data: list[dict], filters: dict) -> list[dict]:\n        pass\n\n    def sort(self, data: list[dict], sort_by: str, ascending: bool = True) -> list[dict]:\n        pass\n\n    def filter_and_sort(self, data: list[dict], filters: dict | None = None,\n                        sort_by: str | None = None, ascending: bool = True) -> list[dict]:\n        pass\n\n\ndef build_product_api(products: list[dict]) -> dict:\n    pass\n",
+  "test_cases": [
+    {
+      "input": "p = OffsetPaginator()\ndata = list(range(1, 26))\nr = p.paginate(data, page=1, page_size=10)\n(r.items, r.total, r.total_pages, r.has_next, r.has_prev)",
+      "expected": "([1, 2, 3, 4, 5, 6, 7, 8, 9, 10], 25, 3, True, False)",
+      "is_hidden": false
+    },
+    {
+      "input": "p = OffsetPaginator()\nr = p.paginate(list(range(5)), page=3, page_size=10)\n(r.items, r.total_pages, r.has_next)",
+      "expected": "([], 1, False)",
+      "is_hidden": false
+    },
+    {
+      "input": "cp = CursorPaginator()\ndata = [{'id': i, 'name': f'item-{i}'} for i in range(1, 11)]\nr = cp.paginate(data, cursor='3', page_size=3)\n([d['id'] for d in r.items], r.next_cursor, r.has_more)",
+      "expected": "([4, 5, 6], '6', True)",
+      "is_hidden": false
+    },
+    {
+      "input": "f = FilterEngine()\ndata = [\n    {'name': 'Alice', 'age': 30, 'role': 'admin'},\n    {'name': 'Bob', 'age': 25, 'role': 'user'},\n    {'name': 'Charlie', 'age': 35, 'role': 'admin'},\n]\nr = f.filter(data, {'role': 'admin', 'age': {'$gte': 30}})\n[d['name'] for d in r]",
+      "expected": "['Alice', 'Charlie']",
+      "is_hidden": true
+    },
+    {
+      "input": "f = FilterEngine()\ndata = [{'name': 'Alice'}, {'name': 'ALICIA'}, {'name': 'Bob'}]\nr = f.filter(data, {'name': {'$contains': 'ali'}})\n[d['name'] for d in r]",
+      "expected": "['Alice', 'ALICIA']",
+      "is_hidden": true
+    },
+    {
+      "input": "f = FilterEngine()\ndata = [{'name': 'B', 'score': 80}, {'name': 'A', 'score': 90}, {'name': 'C'}]\nsorted_data = f.sort(data, 'score', ascending=False)\n[d['name'] for d in sorted_data]",
+      "expected": "['A', 'B', 'C']",
+      "is_hidden": true
+    },
+    {
+      "input": "p = OffsetPaginator()\nr = p.paginate([], page=1, page_size=10)\n(r.items, r.total, r.total_pages, r.has_next)",
+      "expected": "([], 0, 0, False)",
+      "is_hidden": true
+    },
+    {
+      "input": "f = FilterEngine()\ndata = [{'lang': 'python'}, {'lang': 'js'}, {'lang': 'go'}]\nr = f.filter(data, {'lang': {'$in': ['python', 'go']}})\n[d['lang'] for d in r]",
+      "expected": "['python', 'go']",
+      "is_hidden": true
+    }
+  ],
+  "time_limit_minutes": 35,
+  "tags": ["fastapi", "pagination", "filtering", "sorting", "api-design"]
+}
