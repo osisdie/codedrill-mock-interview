@@ -1,0 +1,73 @@
+{
+  "id": "orm-relationships",
+  "title": "ORM Relationships — One-to-Many with Foreign Keys",
+  "category": "fastapi",
+  "difficulty": "hard",
+  "description": "Implement an ORM relationship layer that models **one-to-many** associations between tables, similar to SQLAlchemy's `relationship()` + `ForeignKey`.\n\nUsing Python's built-in `sqlite3`, build a mini ORM that supports parent-child relationships, cascading inserts, and join-based querying.\n\nBuild the following:\n\n1. **`Column`** — A descriptor class for a column:\n   - `__init__(self, col_type: str, primary_key=False, nullable=True, foreign_key: str | None = None)` — `col_type` is one of `'INTEGER'`, `'TEXT'`. `foreign_key` is a string like `'users.id'` (table.column).\n   - Implement `__set_name__` to capture the attribute name.\n\n2. **`Relationship`** — A descriptor declaring a one-to-many link:\n   - `__init__(self, target_model: str, back_populates: str | None = None)` — `target_model` is the class name as a string (e.g. `'Post'`). `back_populates` is the attribute name on the child that links back.\n   - When accessed on a parent instance, it should return a list of related child instances (loaded by `Session.load_related`).\n\n3. **`ModelMeta`** (metaclass) — Collects `Column` and `Relationship` descriptors. Auto-generates `__tablename__` as lowercase classname + `'s'`.\n\n4. **`Model`** (using `ModelMeta`) — Base class:\n   - `__init__(self, **kwargs)` — Set attributes from kwargs; initialize relationship attrs as empty lists.\n   - `to_dict(self) -> dict` — Return column values (not relationships) as a dict.\n   - Class method `create_table_sql(cls) -> str` — Generate `CREATE TABLE IF NOT EXISTS` with `FOREIGN KEY` constraints.\n\n5. **`Session`** — Extended with relationship support:\n   - `__init__(self, conn)` — Store connection and a `_registry` dict mapping class names to model classes.\n   - `register(self, *model_classes)` — Register model classes by name for relationship resolution.\n   - `create_table(self, model_cls)` — Execute the DDL.\n   - `add(self, instance)` — INSERT and set `instance.id` from `lastrowid`.\n   - `get(self, model_cls, id: int)` — SELECT by id.\n   - `all(self, model_cls)` — SELECT all.\n   - `commit(self)` — Commit.\n   - `load_related(self, instance, rel_attr: str) -> list` — Given a parent instance and the name of a `Relationship` attribute, query the child table for rows whose foreign key matches `instance.id`. Return a list of child model instances.\n   - `get_with_related(self, model_cls, id: int, *rel_attrs: str)` — Get an instance by id, then call `load_related` for each specified relationship attribute. Return the fully populated instance.\n\n6. **`User(Model)`** — `id`, `name` columns; `posts = Relationship('Post', back_populates='author')`.\n\n7. **`Post(Model)`** — `id`, `title`, `user_id = Column('INTEGER', foreign_key='users.id')`; `author = Relationship('User', back_populates='posts')`.\n\nThe goal is to demonstrate understanding of foreign keys, relationship descriptors, and how ORMs resolve related objects via join queries.",
+  "examples": [
+    {
+      "input": "Post.create_table_sql()",
+      "output": "A CREATE TABLE with FOREIGN KEY(user_id) REFERENCES users(id)",
+      "explanation": "Foreign key constraint is generated from Column's foreign_key parameter."
+    },
+    {
+      "input": "conn = sqlite3.connect(':memory:')\ns = Session(conn)\ns.register(User, Post)\ns.create_table(User)\ns.create_table(Post)\nu = User(name='Alice')\ns.add(u)\ns.add(Post(title='Hello', user_id=u.id))\ns.add(Post(title='World', user_id=u.id))\ns.commit()\nresult = s.get_with_related(User, 1, 'posts')\n[(p.title) for p in result.posts]",
+      "output": "['Hello', 'World']",
+      "explanation": "get_with_related loads the user and eagerly fetches their posts."
+    }
+  ],
+  "constraints": [
+    "Column must support a foreign_key parameter (e.g. 'users.id').",
+    "create_table_sql must generate proper FOREIGN KEY constraints.",
+    "Relationship is a descriptor — accessing it on an instance returns a list.",
+    "Session.load_related must query the child table using the foreign key column.",
+    "Session.get_with_related must return a fully populated instance with related objects.",
+    "Model classes must be registered with the session for relationship resolution.",
+    "All SQL must use parameterized queries."
+  ],
+  "starter_code": "import sqlite3\n\n\n# --- Model registry for resolving string references ---\n_MODEL_REGISTRY: dict[str, type] = {}\n\n\nclass Column:\n    \"\"\"Descriptor representing a database column.\"\"\"\n\n    def __init__(self, col_type: str, primary_key: bool = False,\n                 nullable: bool = True, foreign_key: str | None = None):\n        self.col_type = col_type\n        self.primary_key = primary_key\n        self.nullable = nullable\n        self.foreign_key = foreign_key  # e.g. 'users.id'\n        self.name = ''\n\n    def __set_name__(self, owner, name):\n        # TODO: capture the attribute name\n        pass\n\n\nclass Relationship:\n    \"\"\"Descriptor declaring a one-to-many relationship.\"\"\"\n\n    def __init__(self, target_model: str, back_populates: str | None = None):\n        self.target_model = target_model\n        self.back_populates = back_populates\n        self.name = ''\n\n    def __set_name__(self, owner, name):\n        self.name = name\n\n\nclass ModelMeta(type):\n    \"\"\"Metaclass that collects Column and Relationship descriptors.\"\"\"\n\n    def __new__(mcs, name, bases, namespace):\n        # TODO: Collect __columns__ and __relationships__\n        # Auto-generate __tablename__ as lowercase + 's'\n        # Register in _MODEL_REGISTRY\n        pass\n\n\nclass Model(metaclass=ModelMeta):\n    \"\"\"Base ORM model with relationship support.\"\"\"\n\n    def __init__(self, **kwargs):\n        # TODO: Set column attrs from kwargs\n        # Initialize relationship attrs as empty lists\n        pass\n\n    def to_dict(self) -> dict:\n        # TODO: Return column values as dict (exclude relationships)\n        pass\n\n    @classmethod\n    def create_table_sql(cls) -> str:\n        # TODO: Generate CREATE TABLE with FOREIGN KEY constraints\n        pass\n\n\nclass Session:\n    \"\"\"Database session with relationship loading.\"\"\"\n\n    def __init__(self, conn: sqlite3.Connection):\n        self.conn = conn\n        self._registry: dict[str, type] = {}\n\n    def register(self, *model_classes) -> None:\n        # TODO: Register model classes by name\n        pass\n\n    def create_table(self, model_cls) -> None:\n        # TODO: Execute CREATE TABLE\n        pass\n\n    def add(self, instance) -> None:\n        # TODO: INSERT and set instance.id\n        pass\n\n    def get(self, model_cls, id: int):\n        # TODO: SELECT by id\n        pass\n\n    def all(self, model_cls) -> list:\n        # TODO: SELECT all\n        pass\n\n    def commit(self) -> None:\n        self.conn.commit()\n\n    def load_related(self, instance, rel_attr: str) -> list:\n        # TODO: Query child table for rows matching instance.id\n        # via the foreign key column\n        pass\n\n    def get_with_related(self, model_cls, id: int, *rel_attrs: str):\n        # TODO: Get instance, then load_related for each rel_attr\n        pass\n\n\nclass User(Model):\n    id = Column('INTEGER', primary_key=True)\n    name = Column('TEXT', nullable=False)\n    posts = Relationship('Post', back_populates='author')\n\n\nclass Post(Model):\n    id = Column('INTEGER', primary_key=True)\n    title = Column('TEXT', nullable=False)\n    user_id = Column('INTEGER', foreign_key='users.id')\n    author = Relationship('User', back_populates='posts')\n",
+  "test_cases": [
+    {
+      "input": "sql = Post.create_table_sql()\n'FOREIGN KEY' in sql and 'users' in sql",
+      "expected": "True",
+      "is_hidden": false
+    },
+    {
+      "input": "conn = sqlite3.connect(':memory:')\ns = Session(conn)\ns.register(User, Post)\ns.create_table(User)\ns.create_table(Post)\nu = User(name='Alice')\ns.add(u)\ns.commit()\n(u.id, u.name)",
+      "expected": "(1, 'Alice')",
+      "is_hidden": false
+    },
+    {
+      "input": "conn = sqlite3.connect(':memory:')\ns = Session(conn)\ns.register(User, Post)\ns.create_table(User)\ns.create_table(Post)\nu = User(name='Alice')\ns.add(u)\ns.add(Post(title='Hello', user_id=u.id))\ns.add(Post(title='World', user_id=u.id))\ns.commit()\nposts = s.load_related(u, 'posts')\n[(p.title, p.user_id) for p in posts]",
+      "expected": "[('Hello', 1), ('World', 1)]",
+      "is_hidden": false
+    },
+    {
+      "input": "conn = sqlite3.connect(':memory:')\ns = Session(conn)\ns.register(User, Post)\ns.create_table(User)\ns.create_table(Post)\nu = User(name='Bob')\ns.add(u)\nfor i in range(3):\n    s.add(Post(title=f'Post{i}', user_id=u.id))\ns.commit()\nresult = s.get_with_related(User, 1, 'posts')\n(result.name, len(result.posts), result.posts[0].title)",
+      "expected": "('Bob', 3, 'Post0')",
+      "is_hidden": false
+    },
+    {
+      "input": "conn = sqlite3.connect(':memory:')\ns = Session(conn)\ns.register(User, Post)\ns.create_table(User)\ns.create_table(Post)\nu1 = User(name='A')\nu2 = User(name='B')\ns.add(u1)\ns.add(u2)\ns.add(Post(title='P1', user_id=u1.id))\ns.add(Post(title='P2', user_id=u2.id))\ns.add(Post(title='P3', user_id=u1.id))\ns.commit()\nr1 = s.get_with_related(User, 1, 'posts')\nr2 = s.get_with_related(User, 2, 'posts')\n(len(r1.posts), len(r2.posts))",
+      "expected": "(2, 1)",
+      "is_hidden": true
+    },
+    {
+      "input": "conn = sqlite3.connect(':memory:')\ns = Session(conn)\ns.register(User, Post)\ns.create_table(User)\ns.create_table(Post)\nu = User(name='Empty')\ns.add(u)\ns.commit()\nresult = s.get_with_related(User, 1, 'posts')\n(result.name, result.posts)",
+      "expected": "('Empty', [])",
+      "is_hidden": true
+    },
+    {
+      "input": "u = User(name='Test')\nd = u.to_dict()\n'posts' not in d and 'name' in d",
+      "expected": "True",
+      "is_hidden": true
+    },
+    {
+      "input": "conn = sqlite3.connect(':memory:')\ns = Session(conn)\ns.register(User, Post)\ns.create_table(User)\ns.create_table(Post)\nall_posts = s.all(Post)\nall_posts",
+      "expected": "[]",
+      "is_hidden": true
+    }
+  ],
+  "time_limit_minutes": 45,
+  "tags": ["fastapi", "sql", "orm", "relationships", "foreign-key", "one-to-many"]
+}
