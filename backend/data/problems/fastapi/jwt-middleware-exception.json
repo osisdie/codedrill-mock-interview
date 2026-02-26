@@ -1,0 +1,72 @@
+{
+  "id": "jwt-middleware-exception",
+  "title": "JWT Middleware, Global Exception Handler & Versioned Routing",
+  "category": "fastapi",
+  "difficulty": "hard",
+  "description": "Implement three interconnected patterns commonly used in production FastAPI applications: **JWT authentication middleware**, **structured logging middleware**, **global exception handling**, and **versioned API routing**.\n\nSince we cannot run a real HTTP server in this sandbox, you will implement the logic as pure Python classes and functions.\n\nBuild the following:\n\n1. **`JWTToken`** — A simplified JWT-like token system (no real crypto, base64-encoded JSON):\n   - `create_token(payload: dict, secret: str, expires_in: int = 3600) -> str` — Create a token by base64-encoding a JSON object `{\"payload\": payload, \"exp\": time.time() + expires_in, \"secret\": secret}`.\n   - `decode_token(token: str, secret: str) -> dict` — Base64-decode the token, verify the `secret` matches, check expiration. Return `payload` dict. Raise `TokenExpiredError` if expired, `InvalidTokenError` if secret doesn't match or token is malformed.\n\n2. **`TokenExpiredError(Exception)`** and **`InvalidTokenError(Exception)`** — Custom exception classes.\n\n3. **`AppError(Exception)`** — Base application error with `status_code: int`, `message: str`, `error_code: str`.\n\n4. **`NotFoundError(AppError)`** — status_code=404, error_code=\"NOT_FOUND\".\n\n5. **`ForbiddenError(AppError)`** — status_code=403, error_code=\"FORBIDDEN\".\n\n6. **`global_exception_handler(exc: Exception) -> dict`** — Convert any exception to a structured error response:\n   - For `AppError` subclasses: `{\"status_code\": ..., \"error_code\": ..., \"message\": ...}`\n   - For `TokenExpiredError`: `{\"status_code\": 401, \"error_code\": \"TOKEN_EXPIRED\", \"message\": str(exc)}`\n   - For `InvalidTokenError`: `{\"status_code\": 401, \"error_code\": \"INVALID_TOKEN\", \"message\": str(exc)}`\n   - For any other exception: `{\"status_code\": 500, \"error_code\": \"INTERNAL_ERROR\", \"message\": \"Internal server error\"}`\n\n7. **`RequestLog`** (Pydantic model) — `method: str`, `path: str`, `user: str | None`, `status_code: int`, `duration_ms: float`.\n\n8. **`LoggingMiddleware`** — A class that records request logs:\n   - `__init__(self)` — Initialize with an empty `logs: list[RequestLog]`.\n   - `log(self, method: str, path: str, user: str | None, status_code: int, duration_ms: float) -> None` — Append a `RequestLog`.\n   - `get_logs(self) -> list[RequestLog]` — Return all logs.\n   - `get_logs_by_path(self, path_prefix: str) -> list[RequestLog]` — Return logs where path starts with `path_prefix`.\n\n9. **`APIRouter`** — A versioned routing system:\n   - `__init__(self, prefix: str = '')` — Store prefix and route registry.\n   - `route(self, method: str, path: str) -> Callable` — Decorator that registers a handler for `method + prefix + path`.\n   - `resolve(self, method: str, path: str) -> Callable | None` — Find and return the handler for the given method+path, or `None`.\n   - `get_routes(self) -> list[dict]` — Return all registered routes as `[{\"method\": ..., \"path\": ...}]`.\n\n10. **`build_versioned_app(secret: str) -> dict`** — Wire everything together:\n    - Create two routers: `v1 = APIRouter(prefix='/api/v1')` and `v2 = APIRouter(prefix='/api/v2')`.\n    - Register on v1: `GET /users` handler returning `{\"version\": 1, \"data\": [\"user1\", \"user2\"]}`.\n    - Register on v2: `GET /users` handler returning `{\"version\": 2, \"data\": [{\"name\": \"user1\"}, {\"name\": \"user2\"}], \"total\": 2}`.\n    - Return `{\"v1\": v1, \"v2\": v2, \"secret\": secret}`.",
+  "examples": [
+    {
+      "input": "token = JWTToken.create_token({'user': 'admin'}, 'my_secret')\npayload = JWTToken.decode_token(token, 'my_secret')\npayload['user']",
+      "output": "'admin'",
+      "explanation": "Token is created and decoded successfully with matching secret."
+    },
+    {
+      "input": "resp = global_exception_handler(NotFoundError('User not found'))\n(resp['status_code'], resp['error_code'])",
+      "output": "(404, 'NOT_FOUND')",
+      "explanation": "Global handler converts AppError subclass to structured response."
+    },
+    {
+      "input": "app = build_versioned_app('secret')\nhandler = app['v1'].resolve('GET', '/api/v1/users')\nhandler()",
+      "output": "{'version': 1, 'data': ['user1', 'user2']}",
+      "explanation": "Versioned router resolves v1 handler correctly."
+    }
+  ],
+  "constraints": [
+    "JWTToken must use base64 + json for encoding/decoding (import base64, json).",
+    "decode_token must check expiration BEFORE returning payload.",
+    "global_exception_handler must handle ALL exception types with a fallback for unknown exceptions.",
+    "APIRouter.resolve must match the full path including prefix.",
+    "LoggingMiddleware.get_logs_by_path must use prefix matching (startswith).",
+    "NotFoundError and ForbiddenError must inherit from AppError with correct defaults."
+  ],
+  "starter_code": "import time\nimport json\nimport base64\nfrom typing import Callable\nfrom pydantic import BaseModel\n\n\nclass TokenExpiredError(Exception):\n    pass\n\n\nclass InvalidTokenError(Exception):\n    pass\n\n\nclass AppError(Exception):\n    def __init__(self, message: str, status_code: int = 500, error_code: str = 'UNKNOWN'):\n        super().__init__(message)\n        self.message = message\n        self.status_code = status_code\n        self.error_code = error_code\n\n\nclass NotFoundError(AppError):\n    def __init__(self, message: str = 'Not found'):\n        # Set status_code=404, error_code='NOT_FOUND'\n        pass\n\n\nclass ForbiddenError(AppError):\n    def __init__(self, message: str = 'Forbidden'):\n        # Set status_code=403, error_code='FORBIDDEN'\n        pass\n\n\nclass JWTToken:\n    @staticmethod\n    def create_token(payload: dict, secret: str, expires_in: int = 3600) -> str:\n        # Base64-encode JSON with payload, exp, secret\n        pass\n\n    @staticmethod\n    def decode_token(token: str, secret: str) -> dict:\n        # Decode, verify secret and expiration, return payload\n        pass\n\n\ndef global_exception_handler(exc: Exception) -> dict:\n    \"\"\"Convert any exception to a structured error response.\"\"\"\n    pass\n\n\nclass RequestLog(BaseModel):\n    method: str\n    path: str\n    user: str | None = None\n    status_code: int = 200\n    duration_ms: float = 0.0\n\n\nclass LoggingMiddleware:\n    def __init__(self):\n        # Initialize logs list\n        pass\n\n    def log(self, method: str, path: str, user: str | None,\n            status_code: int, duration_ms: float) -> None:\n        pass\n\n    def get_logs(self) -> list[RequestLog]:\n        pass\n\n    def get_logs_by_path(self, path_prefix: str) -> list[RequestLog]:\n        pass\n\n\nclass APIRouter:\n    def __init__(self, prefix: str = ''):\n        # Store prefix and route registry\n        pass\n\n    def route(self, method: str, path: str) -> Callable:\n        # Decorator to register a handler\n        pass\n\n    def resolve(self, method: str, path: str) -> Callable | None:\n        # Find handler for method + path\n        pass\n\n    def get_routes(self) -> list[dict]:\n        # Return all routes\n        pass\n\n\ndef build_versioned_app(secret: str) -> dict:\n    \"\"\"Build a versioned API with v1 and v2 routers.\"\"\"\n    pass\n",
+  "test_cases": [
+    {
+      "input": "token = JWTToken.create_token({'user': 'admin', 'role': 'superuser'}, 'secret123')\npayload = JWTToken.decode_token(token, 'secret123')\n(payload['user'], payload['role'])",
+      "expected": "('admin', 'superuser')",
+      "is_hidden": false
+    },
+    {
+      "input": "token = JWTToken.create_token({'user': 'test'}, 'correct_secret')\ntry:\n    JWTToken.decode_token(token, 'wrong_secret')\n    result = 'no_error'\nexcept InvalidTokenError:\n    result = 'invalid_token'\nresult",
+      "expected": "'invalid_token'",
+      "is_hidden": false
+    },
+    {
+      "input": "r1 = global_exception_handler(NotFoundError('User 42 not found'))\nr2 = global_exception_handler(ForbiddenError('Access denied'))\nr3 = global_exception_handler(ValueError('unexpected'))\n(r1['status_code'], r1['error_code'], r2['status_code'], r3['status_code'], r3['error_code'])",
+      "expected": "(404, 'NOT_FOUND', 403, 500, 'INTERNAL_ERROR')",
+      "is_hidden": false
+    },
+    {
+      "input": "token = JWTToken.create_token({'user': 'x'}, 'key', expires_in=0)\nimport time; time.sleep(0.01)\ntry:\n    JWTToken.decode_token(token, 'key')\n    result = 'no_error'\nexcept TokenExpiredError:\n    result = 'expired'\nresult",
+      "expected": "'expired'",
+      "is_hidden": true
+    },
+    {
+      "input": "logger = LoggingMiddleware()\nlogger.log('GET', '/api/v1/users', 'admin', 200, 12.5)\nlogger.log('POST', '/api/v1/users', 'admin', 201, 45.0)\nlogger.log('GET', '/api/v2/users', None, 200, 8.0)\nv1_logs = logger.get_logs_by_path('/api/v1')\n(len(logger.get_logs()), len(v1_logs))",
+      "expected": "(3, 2)",
+      "is_hidden": true
+    },
+    {
+      "input": "app = build_versioned_app('s3cret')\nv1_handler = app['v1'].resolve('GET', '/api/v1/users')\nv2_handler = app['v2'].resolve('GET', '/api/v2/users')\nr1 = v1_handler()\nr2 = v2_handler()\n(r1['version'], r2['version'], r2['total'], app['v1'].resolve('POST', '/api/v1/users'))",
+      "expected": "(1, 2, 2, None)",
+      "is_hidden": true
+    },
+    {
+      "input": "router = APIRouter(prefix='/api')\n@router.route('GET', '/health')\ndef health():\n    return {'status': 'ok'}\nroutes = router.get_routes()\n(routes[0]['method'], routes[0]['path'], router.resolve('GET', '/api/health')())",
+      "expected": "('GET', '/api/health', {'status': 'ok'})",
+      "is_hidden": false
+    }
+  ],
+  "time_limit_minutes": 40,
+  "tags": ["fastapi", "jwt", "middleware", "exception-handling", "api-versioning"]
+}

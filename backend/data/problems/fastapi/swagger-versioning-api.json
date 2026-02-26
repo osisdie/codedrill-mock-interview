@@ -1,0 +1,67 @@
+{
+  "id": "swagger-versioning-api",
+  "title": "Swagger/OpenAPI Spec Generator with Versioned API",
+  "category": "fastapi",
+  "difficulty": "hard",
+  "description": "Implement an **OpenAPI/Swagger specification generator** that can document versioned API endpoints. In production FastAPI apps, Swagger docs are auto-generated from route definitions and Pydantic models. Here you will build the generator logic from scratch.\n\nBuild the following:\n\n1. **`SchemaGenerator`** — Generates JSON Schema from Pydantic models:\n   - `from_model(cls, model_cls) -> dict` — Class method. Given a Pydantic BaseModel class, return a dict representing its JSON Schema with `type`, `properties`, and `required` fields. Support field types: `str` → `string`, `int` → `integer`, `float` → `number`, `bool` → `boolean`, `list` → `array`, `None/Optional` → `nullable`. Use `model_cls.model_fields` to introspect fields.\n\n2. **`EndpointDoc`** (Pydantic model) — Documents a single endpoint:\n   - `method: str` (GET, POST, etc.)\n   - `path: str` (e.g., \"/api/v1/users\")\n   - `summary: str`\n   - `description: str = ''`\n   - `tags: list[str] = []`\n   - `request_body: dict | None = None` (JSON Schema)\n   - `response_schema: dict | None = None` (JSON Schema)\n   - `parameters: list[dict] = []` (path/query params)\n   - `deprecated: bool = False`\n\n3. **`APIVersion`** — Groups endpoints under a version:\n   - `__init__(self, version: str, prefix: str)` — e.g., version=\"1.0\", prefix=\"/api/v1\".\n   - `add_endpoint(self, endpoint: EndpointDoc) -> None` — Register an endpoint.\n   - `get_endpoints(self) -> list[EndpointDoc]` — Return all endpoints.\n\n4. **`OpenAPIGenerator`** — Generates the full OpenAPI 3.0 spec:\n   - `__init__(self, title: str, description: str = '', versions: list[APIVersion] | None = None)` — Initialize.\n   - `add_version(self, version: APIVersion) -> None` — Add an API version.\n   - `generate_spec(self, version: str | None = None) -> dict` — Generate the OpenAPI spec dict. If `version` is specified, only include that version's endpoints. The spec must include:\n     - `openapi: '3.0.0'`\n     - `info: {title, description, version}`\n     - `paths: {path: {method: {summary, description, tags, parameters, requestBody, responses}}}`\n     - `tags: [{name, description}]` — unique tags from all endpoints.\n   - `get_all_tags(self) -> list[str]` — Return unique tag names across all versions.\n\n5. **`build_user_api_docs() -> OpenAPIGenerator`** — Build a sample documented API:\n   - v1 (`/api/v1`): `GET /users` (list users, tag: users), `POST /users` (create user, tag: users), `GET /users/{id}` (get user, tag: users)\n   - v2 (`/api/v2`): Same endpoints plus `GET /users/search` (search users, tag: users, search) and deprecate `GET /users/{id}` in v2.\n   - Return the configured OpenAPIGenerator.",
+  "examples": [
+    {
+      "input": "from pydantic import BaseModel\nclass UserOut(BaseModel):\n    id: int\n    name: str\nschema = SchemaGenerator.from_model(UserOut)\n(schema['properties']['id']['type'], schema['properties']['name']['type'])",
+      "output": "('integer', 'string')",
+      "explanation": "SchemaGenerator introspects Pydantic model fields and maps Python types to JSON Schema types."
+    },
+    {
+      "input": "gen = build_user_api_docs()\nspec = gen.generate_spec('1.0')\nlen(spec['paths'])",
+      "output": "3",
+      "explanation": "v1 has 3 endpoint paths."
+    }
+  ],
+  "constraints": [
+    "SchemaGenerator.from_model must handle str, int, float, bool, list types.",
+    "OpenAPI spec must follow the 3.0.0 format with correct structure.",
+    "generate_spec(version=...) must filter to only that version's endpoints.",
+    "get_all_tags must return unique tag names sorted alphabetically.",
+    "build_user_api_docs must include deprecated=True for v2's GET /users/{id}.",
+    "Paths in the spec must be grouped correctly (same path, different methods)."
+  ],
+  "starter_code": "from pydantic import BaseModel\nfrom typing import Any\n\n\nclass SchemaGenerator:\n    \"\"\"Generate JSON Schema from Pydantic models.\"\"\"\n\n    TYPE_MAP = {\n        'str': 'string',\n        'int': 'integer',\n        'float': 'number',\n        'bool': 'boolean',\n        'list': 'array',\n    }\n\n    @classmethod\n    def from_model(cls, model_cls) -> dict:\n        # Introspect model_cls.model_fields and build JSON Schema\n        pass\n\n\nclass EndpointDoc(BaseModel):\n    method: str\n    path: str\n    summary: str\n    description: str = ''\n    tags: list[str] = []\n    request_body: dict | None = None\n    response_schema: dict | None = None\n    parameters: list[dict] = []\n    deprecated: bool = False\n\n\nclass APIVersion:\n    def __init__(self, version: str, prefix: str):\n        # Store version info and endpoint list\n        pass\n\n    def add_endpoint(self, endpoint: EndpointDoc) -> None:\n        pass\n\n    def get_endpoints(self) -> list[EndpointDoc]:\n        pass\n\n\nclass OpenAPIGenerator:\n    def __init__(self, title: str, description: str = '',\n                 versions: list[APIVersion] | None = None):\n        pass\n\n    def add_version(self, version: APIVersion) -> None:\n        pass\n\n    def generate_spec(self, version: str | None = None) -> dict:\n        # Build OpenAPI 3.0.0 spec dict\n        pass\n\n    def get_all_tags(self) -> list[str]:\n        # Return unique sorted tag names\n        pass\n\n\ndef build_user_api_docs() -> OpenAPIGenerator:\n    \"\"\"Build a sample user API with v1 and v2 docs.\"\"\"\n    pass\n",
+  "test_cases": [
+    {
+      "input": "class Item(BaseModel):\n    id: int\n    name: str\n    price: float\n    active: bool\nschema = SchemaGenerator.from_model(Item)\nprops = schema['properties']\n(props['id']['type'], props['name']['type'], props['price']['type'], props['active']['type'])",
+      "expected": "('integer', 'string', 'number', 'boolean')",
+      "is_hidden": false
+    },
+    {
+      "input": "class Required(BaseModel):\n    name: str\n    age: int\nschema = SchemaGenerator.from_model(Required)\nsorted(schema.get('required', []))",
+      "expected": "['age', 'name']",
+      "is_hidden": false
+    },
+    {
+      "input": "gen = build_user_api_docs()\nspec = gen.generate_spec('1.0')\nsorted(spec['paths'].keys())",
+      "expected": "['/api/v1/users', '/api/v1/users/{id}']",
+      "is_hidden": false
+    },
+    {
+      "input": "gen = build_user_api_docs()\nspec = gen.generate_spec('2.0')\nsorted(spec['paths'].keys())",
+      "expected": "['/api/v2/users', '/api/v2/users/search', '/api/v2/users/{id}']",
+      "is_hidden": true
+    },
+    {
+      "input": "gen = build_user_api_docs()\nspec = gen.generate_spec('2.0')\nuser_id_path = spec['paths'].get('/api/v2/users/{id}', {})\nget_op = user_id_path.get('get', {})\nget_op.get('deprecated', False)",
+      "expected": "True",
+      "is_hidden": true
+    },
+    {
+      "input": "gen = build_user_api_docs()\nspec = gen.generate_spec()\n(spec['openapi'], spec['info']['title'] != '')",
+      "expected": "('3.0.0', True)",
+      "is_hidden": true
+    },
+    {
+      "input": "gen = build_user_api_docs()\nsorted(gen.get_all_tags())",
+      "expected": "['search', 'users']",
+      "is_hidden": true
+    }
+  ],
+  "time_limit_minutes": 40,
+  "tags": ["fastapi", "openapi", "swagger", "api-versioning", "documentation"]
+}

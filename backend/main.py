@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
-from app.routers import problems, sessions, execution, interview, scoring
+from app.routers import problems, sessions, execution, interview, scoring, code_chat
 
 app = FastAPI(title="CodeDrill", version="1.0.0")
 
@@ -19,6 +19,7 @@ app.include_router(sessions.router)
 app.include_router(execution.router)
 app.include_router(interview.router)
 app.include_router(scoring.router)
+app.include_router(code_chat.router)
 
 
 @app.get("/api/health")

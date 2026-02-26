@@ -1,0 +1,67 @@
+{
+  "id": "background-job-monitor",
+  "title": "Background Job Scheduler with Progress Monitoring",
+  "category": "fastapi",
+  "difficulty": "hard",
+  "description": "Implement an advanced **background job scheduler** with real-time progress tracking, retry logic, and a monitoring dashboard. This extends beyond simple background tasks to simulate what you'd build with Celery or ARQ in a production FastAPI app.\n\nBuild the following:\n\n1. **`JobStatus`** — String enum-like constants: `PENDING = 'pending'`, `RUNNING = 'running'`, `COMPLETED = 'completed'`, `FAILED = 'failed'`, `RETRYING = 'retrying'`, `CANCELLED = 'cancelled'`.\n\n2. **`JobConfig`** (Pydantic model) — `max_retries: int = 3`, `retry_delay: float = 1.0`, `timeout: float = 30.0`, `priority: int = 0` (higher = more urgent).\n\n3. **`JobRecord`** (Pydantic model) — `job_id: str`, `name: str`, `status: str = 'pending'`, `progress: float = 0.0` (0.0 to 1.0), `result: Any = None`, `error: str | None = None`, `attempts: int = 0`, `config: JobConfig`, `created_at: float`, `started_at: float | None = None`, `completed_at: float | None = None`.\n\n4. **`JobScheduler`** — Main scheduler:\n   - `__init__(self)` — Initialize job storage and ID counter.\n   - `submit(self, name: str, func: Callable, args: tuple = (), kwargs: dict | None = None, config: JobConfig | None = None) -> str` — Register a job. Generate `job_id` as `\"job-{n}\"`. Store the function, args, kwargs. Status = `PENDING`. Return the `job_id`.\n   - `cancel(self, job_id: str) -> bool` — Cancel a pending job. Return `True` if cancelled (only `PENDING` jobs can be cancelled).\n   - `run_next(self) -> str | None` — Run the highest-priority pending job. On success: status = `COMPLETED`, store result. On failure: increment attempts. If attempts < max_retries: status = `RETRYING`, re-queue as PENDING. If attempts >= max_retries: status = `FAILED`, store error. Return the job_id or `None` if no pending jobs.\n   - `run_all(self) -> list[str]` — Run all pending jobs in priority order (highest first, then FIFO for same priority). Return list of job_ids processed.\n   - `get_job(self, job_id: str) -> JobRecord` — Return the job record. Raise `KeyError` if not found.\n   - `get_dashboard(self) -> dict` — Return monitoring stats: `{\"total\": int, \"by_status\": {status: count}, \"avg_duration\": float | None}`. `avg_duration` is the average of `completed_at - started_at` for completed jobs, or `None` if no completed jobs.\n\n5. **`ProgressCallback`** — A callable class for reporting progress:\n   - `__init__(self, scheduler: JobScheduler, job_id: str)` — Store references.\n   - `__call__(self, progress: float) -> None` — Update the job's progress (0.0 to 1.0).\n\n6. **Sample job functions:**\n   - `process_batch(items: list, callback: ProgressCallback | None = None) -> dict` — Process each item (just collect them). Call `callback(i/len(items))` after each item if callback provided. Return `{\"processed\": len(items), \"items\": items}`.\n   - `failing_job(should_fail: bool = True) -> str` — If `should_fail`, raise `RuntimeError(\"Job failed\")`. Otherwise return `\"success\"`.",
+  "examples": [
+    {
+      "input": "sched = JobScheduler()\njid = sched.submit('test', lambda: 42)\nsched.run_next()\nsched.get_job(jid).result",
+      "output": "42",
+      "explanation": "Job runs successfully and stores its return value."
+    },
+    {
+      "input": "sched = JobScheduler()\nsched.submit('fail', failing_job, args=(True,), config=JobConfig(max_retries=2))\nsched.run_all()\nj = sched.get_job('job-1')\n(j.status, j.attempts)",
+      "output": "('failed', 2)",
+      "explanation": "Job fails, retries up to max_retries, then marked as failed."
+    }
+  ],
+  "constraints": [
+    "Job IDs must follow format 'job-{n}' starting from 1.",
+    "run_next must pick the highest priority pending job (higher number = higher priority).",
+    "Only PENDING jobs can be cancelled.",
+    "Retry logic: on failure, if attempts < max_retries, set status back to PENDING for retry.",
+    "get_dashboard avg_duration must only consider COMPLETED jobs.",
+    "ProgressCallback must update the job's progress field in real-time."
+  ],
+  "starter_code": "import time\nfrom typing import Any, Callable\nfrom pydantic import BaseModel, Field\n\n\nclass JobStatus:\n    PENDING = 'pending'\n    RUNNING = 'running'\n    COMPLETED = 'completed'\n    FAILED = 'failed'\n    RETRYING = 'retrying'\n    CANCELLED = 'cancelled'\n\n\nclass JobConfig(BaseModel):\n    max_retries: int = 3\n    retry_delay: float = 1.0\n    timeout: float = 30.0\n    priority: int = 0\n\n\nclass JobRecord(BaseModel):\n    job_id: str\n    name: str\n    status: str = JobStatus.PENDING\n    progress: float = 0.0\n    result: Any = None\n    error: str | None = None\n    attempts: int = 0\n    config: JobConfig = Field(default_factory=JobConfig)\n    created_at: float = Field(default_factory=time.time)\n    started_at: float | None = None\n    completed_at: float | None = None\n\n\nclass ProgressCallback:\n    \"\"\"Callable for reporting job progress.\"\"\"\n\n    def __init__(self, scheduler: 'JobScheduler', job_id: str):\n        pass\n\n    def __call__(self, progress: float) -> None:\n        pass\n\n\nclass JobScheduler:\n    \"\"\"Background job scheduler with monitoring.\"\"\"\n\n    def __init__(self):\n        pass\n\n    def submit(self, name: str, func: Callable, args: tuple = (),\n              kwargs: dict | None = None, config: JobConfig | None = None) -> str:\n        pass\n\n    def cancel(self, job_id: str) -> bool:\n        pass\n\n    def run_next(self) -> str | None:\n        pass\n\n    def run_all(self) -> list[str]:\n        pass\n\n    def get_job(self, job_id: str) -> JobRecord:\n        pass\n\n    def get_dashboard(self) -> dict:\n        pass\n\n\ndef process_batch(items: list, callback: ProgressCallback | None = None) -> dict:\n    \"\"\"Process a batch of items with optional progress reporting.\"\"\"\n    pass\n\n\ndef failing_job(should_fail: bool = True) -> str:\n    \"\"\"A job that may fail.\"\"\"\n    pass\n",
+  "test_cases": [
+    {
+      "input": "s = JobScheduler()\nj1 = s.submit('task1', lambda: 'done')\nj2 = s.submit('task2', lambda: 100)\n(j1, j2, s.get_job(j1).status)",
+      "expected": "('job-1', 'job-2', 'pending')",
+      "is_hidden": false
+    },
+    {
+      "input": "s = JobScheduler()\ns.submit('low', lambda: 'low', config=JobConfig(priority=1))\ns.submit('high', lambda: 'high', config=JobConfig(priority=10))\njid = s.run_next()\ns.get_job(jid).name",
+      "expected": "'high'",
+      "is_hidden": false
+    },
+    {
+      "input": "s = JobScheduler()\ns.submit('batch', process_batch, args=([1,2,3],))\ns.run_all()\nj = s.get_job('job-1')\nj.result",
+      "expected": "{'processed': 3, 'items': [1, 2, 3]}",
+      "is_hidden": false
+    },
+    {
+      "input": "s = JobScheduler()\ns.submit('will_fail', failing_job, args=(True,), config=JobConfig(max_retries=3))\ns.run_all()\nj = s.get_job('job-1')\n(j.status, j.attempts, 'Job failed' in j.error)",
+      "expected": "('failed', 3, True)",
+      "is_hidden": true
+    },
+    {
+      "input": "s = JobScheduler()\ns.submit('to_cancel', lambda: 'x')\n(s.cancel('job-1'), s.get_job('job-1').status, s.cancel('job-1'))",
+      "expected": "(True, 'cancelled', False)",
+      "is_hidden": true
+    },
+    {
+      "input": "s = JobScheduler()\ns.submit('a', lambda: 1)\ns.submit('b', lambda: 2)\ns.submit('c', failing_job, args=(True,), config=JobConfig(max_retries=1))\ns.run_all()\nd = s.get_dashboard()\n(d['total'], d['by_status'].get('completed', 0), d['by_status'].get('failed', 0))",
+      "expected": "(3, 2, 1)",
+      "is_hidden": true
+    },
+    {
+      "input": "s = JobScheduler()\ncb = ProgressCallback(s, 'job-1')\ns.submit('prog', process_batch, args=([10,20,30,40], cb))\ns.run_all()\nj = s.get_job('job-1')\n(j.status, j.progress, j.result['processed'])",
+      "expected": "('completed', 1.0, 4)",
+      "is_hidden": true
+    }
+  ],
+  "time_limit_minutes": 40,
+  "tags": ["fastapi", "background-jobs", "scheduler", "monitoring", "retry"]
+}

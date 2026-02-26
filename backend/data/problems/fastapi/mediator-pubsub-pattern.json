@@ -1,0 +1,67 @@
+{
+  "id": "mediator-pubsub-pattern",
+  "title": "Implement Mediator & Pub-Sub for Event-Driven Design",
+  "category": "fastapi",
+  "difficulty": "hard",
+  "description": "Implement two foundational patterns for event-driven architecture in Python: the **Mediator pattern** (command/query dispatching) and the **Pub-Sub pattern** (event broadcasting). These are commonly used in FastAPI backends for decoupling business logic.\n\nBuild the following:\n\n**Part 1 — Mediator Pattern (Command/Query Bus):**\n\n1. **`Command`** (Pydantic BaseModel) — Base class for commands. Subclasses carry data for a specific action.\n\n2. **`CommandResult`** (Pydantic BaseModel) — `success: bool`, `data: Any = None`, `error: str | None = None`.\n\n3. **`Mediator`** — Central dispatcher:\n   - `register(self, command_type: type, handler: Callable) -> None` — Map a command class to its handler function.\n   - `send(self, command: Command) -> CommandResult` — Find the handler for the command's type and execute it. If no handler is registered, return `CommandResult(success=False, error='No handler for {type_name}')`.\n\n4. **`CreateUserCommand(Command)`** — `name: str`, `email: str`.\n5. **`DeleteUserCommand(Command)`** — `user_id: int`.\n6. **`GetUserQuery(Command)`** — `user_id: int`.\n\n**Part 2 — Pub-Sub Pattern (Event Bus):**\n\n7. **`Event`** (Pydantic BaseModel) — Base class with `event_type: str` and `timestamp: float = Field(default_factory=time.time)`.\n\n8. **`EventBus`** — Publish-subscribe dispatcher:\n   - `subscribe(self, event_type: str, handler: Callable) -> None` — Register a handler for an event type. Multiple handlers per event are allowed.\n   - `unsubscribe(self, event_type: str, handler: Callable) -> bool` — Remove a handler. Return `True` if removed.\n   - `publish(self, event: Event) -> list` — Notify all subscribed handlers for `event.event_type`. Each handler receives the event. Return a list of handler return values.\n   - `get_subscribers(self, event_type: str) -> list[Callable]` — Return handlers for an event type.\n\n9. **`UserCreatedEvent(Event)`** — `event_type='user_created'`, `user_id: int`, `name: str`, `email: str`.\n10. **`UserDeletedEvent(Event)`** — `event_type='user_deleted'`, `user_id: int`.\n\n**Part 3 — Wiring Together:**\n\n11. **`build_user_system() -> dict`** — Create a complete system:\n    - Create a `Mediator`, `EventBus`, and an in-memory `users: dict[int, dict]` store (with `next_id = [1]`).\n    - Register a `CreateUserCommand` handler that: stores the user, publishes `UserCreatedEvent`, returns `CommandResult(success=True, data={'id': new_id, ...})`.\n    - Register a `DeleteUserCommand` handler that: deletes the user, publishes `UserDeletedEvent`, returns success/failure.\n    - Register a `GetUserQuery` handler that: returns the user data or error.\n    - Return `{'mediator': mediator, 'event_bus': event_bus, 'users': users}`.",
+  "examples": [
+    {
+      "input": "m = Mediator()\nm.register(CreateUserCommand, lambda cmd: CommandResult(success=True, data={'name': cmd.name}))\nresult = m.send(CreateUserCommand(name='Alice', email='a@t.com'))\nresult.data",
+      "output": "{'name': 'Alice'}",
+      "explanation": "Mediator dispatches CreateUserCommand to its registered handler."
+    },
+    {
+      "input": "bus = EventBus()\nlogs = []\nbus.subscribe('user_created', lambda e: logs.append(e.name))\nbus.publish(UserCreatedEvent(user_id=1, name='Alice', email='a@t.com'))\nlogs",
+      "output": "['Alice']",
+      "explanation": "EventBus delivers event to all subscribers of 'user_created'."
+    }
+  ],
+  "constraints": [
+    "Mediator.send must match on the exact type of the command (type(command)).",
+    "EventBus must support multiple handlers per event_type.",
+    "EventBus.publish must return a list of all handler return values.",
+    "EventBus.unsubscribe must return False if the handler was not found.",
+    "build_user_system handlers must publish events AFTER the data operation succeeds.",
+    "All models must extend Pydantic BaseModel."
+  ],
+  "starter_code": "import time\nfrom typing import Any, Callable\nfrom pydantic import BaseModel, Field\n\n\n# Part 1: Mediator Pattern\n\nclass Command(BaseModel):\n    \"\"\"Base command class.\"\"\"\n    pass\n\n\nclass CommandResult(BaseModel):\n    success: bool\n    data: Any = None\n    error: str | None = None\n\n\nclass Mediator:\n    \"\"\"Command/query dispatcher.\"\"\"\n\n    def __init__(self):\n        pass\n\n    def register(self, command_type: type, handler: Callable) -> None:\n        pass\n\n    def send(self, command: Command) -> CommandResult:\n        pass\n\n\nclass CreateUserCommand(Command):\n    name: str\n    email: str\n\n\nclass DeleteUserCommand(Command):\n    user_id: int\n\n\nclass GetUserQuery(Command):\n    user_id: int\n\n\n# Part 2: Pub-Sub Pattern\n\nclass Event(BaseModel):\n    \"\"\"Base event class.\"\"\"\n    event_type: str\n    timestamp: float = Field(default_factory=time.time)\n\n\nclass EventBus:\n    \"\"\"Publish-subscribe event dispatcher.\"\"\"\n\n    def __init__(self):\n        pass\n\n    def subscribe(self, event_type: str, handler: Callable) -> None:\n        pass\n\n    def unsubscribe(self, event_type: str, handler: Callable) -> bool:\n        pass\n\n    def publish(self, event: Event) -> list:\n        pass\n\n    def get_subscribers(self, event_type: str) -> list[Callable]:\n        pass\n\n\nclass UserCreatedEvent(Event):\n    event_type: str = 'user_created'\n    user_id: int\n    name: str\n    email: str\n\n\nclass UserDeletedEvent(Event):\n    event_type: str = 'user_deleted'\n    user_id: int\n\n\n# Part 3: Wiring\n\ndef build_user_system() -> dict:\n    \"\"\"Build mediator + event bus + user store.\"\"\"\n    pass\n",
+  "test_cases": [
+    {
+      "input": "m = Mediator()\nm.register(CreateUserCommand, lambda cmd: CommandResult(success=True, data={'name': cmd.name}))\nr = m.send(CreateUserCommand(name='Alice', email='a@t.com'))\n(r.success, r.data)",
+      "expected": "(True, {'name': 'Alice'})",
+      "is_hidden": false
+    },
+    {
+      "input": "m = Mediator()\nr = m.send(CreateUserCommand(name='X', email='x@t.com'))\n(r.success, 'No handler' in r.error)",
+      "expected": "(False, True)",
+      "is_hidden": false
+    },
+    {
+      "input": "bus = EventBus()\nresults = []\nbus.subscribe('test', lambda e: results.append('h1'))\nbus.subscribe('test', lambda e: results.append('h2'))\nbus.publish(Event(event_type='test'))\nresults",
+      "expected": "['h1', 'h2']",
+      "is_hidden": false
+    },
+    {
+      "input": "sys = build_user_system()\nr1 = sys['mediator'].send(CreateUserCommand(name='Alice', email='a@t.com'))\nr2 = sys['mediator'].send(CreateUserCommand(name='Bob', email='b@t.com'))\n(r1.data['id'], r2.data['id'], len(sys['users']))",
+      "expected": "(1, 2, 2)",
+      "is_hidden": true
+    },
+    {
+      "input": "sys = build_user_system()\nsys['mediator'].send(CreateUserCommand(name='Alice', email='a@t.com'))\nget_r = sys['mediator'].send(GetUserQuery(user_id=1))\ndel_r = sys['mediator'].send(DeleteUserCommand(user_id=1))\ngone_r = sys['mediator'].send(GetUserQuery(user_id=1))\n(get_r.data['name'], del_r.success, gone_r.success)",
+      "expected": "('Alice', True, False)",
+      "is_hidden": true
+    },
+    {
+      "input": "bus = EventBus()\nhandler = lambda e: 'handled'\nbus.subscribe('evt', handler)\n(bus.unsubscribe('evt', handler), bus.unsubscribe('evt', handler), len(bus.get_subscribers('evt')))",
+      "expected": "(True, False, 0)",
+      "is_hidden": true
+    },
+    {
+      "input": "sys = build_user_system()\nevents_log = []\nsys['event_bus'].subscribe('user_created', lambda e: events_log.append(('created', e.name)))\nsys['event_bus'].subscribe('user_deleted', lambda e: events_log.append(('deleted', e.user_id)))\nsys['mediator'].send(CreateUserCommand(name='Eve', email='e@t.com'))\nsys['mediator'].send(DeleteUserCommand(user_id=1))\nevents_log",
+      "expected": "[('created', 'Eve'), ('deleted', 1)]",
+      "is_hidden": true
+    }
+  ],
+  "time_limit_minutes": 40,
+  "tags": ["fastapi", "mediator", "pubsub", "event-driven", "design-patterns"]
+}

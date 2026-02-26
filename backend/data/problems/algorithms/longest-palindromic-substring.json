@@ -1,0 +1,23 @@
+{
+  "id": "longest-palindromic-substring",
+  "title": "Longest Palindromic Substring",
+  "category": "algorithms",
+  "difficulty": "medium",
+  "description": "Given a string `s`, return the **longest palindromic substring** in `s`.\n\nA palindrome is a string that reads the same forwards and backwards. If there are multiple answers of the same length, return any one of them.",
+  "examples": [
+    {"input": "s = \"babad\"", "output": "\"bab\"", "explanation": "\"aba\" is also a valid answer."},
+    {"input": "s = \"cbbd\"", "output": "\"bb\""}
+  ],
+  "constraints": ["1 <= len(s) <= 1000", "s consists of only digits and English letters."],
+  "starter_code": "def longest_palindrome(s: str) -> str:\n    # Write your solution here\n    pass\n",
+  "test_cases": [
+    {"input": "r = longest_palindrome('babad')\nr in ('bab', 'aba')", "expected": "True", "is_hidden": false},
+    {"input": "longest_palindrome('cbbd')", "expected": "'bb'", "is_hidden": false},
+    {"input": "longest_palindrome('a')", "expected": "'a'", "is_hidden": false},
+    {"input": "longest_palindrome('racecar')", "expected": "'racecar'", "is_hidden": true},
+    {"input": "longest_palindrome('ac')\nin ('a', 'c')", "expected": "True", "is_hidden": true},
+    {"input": "len(longest_palindrome('aaaa'))", "expected": "4", "is_hidden": true}
+  ],
+  "time_limit_minutes": 25,
+  "tags": ["dynamic-programming", "string", "expand-around-center"]
+}

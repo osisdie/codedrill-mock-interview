@@ -1,0 +1,83 @@
+{
+  "id": "http-error-handling",
+  "title": "Centralized HTTP Error Handling & Status Code Patterns",
+  "category": "fastapi",
+  "difficulty": "medium",
+  "description": "Implement a **centralized error handling system** that eliminates duplicated error-response logic across FastAPI endpoints. In real applications, handling 400, 401, 403, 404, 409, 422, 500 errors consistently becomes repetitive. You will build a framework that makes error responses DRY and uniform.\n\nBuild the following:\n\n1. **`HTTPError`** (base exception class) — `status_code: int`, `message: str`, `error_code: str | None = None`, `headers: dict | None = None`.\n\n2. **Error subclasses** — Each sets its own defaults:\n   - `BadRequestError(HTTPError)` — 400, error_code=`\"BAD_REQUEST\"`\n   - `UnauthorizedError(HTTPError)` — 401, error_code=`\"UNAUTHORIZED\"`, default headers=`{\"WWW-Authenticate\": \"Bearer\"}`\n   - `ForbiddenError(HTTPError)` — 403, error_code=`\"FORBIDDEN\"`\n   - `NotFoundError(HTTPError)` — 404, error_code=`\"NOT_FOUND\"`\n   - `ConflictError(HTTPError)` — 409, error_code=`\"CONFLICT\"`\n   - `ValidationError(HTTPError)` — 422, error_code=`\"VALIDATION_ERROR\"`, plus `errors: list[dict] = []` for field-level errors.\n   - `InternalError(HTTPError)` — 500, error_code=`\"INTERNAL_ERROR\"`\n\n3. **`ErrorResponseBody`** (Pydantic model) — Structured error response body:\n   - `status_code: int`, `error_code: str`, `message: str`, `errors: list[dict] = []` (field-level errors for 422), `timestamp: float`.\n\n4. **`error_handler(exc: Exception) -> ErrorResponseBody`** — Central handler:\n   - For `HTTPError` subclasses: map to `ErrorResponseBody`.\n   - For `ValidationError`: include `errors` list.\n   - For any other `Exception`: return 500 with generic message (never leak internal details).\n\n5. **`require_auth(token: str | None) -> dict`** — Simulate auth check. If token is `None` or empty: raise `UnauthorizedError(\"Missing authentication token\")`. If token == `\"expired\"`: raise `UnauthorizedError(\"Token has expired\")`. If token == `\"invalid\"`: raise `UnauthorizedError(\"Invalid token\")`. Otherwise return `{\"user_id\": 1, \"token\": token}`.\n\n6. **`require_role(user: dict, required_role: str) -> bool`** — Check role. If `user.get('role') != required_role`: raise `ForbiddenError(f\"Requires {required_role} role\")`. Return `True`.\n\n7. **`safe_endpoint(func: Callable) -> Callable`** — A decorator that wraps any function with try/except. On `HTTPError`: return `error_handler(exc)`. On any other exception: return `error_handler(InternalError(\"An unexpected error occurred\"))`. On success: return the function's result as-is.\n\n8. **Simulated endpoints using `safe_endpoint`:**\n   - `get_user(user_id: int, token: str | None = None) -> dict | ErrorResponseBody` — Auth required. If user_id == 0: raise `BadRequestError(\"Invalid user ID\")`. If user_id == 999: raise `NotFoundError(\"User not found\")`. Otherwise return `{\"id\": user_id, \"name\": \"User\"}`.\n   - `create_user(data: dict, token: str | None = None) -> dict | ErrorResponseBody` — Auth required. Validate: `name` required (non-empty), `email` required (contains `@`). On validation failure: raise `ValidationError` with field-level errors list. If `data.get('email') == 'taken@test.com'`: raise `ConflictError(\"Email already exists\")`. Otherwise return `{\"id\": 1, **data}`.",
+  "examples": [
+    {
+      "input": "result = get_user(1, token='valid_token')\nresult",
+      "output": "{'id': 1, 'name': 'User'}",
+      "explanation": "Valid request returns user data."
+    },
+    {
+      "input": "result = get_user(1, token=None)\n(result.status_code, result.error_code)",
+      "output": "(401, 'UNAUTHORIZED')",
+      "explanation": "Missing token triggers centralized 401 handling."
+    },
+    {
+      "input": "result = create_user({'name': '', 'email': 'bad'}, token='valid')\n(result.status_code, len(result.errors))",
+      "output": "(422, 2)",
+      "explanation": "Two validation errors returned in structured 422 format."
+    }
+  ],
+  "constraints": [
+    "All error subclasses must inherit from HTTPError.",
+    "UnauthorizedError must always include WWW-Authenticate header by default.",
+    "ValidationError must support a list of field-level error dicts.",
+    "error_handler must NEVER expose internal exception details for non-HTTPError exceptions.",
+    "safe_endpoint decorator must catch ALL exceptions and return ErrorResponseBody.",
+    "get_user and create_user must use the safe_endpoint decorator.",
+    "ErrorResponseBody.timestamp must use time.time()."
+  ],
+  "starter_code": "import time\nfrom typing import Any, Callable\nfrom pydantic import BaseModel, Field\n\n\nclass HTTPError(Exception):\n    def __init__(self, message: str, status_code: int = 500,\n                 error_code: str | None = None, headers: dict | None = None):\n        super().__init__(message)\n        self.message = message\n        self.status_code = status_code\n        self.error_code = error_code or 'UNKNOWN'\n        self.headers = headers\n\n\nclass BadRequestError(HTTPError):\n    def __init__(self, message: str = 'Bad request'):\n        pass\n\n\nclass UnauthorizedError(HTTPError):\n    def __init__(self, message: str = 'Unauthorized'):\n        pass\n\n\nclass ForbiddenError(HTTPError):\n    def __init__(self, message: str = 'Forbidden'):\n        pass\n\n\nclass NotFoundError(HTTPError):\n    def __init__(self, message: str = 'Not found'):\n        pass\n\n\nclass ConflictError(HTTPError):\n    def __init__(self, message: str = 'Conflict'):\n        pass\n\n\nclass ValidationError(HTTPError):\n    def __init__(self, message: str = 'Validation failed', errors: list[dict] | None = None):\n        pass\n\n\nclass InternalError(HTTPError):\n    def __init__(self, message: str = 'Internal server error'):\n        pass\n\n\nclass ErrorResponseBody(BaseModel):\n    status_code: int\n    error_code: str\n    message: str\n    errors: list[dict] = []\n    timestamp: float = Field(default_factory=time.time)\n\n\ndef error_handler(exc: Exception) -> ErrorResponseBody:\n    \"\"\"Central error handler — converts any exception to ErrorResponseBody.\"\"\"\n    pass\n\n\ndef require_auth(token: str | None) -> dict:\n    \"\"\"Validate authentication token.\"\"\"\n    pass\n\n\ndef require_role(user: dict, required_role: str) -> bool:\n    \"\"\"Check user role.\"\"\"\n    pass\n\n\ndef safe_endpoint(func: Callable) -> Callable:\n    \"\"\"Decorator that wraps endpoints with centralized error handling.\"\"\"\n    pass\n\n\n@safe_endpoint\ndef get_user(user_id: int, token: str | None = None) -> dict:\n    \"\"\"Get user by ID (auth required).\"\"\"\n    pass\n\n\n@safe_endpoint\ndef create_user(data: dict, token: str | None = None) -> dict:\n    \"\"\"Create a new user (auth + validation required).\"\"\"\n    pass\n",
+  "test_cases": [
+    {
+      "input": "r = get_user(1, token='valid')\nr",
+      "expected": "{'id': 1, 'name': 'User'}",
+      "is_hidden": false
+    },
+    {
+      "input": "r = get_user(1, token=None)\n(r.status_code, r.error_code, 'Missing' in r.message)",
+      "expected": "(401, 'UNAUTHORIZED', True)",
+      "is_hidden": false
+    },
+    {
+      "input": "r = get_user(999, token='valid')\n(r.status_code, r.error_code)",
+      "expected": "(404, 'NOT_FOUND')",
+      "is_hidden": false
+    },
+    {
+      "input": "r = create_user({'name': '', 'email': 'bad'}, token='valid')\n(r.status_code, r.error_code, len(r.errors))",
+      "expected": "(422, 'VALIDATION_ERROR', 2)",
+      "is_hidden": true
+    },
+    {
+      "input": "r = create_user({'name': 'Test', 'email': 'taken@test.com'}, token='valid')\n(r.status_code, r.error_code)",
+      "expected": "(409, 'CONFLICT')",
+      "is_hidden": true
+    },
+    {
+      "input": "r = get_user(0, token='valid')\n(r.status_code, r.error_code)",
+      "expected": "(400, 'BAD_REQUEST')",
+      "is_hidden": true
+    },
+    {
+      "input": "r = create_user({'name': 'OK', 'email': 'ok@test.com'}, token='valid')\nr",
+      "expected": "{'id': 1, 'name': 'OK', 'email': 'ok@test.com'}",
+      "is_hidden": true
+    },
+    {
+      "input": "e = UnauthorizedError('test')\n(e.status_code, e.headers)",
+      "expected": "(401, {'WWW-Authenticate': 'Bearer'})",
+      "is_hidden": true
+    },
+    {
+      "input": "r = error_handler(RuntimeError('secret db error'))\n(r.status_code, 'secret' not in r.message, r.error_code)",
+      "expected": "(500, True, 'INTERNAL_ERROR')",
+      "is_hidden": true
+    }
+  ],
+  "time_limit_minutes": 35,
+  "tags": ["fastapi", "error-handling", "http-status", "middleware", "dry"]
+}

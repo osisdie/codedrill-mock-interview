@@ -1,0 +1,79 @@
+{
+  "id": "redis-cache-strategy",
+  "title": "Implement Redis Cache + LRU Cache with Invalidation",
+  "category": "fastapi",
+  "difficulty": "hard",
+  "description": "Implement a caching layer that combines a Redis-like cache and Python's `functools.lru_cache` for GET request caching, with proper cache invalidation on data mutations.\n\nIn real FastAPI applications, you often use Redis for distributed caching and `lru_cache` for in-process caching. The critical part is **invalidating** both caches when data is inserted, updated, or deleted.\n\nBuild the following:\n\n1. **`RedisCache`** — A class simulating a Redis cache (using an in-memory dict):\n   - `__init__(self, default_ttl: int = 300)` — Initialize with a storage dict, TTL tracking dict, and default TTL in seconds.\n   - `get(self, key: str) -> Any | None` — Return the cached value, or `None` if missing or expired. If expired, auto-delete it.\n   - `set(self, key: str, value: Any, ttl: int | None = None) -> None` — Store a value with an expiration time. Use `default_ttl` if `ttl` is not provided. Store expiry as `time.time() + ttl`.\n   - `delete(self, key: str) -> bool` — Delete a key. Return `True` if it existed, `False` otherwise.\n   - `delete_pattern(self, pattern: str) -> int` — Delete all keys that **start with** the given pattern string. Return the count of deleted keys.\n   - `clear(self) -> None` — Clear all data.\n   - `keys(self) -> list[str]` — Return all non-expired keys.\n\n2. **`CachedRepository`** — A repository class that wraps data access with caching:\n   - `__init__(self, cache: RedisCache)` — Initialize with the cache instance and an in-memory `_data: dict[int, dict]` as the \"database\", plus `_next_id = 1`.\n   - `get_item(self, item_id: int) -> dict | None` — Check cache first (key: `\"item:{item_id}\"`). On miss, read from `_data`, cache the result, and return it.\n   - `get_all_items(self) -> list[dict]` — Check cache (key: `\"items:all\"`). On miss, read from `_data`, cache, and return.\n   - `create_item(self, data: dict) -> dict` — Insert into `_data` with auto-incremented `id`. **Invalidate** the `\"items:all\"` cache key. Return the created item.\n   - `update_item(self, item_id: int, data: dict) -> dict | None` — Update the item in `_data`. **Invalidate** both `\"item:{item_id}\"` and `\"items:all\"` cache keys. Return updated item or `None` if not found.\n   - `delete_item(self, item_id: int) -> bool` — Delete from `_data`. **Invalidate** both `\"item:{item_id}\"` and `\"items:all\"` cache keys. Return `True` if deleted, `False` if not found.\n\n3. **`lru_cached_fibonacci(n: int) -> int`** — A function decorated with `@lru_cache(maxsize=128)` that computes the nth Fibonacci number. This demonstrates `lru_cache` usage alongside the Redis-style cache.\n\n4. **`build_cache_key(prefix: str, *args) -> str`** — A utility to build cache keys in the format `\"{prefix}:{arg1}:{arg2}:...\"`.",
+  "examples": [
+    {
+      "input": "cache = RedisCache(default_ttl=60)\ncache.set('user:1', {'name': 'Alice'})\ncache.get('user:1')",
+      "output": "{'name': 'Alice'}",
+      "explanation": "Value is stored and retrieved before TTL expires."
+    },
+    {
+      "input": "cache = RedisCache()\nrepo = CachedRepository(cache)\nrepo.create_item({'name': 'Widget'})\nrepo.get_item(1)",
+      "output": "{'id': 1, 'name': 'Widget'}",
+      "explanation": "After creation, get_item reads from DB (cache miss), then caches the result."
+    },
+    {
+      "input": "cache = RedisCache()\nrepo = CachedRepository(cache)\nrepo.create_item({'name': 'A'})\nrepo.get_all_items()  # caches\nrepo.create_item({'name': 'B'})  # invalidates 'items:all'\nlen(repo.get_all_items())",
+      "output": "2",
+      "explanation": "Creating a new item invalidates the 'items:all' cache, so get_all_items returns fresh data."
+    }
+  ],
+  "constraints": [
+    "RedisCache must use time.time() for TTL expiration checks.",
+    "get() must auto-delete expired keys and return None for them.",
+    "delete_pattern() matches keys that START WITH the pattern (prefix match, not regex).",
+    "CachedRepository.create_item must invalidate 'items:all' cache.",
+    "CachedRepository.update_item must invalidate both the specific item key and 'items:all'.",
+    "CachedRepository.delete_item must invalidate both the specific item key and 'items:all'.",
+    "lru_cached_fibonacci must use @lru_cache(maxsize=128) from functools.",
+    "build_cache_key('prefix', 'a', 'b') must return 'prefix:a:b'."
+  ],
+  "starter_code": "import time\nfrom typing import Any\nfrom functools import lru_cache\n\n\nclass RedisCache:\n    \"\"\"In-memory Redis-like cache with TTL support.\"\"\"\n\n    def __init__(self, default_ttl: int = 300):\n        # Initialize storage, TTL tracking, and default TTL\n        pass\n\n    def get(self, key: str) -> Any | None:\n        # Return value if exists and not expired; auto-delete expired keys\n        pass\n\n    def set(self, key: str, value: Any, ttl: int | None = None) -> None:\n        # Store value with expiration time\n        pass\n\n    def delete(self, key: str) -> bool:\n        # Delete key; return True if existed\n        pass\n\n    def delete_pattern(self, pattern: str) -> int:\n        # Delete all keys starting with pattern; return count\n        pass\n\n    def clear(self) -> None:\n        # Clear all data\n        pass\n\n    def keys(self) -> list[str]:\n        # Return all non-expired keys\n        pass\n\n\nclass CachedRepository:\n    \"\"\"Repository with Redis cache layer and automatic invalidation.\"\"\"\n\n    def __init__(self, cache: RedisCache):\n        # Initialize with cache, in-memory DB, and ID counter\n        pass\n\n    def get_item(self, item_id: int) -> dict | None:\n        # Cache-first read for single item (key: 'item:{id}')\n        pass\n\n    def get_all_items(self) -> list[dict]:\n        # Cache-first read for all items (key: 'items:all')\n        pass\n\n    def create_item(self, data: dict) -> dict:\n        # Insert and invalidate 'items:all' cache\n        pass\n\n    def update_item(self, item_id: int, data: dict) -> dict | None:\n        # Update and invalidate 'item:{id}' + 'items:all'\n        pass\n\n    def delete_item(self, item_id: int) -> bool:\n        # Delete and invalidate 'item:{id}' + 'items:all'\n        pass\n\n\n@lru_cache(maxsize=128)\ndef lru_cached_fibonacci(n: int) -> int:\n    \"\"\"Compute nth Fibonacci number with LRU caching.\"\"\"\n    # Implement recursive Fibonacci with lru_cache\n    pass\n\n\ndef build_cache_key(prefix: str, *args) -> str:\n    \"\"\"Build a cache key like 'prefix:arg1:arg2:...'.\"\"\"\n    # Implement this\n    pass\n",
+  "test_cases": [
+    {
+      "input": "c = RedisCache(default_ttl=60)\nc.set('k1', 'v1')\nc.set('k2', 'v2')\n(c.get('k1'), c.get('k2'), c.get('k3'))",
+      "expected": "('v1', 'v2', None)",
+      "is_hidden": false
+    },
+    {
+      "input": "c = RedisCache()\nrepo = CachedRepository(c)\ni1 = repo.create_item({'name': 'A', 'price': 10})\ni2 = repo.create_item({'name': 'B', 'price': 20})\n(i1, i2)",
+      "expected": "({'id': 1, 'name': 'A', 'price': 10}, {'id': 2, 'name': 'B', 'price': 20})",
+      "is_hidden": false
+    },
+    {
+      "input": "c = RedisCache()\nrepo = CachedRepository(c)\nrepo.create_item({'name': 'Widget'})\nrepo.get_item(1)\ncached = c.get('item:1')\n(cached is not None, repo.get_item(99))",
+      "expected": "(True, None)",
+      "is_hidden": false
+    },
+    {
+      "input": "c = RedisCache()\nrepo = CachedRepository(c)\nrepo.create_item({'name': 'Old'})\nrepo.get_item(1)\nrepo.update_item(1, {'name': 'New'})\nstale = c.get('item:1')\nfresh = repo.get_item(1)\n(stale, fresh['name'])",
+      "expected": "(None, 'New')",
+      "is_hidden": true
+    },
+    {
+      "input": "c = RedisCache()\nrepo = CachedRepository(c)\nrepo.create_item({'name': 'A'})\nrepo.create_item({'name': 'B'})\nrepo.get_all_items()\nassert c.get('items:all') is not None\nrepo.delete_item(1)\nstale_all = c.get('items:all')\nfresh_all = repo.get_all_items()\n(stale_all, len(fresh_all), fresh_all[0]['name'])",
+      "expected": "(None, 1, 'B')",
+      "is_hidden": true
+    },
+    {
+      "input": "c = RedisCache(default_ttl=0)\nc.set('expire_now', 'val', ttl=0)\nimport time; time.sleep(0.01)\n(c.get('expire_now'), c.keys())",
+      "expected": "(None, [])",
+      "is_hidden": true
+    },
+    {
+      "input": "c = RedisCache()\nc.set('user:1', 'a')\nc.set('user:2', 'b')\nc.set('post:1', 'c')\ndeleted = c.delete_pattern('user:')\n(deleted, sorted(c.keys()))",
+      "expected": "(2, ['post:1'])",
+      "is_hidden": true
+    },
+    {
+      "input": "(lru_cached_fibonacci(0), lru_cached_fibonacci(1), lru_cached_fibonacci(10), lru_cached_fibonacci(20), build_cache_key('user', 1, 'profile'))",
+      "expected": "(0, 1, 55, 6765, 'user:1:profile')",
+      "is_hidden": false
+    }
+  ],
+  "time_limit_minutes": 35,
+  "tags": ["fastapi", "redis", "caching", "lru-cache", "invalidation"]
+}

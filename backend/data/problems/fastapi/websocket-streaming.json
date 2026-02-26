@@ -1,0 +1,72 @@
+{
+  "id": "websocket-streaming",
+  "title": "Implement WebSocket Manager & Streaming Response",
+  "category": "fastapi",
+  "difficulty": "hard",
+  "description": "Implement **WebSocket connection management** and **streaming response** patterns used in FastAPI real-time applications. Since we cannot open real network connections in the sandbox, you will build the logic layer that manages connections, rooms, message broadcasting, and chunked streaming.\n\nBuild the following:\n\n**Part 1 — WebSocket Connection Manager:**\n\n1. **`Message`** (Pydantic model) — `sender: str`, `content: str`, `room: str = 'general'`, `timestamp: float = Field(default_factory=time.time)`, `msg_type: str = 'text'` (one of `'text'`, `'system'`, `'error'`).\n\n2. **`Connection`** — Represents a WebSocket client:\n   - `__init__(self, client_id: str)` — Store client_id, rooms set (initially empty), and an outbox `list[Message]` (messages waiting to be sent to this client).\n   - `receive(self) -> Message | None` — Pop and return the oldest message from outbox, or `None` if empty.\n\n3. **`WebSocketManager`** — Manages all connections and rooms:\n   - `connect(self, client_id: str, room: str = 'general') -> Connection` — Create or get a connection, add it to the room. Send a system message `\"{client_id} joined {room}\"` to all OTHER clients in the room. Return the connection.\n   - `disconnect(self, client_id: str) -> list[str]` — Remove the client from all rooms. Send a system message `\"{client_id} left {room}\"` to remaining clients in each room. Return the list of rooms the client was in.\n   - `send_to(self, client_id: str, message: Message) -> bool` — Send a message to a specific client's outbox. Return `False` if client not found.\n   - `broadcast(self, room: str, message: Message, exclude: str | None = None) -> int` — Send message to all clients in the room, optionally excluding one client_id. Return the number of clients who received it.\n   - `get_room_members(self, room: str) -> list[str]` — Return sorted list of client IDs in a room.\n   - `get_client_rooms(self, client_id: str) -> list[str]` — Return sorted list of rooms a client is in.\n\n**Part 2 — Streaming Response:**\n\n4. **`StreamChunk`** (Pydantic model) — `index: int`, `data: str`, `is_last: bool = False`.\n\n5. **`StreamingResponse`** — Simulates chunked streaming:\n   - `__init__(self, content: str, chunk_size: int = 10)` — Split content into chunks of `chunk_size` characters.\n   - `__iter__(self) -> Iterator[StreamChunk]` — Yield `StreamChunk` objects with incrementing index (starting from 0). The last chunk has `is_last=True`.\n   - `get_chunks(self) -> list[StreamChunk]` — Return all chunks as a list.\n   - `get_total_chunks(self) -> int` — Return the total number of chunks.\n\n6. **`SSEFormatter`** — Server-Sent Events formatter:\n   - `format_event(data: str, event: str | None = None, id: str | None = None) -> str` — Static method. Format as SSE: `\"data: {data}\\n\"` with optional `\"event: {event}\\n\"` and `\"id: {id}\\n\"` lines, ending with `\"\\n\"` (extra blank line).\n   - `format_stream(chunks: list[StreamChunk]) -> str` — Static method. Format all chunks as a concatenated SSE string.",
+  "examples": [
+    {
+      "input": "mgr = WebSocketManager()\nc1 = mgr.connect('alice', 'chat')\nc2 = mgr.connect('bob', 'chat')\nmgr.get_room_members('chat')",
+      "output": "['alice', 'bob']",
+      "explanation": "Both clients are connected to the 'chat' room."
+    },
+    {
+      "input": "stream = StreamingResponse('Hello, World!', chunk_size=5)\n[(c.index, c.data, c.is_last) for c in stream]",
+      "output": "[(0, 'Hello', False), (1, ', Wor', False), (2, 'ld!', True)]",
+      "explanation": "Content is split into 5-char chunks with the last chunk marked."
+    }
+  ],
+  "constraints": [
+    "connect must send system join messages to OTHER clients already in the room (not the joining client).",
+    "disconnect must send system leave messages to REMAINING clients in each room.",
+    "broadcast with exclude must not send to the excluded client.",
+    "StreamingResponse must handle content shorter than chunk_size (single chunk).",
+    "SSEFormatter.format_event must end with a blank line ('\\n\\n' at the end of all lines).",
+    "Connection.receive must return messages in FIFO order."
+  ],
+  "starter_code": "import time\nfrom typing import Iterator\nfrom pydantic import BaseModel, Field\n\n\nclass Message(BaseModel):\n    sender: str\n    content: str\n    room: str = 'general'\n    timestamp: float = Field(default_factory=time.time)\n    msg_type: str = 'text'  # 'text', 'system', 'error'\n\n\nclass Connection:\n    \"\"\"Represents a WebSocket client.\"\"\"\n\n    def __init__(self, client_id: str):\n        pass\n\n    def receive(self) -> Message | None:\n        # Pop oldest message from outbox\n        pass\n\n\nclass WebSocketManager:\n    \"\"\"Manages WebSocket connections and rooms.\"\"\"\n\n    def __init__(self):\n        pass\n\n    def connect(self, client_id: str, room: str = 'general') -> Connection:\n        pass\n\n    def disconnect(self, client_id: str) -> list[str]:\n        pass\n\n    def send_to(self, client_id: str, message: Message) -> bool:\n        pass\n\n    def broadcast(self, room: str, message: Message, exclude: str | None = None) -> int:\n        pass\n\n    def get_room_members(self, room: str) -> list[str]:\n        pass\n\n    def get_client_rooms(self, client_id: str) -> list[str]:\n        pass\n\n\nclass StreamChunk(BaseModel):\n    index: int\n    data: str\n    is_last: bool = False\n\n\nclass StreamingResponse:\n    \"\"\"Simulates chunked streaming response.\"\"\"\n\n    def __init__(self, content: str, chunk_size: int = 10):\n        pass\n\n    def __iter__(self) -> Iterator[StreamChunk]:\n        pass\n\n    def get_chunks(self) -> list[StreamChunk]:\n        pass\n\n    def get_total_chunks(self) -> int:\n        pass\n\n\nclass SSEFormatter:\n    \"\"\"Server-Sent Events formatter.\"\"\"\n\n    @staticmethod\n    def format_event(data: str, event: str | None = None, id: str | None = None) -> str:\n        # Format as SSE string\n        pass\n\n    @staticmethod\n    def format_stream(chunks: list[StreamChunk]) -> str:\n        # Format all chunks as concatenated SSE\n        pass\n",
+  "test_cases": [
+    {
+      "input": "mgr = WebSocketManager()\nc1 = mgr.connect('alice', 'chat')\nc2 = mgr.connect('bob', 'chat')\n(mgr.get_room_members('chat'), c1.receive().content)",
+      "expected": "(['alice', 'bob'], 'bob joined chat')",
+      "is_hidden": false
+    },
+    {
+      "input": "mgr = WebSocketManager()\nmgr.connect('alice', 'chat')\nmgr.connect('bob', 'chat')\nmsg = Message(sender='alice', content='Hello!', room='chat')\ncount = mgr.broadcast('chat', msg, exclude='alice')\nbob_conn = mgr.connect('bob', 'chat')\n(count, bob_conn.receive().content)",
+      "expected": "(1, 'Hello!')",
+      "is_hidden": false
+    },
+    {
+      "input": "stream = StreamingResponse('ABCDEFGHIJ', chunk_size=3)\nchunks = stream.get_chunks()\n[(c.index, c.data, c.is_last) for c in chunks]",
+      "expected": "[(0, 'ABC', False), (1, 'DEF', False), (2, 'GHI', False), (3, 'J', True)]",
+      "is_hidden": false
+    },
+    {
+      "input": "mgr = WebSocketManager()\nmgr.connect('alice', 'room1')\nmgr.connect('alice', 'room2')\nrooms = mgr.disconnect('alice')\nsorted(rooms)",
+      "expected": "['room1', 'room2']",
+      "is_hidden": true
+    },
+    {
+      "input": "mgr = WebSocketManager()\nmgr.connect('alice', 'chat')\nmgr.connect('bob', 'chat')\nmgr.disconnect('bob')\nalice = mgr.connect('alice', 'chat')\n# alice should have received 'bob joined chat' then 'bob left chat'\nmsgs = []\nm = alice.receive()\nwhile m:\n    msgs.append(m.content)\n    m = alice.receive()\nmsgs",
+      "expected": "['bob joined chat', 'bob left chat']",
+      "is_hidden": true
+    },
+    {
+      "input": "sse = SSEFormatter.format_event('hello', event='message', id='1')\n'event: message' in sse and 'data: hello' in sse and 'id: 1' in sse and sse.endswith('\\n\\n')",
+      "expected": "True",
+      "is_hidden": true
+    },
+    {
+      "input": "stream = StreamingResponse('Hi', chunk_size=100)\nchunks = stream.get_chunks()\n(stream.get_total_chunks(), chunks[0].data, chunks[0].is_last)",
+      "expected": "(1, 'Hi', True)",
+      "is_hidden": true
+    },
+    {
+      "input": "mgr = WebSocketManager()\nmgr.connect('x', 'a')\n(mgr.send_to('x', Message(sender='sys', content='hi')), mgr.send_to('ghost', Message(sender='sys', content='hi')))",
+      "expected": "(True, False)",
+      "is_hidden": false
+    }
+  ],
+  "time_limit_minutes": 40,
+  "tags": ["fastapi", "websocket", "streaming", "sse", "real-time"]
+}

@@ -1,0 +1,23 @@
+{
+  "id": "number-of-islands",
+  "title": "Number of Islands",
+  "category": "algorithms",
+  "difficulty": "medium",
+  "description": "Given an `m x n` 2D grid map of `'1'`s (land) and `'0'`s (water), return the **number of islands**.\n\nAn island is surrounded by water and is formed by connecting adjacent lands horizontally or vertically. You may assume all four edges of the grid are surrounded by water.",
+  "examples": [
+    {"input": "grid = [[\"1\",\"1\",\"1\",\"1\",\"0\"],[\"1\",\"1\",\"0\",\"1\",\"0\"],[\"1\",\"1\",\"0\",\"0\",\"0\"],[\"0\",\"0\",\"0\",\"0\",\"0\"]]", "output": "1"},
+    {"input": "grid = [[\"1\",\"1\",\"0\",\"0\",\"0\"],[\"1\",\"1\",\"0\",\"0\",\"0\"],[\"0\",\"0\",\"1\",\"0\",\"0\"],[\"0\",\"0\",\"0\",\"1\",\"1\"]]", "output": "3"}
+  ],
+  "constraints": ["m == len(grid)", "n == len(grid[i])", "1 <= m, n <= 300", "grid[i][j] is '0' or '1'."],
+  "starter_code": "def num_islands(grid: list[list[str]]) -> int:\n    # Write your solution here\n    pass\n",
+  "test_cases": [
+    {"input": "num_islands([['1','1','1','1','0'],['1','1','0','1','0'],['1','1','0','0','0'],['0','0','0','0','0']])", "expected": "1", "is_hidden": false},
+    {"input": "num_islands([['1','1','0','0','0'],['1','1','0','0','0'],['0','0','1','0','0'],['0','0','0','1','1']])", "expected": "3", "is_hidden": false},
+    {"input": "num_islands([['1']])", "expected": "1", "is_hidden": true},
+    {"input": "num_islands([['0']])", "expected": "0", "is_hidden": true},
+    {"input": "num_islands([['1','0','1'],['0','1','0'],['1','0','1']])", "expected": "5", "is_hidden": true},
+    {"input": "num_islands([['1','1'],['1','1']])", "expected": "1", "is_hidden": true}
+  ],
+  "time_limit_minutes": 25,
+  "tags": ["dfs", "bfs", "graph", "matrix"]
+}

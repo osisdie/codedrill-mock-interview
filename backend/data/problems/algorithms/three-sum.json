@@ -1,0 +1,24 @@
+{
+  "id": "three-sum",
+  "title": "3Sum",
+  "category": "algorithms",
+  "difficulty": "medium",
+  "description": "Given an integer array `nums`, return all the **unique triplets** `[nums[i], nums[j], nums[k]]` such that `i != j`, `i != k`, and `j != k`, and `nums[i] + nums[j] + nums[k] == 0`.\n\nThe solution set must not contain duplicate triplets. Return triplets in any order, but each triplet must be sorted.",
+  "examples": [
+    {"input": "nums = [-1, 0, 1, 2, -1, -4]", "output": "[[-1, -1, 2], [-1, 0, 1]]", "explanation": "The distinct triplets that sum to zero."},
+    {"input": "nums = [0, 1, 1]", "output": "[]", "explanation": "No three numbers sum to zero."},
+    {"input": "nums = [0, 0, 0]", "output": "[[0, 0, 0]]"}
+  ],
+  "constraints": ["3 <= len(nums) <= 3000", "-10^5 <= nums[i] <= 10^5"],
+  "starter_code": "def three_sum(nums: list[int]) -> list[list[int]]:\n    # Write your solution here\n    pass\n",
+  "test_cases": [
+    {"input": "sorted([sorted(t) for t in three_sum([-1, 0, 1, 2, -1, -4])])", "expected": "[[-1, -1, 2], [-1, 0, 1]]", "is_hidden": false},
+    {"input": "three_sum([0, 1, 1])", "expected": "[]", "is_hidden": false},
+    {"input": "three_sum([0, 0, 0])", "expected": "[[0, 0, 0]]", "is_hidden": false},
+    {"input": "three_sum([0, 0, 0, 0])", "expected": "[[0, 0, 0]]", "is_hidden": true},
+    {"input": "sorted([sorted(t) for t in three_sum([-2, 0, 1, 1, 2])])", "expected": "[[-2, 0, 2], [-2, 1, 1]]", "is_hidden": true},
+    {"input": "three_sum([1, 2, 3])", "expected": "[]", "is_hidden": true}
+  ],
+  "time_limit_minutes": 25,
+  "tags": ["two-pointers", "sorting", "array"]
+}

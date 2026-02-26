@@ -1,0 +1,67 @@
+{
+  "id": "rate-limiter",
+  "title": "Implement Rate Limiter (Token Bucket & Sliding Window)",
+  "category": "fastapi",
+  "difficulty": "hard",
+  "description": "Implement two common **rate limiting** algorithms used in FastAPI middleware: **Token Bucket** and **Sliding Window Log**. Rate limiting protects APIs from abuse and ensures fair usage.\n\nBuild the following:\n\n1. **`RateLimitResult`** (Pydantic model) — `allowed: bool`, `remaining: int`, `retry_after: float | None = None` (seconds until next allowed request), `limit: int`, `window: float`.\n\n2. **`TokenBucketLimiter`** — Classic token bucket algorithm:\n   - `__init__(self, capacity: int, refill_rate: float)` — `capacity` is max tokens; `refill_rate` is tokens added per second.\n   - `consume(self, key: str, tokens: int = 1) -> RateLimitResult` — Try to consume tokens for the given key. Each key has its own bucket. Refill tokens based on elapsed time since last check (but never exceed capacity). If enough tokens: consume and return `allowed=True` with `remaining` tokens. If not enough: return `allowed=False` with `retry_after` = seconds until enough tokens are available.\n\n3. **`SlidingWindowLimiter`** — Sliding window log algorithm:\n   - `__init__(self, max_requests: int, window_seconds: float)` — Set limits.\n   - `check(self, key: str) -> RateLimitResult` — Record the current request timestamp. Remove timestamps older than `window_seconds`. If count <= `max_requests`: `allowed=True`, `remaining` = max_requests - count. If count > `max_requests`: `allowed=False`, `retry_after` = oldest_timestamp + window_seconds - now.\n\n4. **`RateLimiterMiddleware`** — Combines multiple limiters:\n   - `__init__(self, limiters: list)` — Store a list of limiter instances.\n   - `check(self, key: str) -> RateLimitResult` — Check ALL limiters in order. Return the FIRST result that is `allowed=False`. If all pass, return the result with the LOWEST `remaining` count.\n\n5. **`IPBasedKey`** — Key extraction:\n   - `extract(request_data: dict) -> str` — Static method. Return `request_data.get('ip', 'unknown')`.\n\n6. **`UserBasedKey`** — Key extraction:\n   - `extract(request_data: dict) -> str` — Static method. Return `request_data.get('user_id', 'anonymous')`.\n\n7. **`build_api_limiter() -> RateLimiterMiddleware`** — Build a standard API limiter with:\n   - Token bucket: capacity=10, refill_rate=2.0 (2 tokens/sec)\n   - Sliding window: max_requests=100, window_seconds=60.0",
+  "examples": [
+    {
+      "input": "tb = TokenBucketLimiter(capacity=5, refill_rate=1.0)\nr = tb.consume('user1')\n(r.allowed, r.remaining)",
+      "output": "(True, 4)",
+      "explanation": "Bucket starts full (5 tokens), one consumed, 4 remaining."
+    },
+    {
+      "input": "sw = SlidingWindowLimiter(max_requests=3, window_seconds=60.0)\nresults = [sw.check('ip1') for _ in range(4)]\n(results[2].allowed, results[3].allowed)",
+      "output": "(True, False)",
+      "explanation": "3rd request succeeds (at limit), 4th is denied."
+    }
+  ],
+  "constraints": [
+    "TokenBucket must refill tokens based on elapsed time (tokens += elapsed * refill_rate, capped at capacity).",
+    "Each key must have independent state (separate bucket/window per user/IP).",
+    "SlidingWindow must remove expired timestamps before checking count.",
+    "RateLimiterMiddleware must return the first denial, or the lowest remaining if all pass.",
+    "retry_after must be calculated correctly (time until enough tokens/window slides).",
+    "Token bucket starts with a FULL bucket on first access."
+  ],
+  "starter_code": "import time\nfrom typing import Any\nfrom pydantic import BaseModel\n\n\nclass RateLimitResult(BaseModel):\n    allowed: bool\n    remaining: int\n    retry_after: float | None = None\n    limit: int\n    window: float\n\n\nclass TokenBucketLimiter:\n    \"\"\"Token bucket rate limiter.\"\"\"\n\n    def __init__(self, capacity: int, refill_rate: float):\n        pass\n\n    def consume(self, key: str, tokens: int = 1) -> RateLimitResult:\n        pass\n\n\nclass SlidingWindowLimiter:\n    \"\"\"Sliding window log rate limiter.\"\"\"\n\n    def __init__(self, max_requests: int, window_seconds: float):\n        pass\n\n    def check(self, key: str) -> RateLimitResult:\n        pass\n\n\nclass RateLimiterMiddleware:\n    \"\"\"Combines multiple rate limiters.\"\"\"\n\n    def __init__(self, limiters: list):\n        pass\n\n    def check(self, key: str) -> RateLimitResult:\n        pass\n\n\nclass IPBasedKey:\n    @staticmethod\n    def extract(request_data: dict) -> str:\n        pass\n\n\nclass UserBasedKey:\n    @staticmethod\n    def extract(request_data: dict) -> str:\n        pass\n\n\ndef build_api_limiter() -> RateLimiterMiddleware:\n    \"\"\"Build standard API rate limiter.\"\"\"\n    pass\n",
+  "test_cases": [
+    {
+      "input": "tb = TokenBucketLimiter(capacity=3, refill_rate=1.0)\nr1 = tb.consume('k')\nr2 = tb.consume('k')\nr3 = tb.consume('k')\nr4 = tb.consume('k')\n(r1.remaining, r2.remaining, r3.remaining, r4.allowed)",
+      "expected": "(2, 1, 0, False)",
+      "is_hidden": false
+    },
+    {
+      "input": "sw = SlidingWindowLimiter(max_requests=2, window_seconds=60.0)\nr1 = sw.check('k')\nr2 = sw.check('k')\nr3 = sw.check('k')\n(r1.allowed, r1.remaining, r2.allowed, r2.remaining, r3.allowed)",
+      "expected": "(True, 1, True, 0, False)",
+      "is_hidden": false
+    },
+    {
+      "input": "tb = TokenBucketLimiter(capacity=5, refill_rate=1.0)\nfor _ in range(5): tb.consume('a')\nfor _ in range(5): tb.consume('b')\n(tb.consume('a').allowed, tb.consume('b').allowed)",
+      "expected": "(False, False)",
+      "is_hidden": false
+    },
+    {
+      "input": "tb = TokenBucketLimiter(capacity=3, refill_rate=100.0)\nfor _ in range(3): tb.consume('k')\nimport time; time.sleep(0.05)\nr = tb.consume('k')\nr.allowed",
+      "expected": "True",
+      "is_hidden": true
+    },
+    {
+      "input": "tb = TokenBucketLimiter(capacity=2, refill_rate=1.0)\nsw = SlidingWindowLimiter(max_requests=5, window_seconds=60.0)\nmw = RateLimiterMiddleware([tb, sw])\nr1 = mw.check('k')\nr2 = mw.check('k')\nr3 = mw.check('k')\n(r1.allowed, r2.allowed, r3.allowed)",
+      "expected": "(True, True, False)",
+      "is_hidden": true
+    },
+    {
+      "input": "(IPBasedKey.extract({'ip': '192.168.1.1', 'user_id': 'bob'}), UserBasedKey.extract({'ip': '10.0.0.1', 'user_id': 'alice'}), IPBasedKey.extract({}))",
+      "expected": "('192.168.1.1', 'alice', 'unknown')",
+      "is_hidden": true
+    },
+    {
+      "input": "limiter = build_api_limiter()\nresults = [limiter.check('user1') for _ in range(10)]\nall_allowed = all(r.allowed for r in results)\neleven = limiter.check('user1')\n(all_allowed, eleven.allowed)",
+      "expected": "(True, False)",
+      "is_hidden": true
+    }
+  ],
+  "time_limit_minutes": 35,
+  "tags": ["fastapi", "rate-limiting", "token-bucket", "sliding-window", "middleware"]
+}
