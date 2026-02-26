@@ -27,6 +27,8 @@
     {"id": "sql-crud-raw", "file": "fastapi/sql-crud-raw.json"},
     {"id": "sql-crud-sqlalchemy", "file": "fastapi/sql-crud-sqlalchemy.json"},
     {"id": "sql-crud-sqlmodel", "file": "fastapi/sql-crud-sqlmodel.json"},
+    {"id": "orm-relationships", "file": "fastapi/orm-relationships.json"},
+    {"id": "sql-n-plus-one", "file": "fastapi/sql-n-plus-one.json"},
     {"id": "jwt-middleware-exception", "file": "fastapi/jwt-middleware-exception.json"},
     {"id": "swagger-versioning-api", "file": "fastapi/swagger-versioning-api.json"},
     {"id": "mediator-pubsub-pattern", "file": "fastapi/mediator-pubsub-pattern.json"},

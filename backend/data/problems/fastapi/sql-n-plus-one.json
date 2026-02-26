@@ -1,0 +1,78 @@
+{
+  "id": "sql-n-plus-one",
+  "title": "SQL N+1 Problem — Detection and Eager Loading Fix",
+  "category": "fastapi",
+  "difficulty": "hard",
+  "description": "The **N+1 query problem** is one of the most common performance pitfalls in ORM-based applications. It occurs when code fetches a list of N parent records, then issues 1 additional query per parent to load related children — resulting in N+1 total queries instead of 1-2.\n\nIn this problem you will build a mini ORM with a **query counter** to detect N+1 issues, then implement **eager loading** strategies (JOIN-based and subquery-based) to fix them.\n\nUsing `sqlite3`, build the following:\n\n1. **`QueryTracker`** — A context manager that counts SQL queries:\n   - `__init__(self, conn: sqlite3.Connection)` — Wrap the connection.\n   - `__enter__(self)` — Reset the counter and install a `conn.set_trace_callback` to count each executed SQL statement.\n   - `__exit__(self, *args)` — Remove the trace callback.\n   - `query_count` property — Return the current count.\n\n2. **`MiniORM`** — A simple ORM class managing two tables: `authors` (id, name) and `books` (id, title, author_id FK):\n   - `__init__(self, conn: sqlite3.Connection)` — Store conn, create both tables.\n   - `add_author(self, name: str) -> int` — INSERT author, return id.\n   - `add_book(self, title: str, author_id: int) -> int` — INSERT book, return id.\n   - `get_all_authors(self) -> list[dict]` — Return all authors as `[{'id': ..., 'name': ...}]`.\n   - `get_books_by_author(self, author_id: int) -> list[dict]` — Return books for one author.\n\n3. **`naive_author_books(orm: MiniORM) -> list[dict]`** — The **N+1 version**: fetch all authors, then loop and call `get_books_by_author` for each. Return `[{'author': name, 'books': [title, ...]}]`.\n\n4. **`eager_join_author_books(orm: MiniORM) -> list[dict]`** — The **JOIN fix**: use a single `SELECT authors.id, authors.name, books.title FROM authors LEFT JOIN books ON ...` query. Group results in Python. Return the same format as above.\n\n5. **`eager_subquery_author_books(orm: MiniORM) -> list[dict]`** — The **subquery fix**: use exactly **2 queries** — one `SELECT * FROM authors` and one `SELECT * FROM books WHERE author_id IN (...)` with the list of author IDs. Group in Python. Return the same format.\n\n6. **`detect_n_plus_one(func, orm: MiniORM, n_authors: int) -> dict`** — A diagnostic function:\n   - Call `func(orm)` inside a `QueryTracker` context.\n   - Return `{'query_count': int, 'is_n_plus_one': bool}` where `is_n_plus_one` is `True` if query_count > n_authors` (i.e. more queries than the number of parents).\n\nThe key learning: `naive_author_books` should fire N+1 queries; `eager_join_author_books` should fire exactly 1; `eager_subquery_author_books` should fire exactly 2.",
+  "examples": [
+    {
+      "input": "conn = sqlite3.connect(':memory:')\norm = MiniORM(conn)\norm.add_author('Alice')\norm.add_author('Bob')\norm.add_book('Book1', 1)\norm.add_book('Book2', 1)\norm.add_book('Book3', 2)\nnaive_author_books(orm)",
+      "output": "[{'author': 'Alice', 'books': ['Book1', 'Book2']}, {'author': 'Bob', 'books': ['Book3']}]",
+      "explanation": "Correct result, but fires 3 queries (1 for authors + 1 per author)."
+    },
+    {
+      "input": "detect_n_plus_one(naive_author_books, orm, 2)",
+      "output": "{'query_count': 3, 'is_n_plus_one': True}",
+      "explanation": "1 query for all authors + 2 queries for each author's books = 3 total > 2 authors."
+    },
+    {
+      "input": "detect_n_plus_one(eager_join_author_books, orm, 2)",
+      "output": "{'query_count': 1, 'is_n_plus_one': False}",
+      "explanation": "Single JOIN query fetches everything — no N+1."
+    }
+  ],
+  "constraints": [
+    "QueryTracker must use conn.set_trace_callback to count queries — no monkey-patching.",
+    "naive_author_books must call get_all_authors + get_books_by_author per author (demonstrating N+1).",
+    "eager_join_author_books must use exactly 1 SQL query with LEFT JOIN.",
+    "eager_subquery_author_books must use exactly 2 SQL queries (authors + books WHERE IN).",
+    "detect_n_plus_one must use QueryTracker to measure and return the diagnostic dict.",
+    "All functions must return results sorted by author name alphabetically.",
+    "All SQL must use parameterized queries where applicable."
+  ],
+  "starter_code": "import sqlite3\nfrom collections import defaultdict\n\n\nclass QueryTracker:\n    \"\"\"Context manager that counts SQL queries executed on a connection.\"\"\"\n\n    def __init__(self, conn: sqlite3.Connection):\n        self.conn = conn\n        self._count = 0\n\n    def __enter__(self):\n        # TODO: Reset counter, install trace callback\n        pass\n\n    def __exit__(self, *args):\n        # TODO: Remove trace callback\n        pass\n\n    @property\n    def query_count(self) -> int:\n        return self._count\n\n\nclass MiniORM:\n    \"\"\"Simple ORM managing authors and books tables.\"\"\"\n\n    def __init__(self, conn: sqlite3.Connection):\n        self.conn = conn\n        # TODO: Create authors and books tables\n        pass\n\n    def add_author(self, name: str) -> int:\n        # TODO: INSERT author, return id\n        pass\n\n    def add_book(self, title: str, author_id: int) -> int:\n        # TODO: INSERT book, return id\n        pass\n\n    def get_all_authors(self) -> list[dict]:\n        # TODO: SELECT all authors\n        pass\n\n    def get_books_by_author(self, author_id: int) -> list[dict]:\n        # TODO: SELECT books for one author\n        pass\n\n\ndef naive_author_books(orm: MiniORM) -> list[dict]:\n    \"\"\"N+1 version: fetches authors, then queries books per author.\"\"\"\n    # TODO: Demonstrate the N+1 problem\n    pass\n\n\ndef eager_join_author_books(orm: MiniORM) -> list[dict]:\n    \"\"\"JOIN fix: single query with LEFT JOIN.\"\"\"\n    # TODO: Fix N+1 with a single JOIN query\n    pass\n\n\ndef eager_subquery_author_books(orm: MiniORM) -> list[dict]:\n    \"\"\"Subquery fix: 2 queries — all authors + all books WHERE IN (...).\"\"\"\n    # TODO: Fix N+1 with subquery strategy\n    pass\n\n\ndef detect_n_plus_one(func, orm: MiniORM, n_authors: int) -> dict:\n    \"\"\"Run func(orm) inside QueryTracker and return diagnostic info.\"\"\"\n    # TODO: Use QueryTracker, return {'query_count': ..., 'is_n_plus_one': ...}\n    pass\n",
+  "test_cases": [
+    {
+      "input": "conn = sqlite3.connect(':memory:')\norm = MiniORM(conn)\norm.add_author('Alice')\norm.add_author('Bob')\norm.add_book('B1', 1)\norm.add_book('B2', 1)\norm.add_book('B3', 2)\nresult = naive_author_books(orm)\n[(r['author'], r['books']) for r in result]",
+      "expected": "[('Alice', ['B1', 'B2']), ('Bob', ['B3'])]",
+      "is_hidden": false
+    },
+    {
+      "input": "conn = sqlite3.connect(':memory:')\norm = MiniORM(conn)\norm.add_author('Alice')\norm.add_author('Bob')\norm.add_book('B1', 1)\norm.add_book('B2', 1)\norm.add_book('B3', 2)\nresult = eager_join_author_books(orm)\n[(r['author'], r['books']) for r in result]",
+      "expected": "[('Alice', ['B1', 'B2']), ('Bob', ['B3'])]",
+      "is_hidden": false
+    },
+    {
+      "input": "conn = sqlite3.connect(':memory:')\norm = MiniORM(conn)\norm.add_author('Alice')\norm.add_author('Bob')\norm.add_book('B1', 1)\norm.add_book('B2', 1)\norm.add_book('B3', 2)\nresult = eager_subquery_author_books(orm)\n[(r['author'], r['books']) for r in result]",
+      "expected": "[('Alice', ['B1', 'B2']), ('Bob', ['B3'])]",
+      "is_hidden": false
+    },
+    {
+      "input": "conn = sqlite3.connect(':memory:')\norm = MiniORM(conn)\nfor i in range(5):\n    aid = orm.add_author(f'A{i}')\n    orm.add_book(f'Book{i}', aid)\ninfo = detect_n_plus_one(naive_author_books, orm, 5)\n(info['is_n_plus_one'], info['query_count'])",
+      "expected": "(True, 6)",
+      "is_hidden": false
+    },
+    {
+      "input": "conn = sqlite3.connect(':memory:')\norm = MiniORM(conn)\nfor i in range(5):\n    aid = orm.add_author(f'A{i}')\n    orm.add_book(f'Book{i}', aid)\ninfo = detect_n_plus_one(eager_join_author_books, orm, 5)\n(info['is_n_plus_one'], info['query_count'])",
+      "expected": "(False, 1)",
+      "is_hidden": true
+    },
+    {
+      "input": "conn = sqlite3.connect(':memory:')\norm = MiniORM(conn)\nfor i in range(5):\n    aid = orm.add_author(f'A{i}')\n    orm.add_book(f'Book{i}', aid)\ninfo = detect_n_plus_one(eager_subquery_author_books, orm, 5)\n(info['is_n_plus_one'], info['query_count'])",
+      "expected": "(False, 2)",
+      "is_hidden": true
+    },
+    {
+      "input": "conn = sqlite3.connect(':memory:')\norm = MiniORM(conn)\norm.add_author('Lonely')\nresult = eager_join_author_books(orm)\nresult",
+      "expected": "[{'author': 'Lonely', 'books': []}]",
+      "is_hidden": true
+    },
+    {
+      "input": "conn = sqlite3.connect(':memory:')\norm = MiniORM(conn)\norm.add_author('Z')\norm.add_author('A')\norm.add_book('BZ', 1)\norm.add_book('BA', 2)\nresult = eager_join_author_books(orm)\n[r['author'] for r in result]",
+      "expected": "['A', 'Z']",
+      "is_hidden": true
+    }
+  ],
+  "time_limit_minutes": 40,
+  "tags": ["fastapi", "sql", "orm", "n+1", "performance", "eager-loading", "join"]
+}
