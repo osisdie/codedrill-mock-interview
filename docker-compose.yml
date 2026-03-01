@@ -2,7 +2,7 @@ services:
   backend:
     build: ./backend
     ports:
-      - "8001:8000"
+      - "8573:8000"
     env_file:
       - ./backend/.env
     environment:

@@ -3,30 +3,31 @@ import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Splitpanes, Pane } from 'splitpanes'
 import 'splitpanes/dist/splitpanes.css'
+import { useMonaco } from '@guolao/vue-monaco-editor'
 import { useProblemStore } from '../stores/problemStore'
 import { useSessionStore } from '../stores/sessionStore'
 import { useTimerStore } from '../stores/timerStore'
-import { useTypewriter } from '../composables/useTypewriter'
-import { useApi } from '../composables/useApi'
 import TimerDisplay from '../components/arena/TimerDisplay.vue'
 import TestCasesPanel from '../components/arena/TestCasesPanel.vue'
 import RunSubmitBar from '../components/arena/RunSubmitBar.vue'
 import CodeChat from '../components/arena/CodeChat.vue'
 import type { SubmissionResult } from '../types'
 
+const { monacoRef } = useMonaco()
+
 const route = useRoute()
 const router = useRouter()
 const problemStore = useProblemStore()
 const sessionStore = useSessionStore()
 const timer = useTimerStore()
-const api = useApi()
-const { isTyping, typeText, cancel: cancelTypewriter } = useTypewriter()
-
 const code = ref('')
 const testResults = ref<SubmissionResult[]>([])
 const activeTab = ref<'description' | 'results'>('description')
 const editorRef = ref<any>(null)
+const streamPreRef = ref<HTMLDivElement | null>(null)
 const solutionLoading = ref(false)
+const completedHtml = ref('')  // HTML for fully-typed lines (append-only, no flicker)
+const typingHtml = ref('')     // HTML for the line currently being typed char-by-char
 const chatOpen = ref(false)
 const selectedText = ref<string | null>(null)
 
@@ -49,9 +50,10 @@ onUnmounted(() => {
   timer.stop()
 })
 
-// Auto-save code on change (debounced)
+// Auto-save code on change (debounced) — skip during streaming
 let saveTimeout: ReturnType<typeof setTimeout> | null = null
 watch(code, (newCode) => {
+  if (solutionLoading.value) return  // don't auto-save partial streaming code
   if (saveTimeout) clearTimeout(saveTimeout)
   saveTimeout = setTimeout(() => {
     sessionStore.updateSession(sessionId, {
@@ -102,30 +104,242 @@ function askAboutSelection() {
   chatOpen.value = true
 }
 
+let streamAbort: AbortController | null = null
+let twTimer: ReturnType<typeof setTimeout> | null = null
+let visibleTextBuffer = ''      // plain text of completed lines (for Stop button)
+let currentTypingPartial = ''   // partial text of line being typed (for Stop button)
+
+// Strip leading ```python / trailing ``` fences the AI sometimes adds
+function stripFences(text: string): string {
+  let s = text
+  if (s.startsWith('```python\n')) s = s.slice(10)
+  else if (s.startsWith('```python')) s = s.slice(9)
+  else if (s.startsWith('```\n')) s = s.slice(4)
+  else if (s.startsWith('```')) s = s.slice(3)
+  if (s.endsWith('\n```')) s = s.slice(0, -4)
+  else if (s.endsWith('```')) s = s.slice(0, -3)
+  return s
+}
+
+// Content-aware delay for typewriter effect
+function typewriterDelay(line: string): number {
+  const trimmed = line.trim()
+  if (trimmed === '') return 120                       // blank line — pause
+  if (trimmed.startsWith('#')) return 80               // comment
+  if (trimmed.startsWith('def ') || trimmed.startsWith('class ')) return 90
+  if (trimmed.endsWith(':')) return 70                  // block opener
+  if (/[.;,!?]$/.test(trimmed)) return 60              // punctuation
+  return 40                                            // regular code
+}
+
+// Colorize text using Monaco's tokenizer (returns HTML string)
+async function colorizeText(text: string): Promise<string> {
+  const monaco = monacoRef.value
+  if (!monaco || !text) return escapeHtml(text)
+  try {
+    return await monaco.editor.colorize(text, 'python', { tabSize: 4 })
+  } catch {
+    return escapeHtml(text)
+  }
+}
+
+function escapeHtml(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+}
+
 async function handleShowAnswer() {
   const problemId = problemStore.currentProblem?.id
   if (!problemId) return
 
   solutionLoading.value = true
-  try {
-    const res = await api.get<{ solution: string }>(`/problems/${problemId}/solution`)
-    code.value = ''
-    await typeText(res.solution, (text, lineCount) => {
-      code.value = text
-      // Auto-scroll editor to keep the latest line visible
-      if (editorRef.value) {
-        editorRef.value.revealLineInCenter(lineCount)
+  completedHtml.value = ''
+  typingHtml.value = ''
+  visibleTextBuffer = ''
+  currentTypingPartial = ''
+  streamAbort = new AbortController()
+
+  // Pending lines queue: SSE fills this, typewriter loop drains it
+  const pendingLines: string[] = []
+  let sseComplete = false
+  let rawBuffer = ''
+
+  // ── Char-by-char typewriter ──────────────────────────
+  function startTypewriter(): Promise<void> {
+    return new Promise<void>((resolve) => {
+      let currentLine = ''
+      let charIdx = 0
+      let lineComplete = true  // start true to pick up first line
+
+      async function tick() {
+        // Pick up next line when current is done
+        if (lineComplete) {
+          if (pendingLines.length === 0) {
+            if (sseComplete) { twTimer = null; resolve(); return }
+            twTimer = setTimeout(tick, 30)  // poll for more lines
+            return
+          }
+          currentLine = pendingLines.shift()!
+          charIdx = 0
+          lineComplete = false
+
+          // Blank lines: add immediately, no typing needed
+          if (currentLine === '') {
+            visibleTextBuffer += (visibleTextBuffer ? '\n' : '')
+            completedHtml.value += '<div style="min-height:1.2em"></div>'
+            lineComplete = true
+            twTimer = setTimeout(tick, 80)
+            return
+          }
+        }
+
+        // Type characters within the current line
+        const isComment = currentLine.trim().startsWith('#')
+        const chunkSize = isComment ? 1 : 2
+        charIdx = Math.min(charIdx + chunkSize, currentLine.length)
+        currentTypingPartial = currentLine.slice(0, charIdx)
+
+        // Colorize partial line for typing display
+        typingHtml.value = await colorizeText(currentTypingPartial)
+
+        // Scroll to keep content centered
+        if (streamPreRef.value) {
+          const el = streamPreRef.value
+          el.style.paddingBottom = `${Math.floor(el.clientHeight / 2)}px`
+          el.scrollTop = el.scrollHeight
+        }
+
+        if (charIdx >= currentLine.length) {
+          // Line fully typed — move to completed section (append-only, no flicker)
+          visibleTextBuffer += (visibleTextBuffer ? '\n' : '') + currentLine
+          completedHtml.value += typingHtml.value  // reuse already-colorized HTML
+          typingHtml.value = ''
+          currentTypingPartial = ''
+          lineComplete = true
+          twTimer = setTimeout(tick, typewriterDelay(currentLine))
+        } else {
+          // Continue typing within line
+          twTimer = setTimeout(tick, isComment ? 25 : 16)
+        }
       }
+      twTimer = setTimeout(tick, 40)
     })
-  } catch (e: any) {
-    code.value = `# Error fetching solution: ${e.message}`
-  } finally {
-    solutionLoading.value = false
   }
+
+  // ── SSE reader ────────────────────────────────────────
+  async function readSSE() {
+    try {
+      const res = await fetch(`/api/problems/${problemId}/solution/stream`, {
+        signal: streamAbort!.signal,
+      })
+      if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`)
+
+      const reader = res.body.getReader()
+      const decoder = new TextDecoder()
+      let sseBuffer = ''
+      let streamDone = false
+      let prevStripped = ''
+
+      while (!streamDone) {
+        const { done, value } = await reader.read()
+        if (done) break
+
+        sseBuffer += decoder.decode(value, { stream: true })
+        const sseLines = sseBuffer.split('\n')
+        sseBuffer = sseLines.pop()!
+
+        for (const sseLine of sseLines) {
+          if (!sseLine.startsWith('data: ')) continue
+          const payload = sseLine.slice(6).trim()
+          if (payload === '[DONE]') {
+            streamDone = true
+            break
+          }
+          try {
+            const { chunk, error } = JSON.parse(payload)
+            if (error) throw new Error(error)
+            if (chunk) rawBuffer += chunk
+          } catch { /* skip malformed SSE frames */ }
+        }
+
+        // Strip fences and enqueue any new complete lines
+        const stripped = stripFences(rawBuffer)
+        if (stripped.length > prevStripped.length) {
+          const newText = stripped.slice(prevStripped.length)
+          const newLines = newText.split('\n')
+          if (!stripped.endsWith('\n') && !streamDone) {
+            const partial = newLines.pop()!
+            prevStripped = stripped.slice(0, stripped.length - partial.length)
+          } else {
+            prevStripped = stripped
+            // "text\n".split('\n') → ["text", ""] — drop trailing empty artifact
+            if (newLines.length > 0 && newLines[newLines.length - 1] === '') {
+              newLines.pop()
+            }
+          }
+          for (const nl of newLines) {
+            pendingLines.push(nl)
+          }
+        }
+      }
+
+      // Enqueue any remaining partial line
+      const finalStripped = stripFences(rawBuffer)
+      const remaining = finalStripped.slice(prevStripped.length)
+      if (remaining) {
+        const parts = remaining.split('\n')
+        // Drop trailing empty artifact from split
+        if (parts.length > 0 && parts[parts.length - 1] === '') parts.pop()
+        for (const nl of parts) {
+          pendingLines.push(nl)
+        }
+      }
+    } catch (e: any) {
+      if (e.name !== 'AbortError') {
+        if (!rawBuffer) {
+          pendingLines.push(`# Error fetching solution: ${e.message}`)
+        }
+      }
+    } finally {
+      sseComplete = true
+    }
+  }
+
+  // Start both concurrently: SSE fills the queue, typewriter drains it
+  const twPromise = startTypewriter()
+  await readSSE()
+  await twPromise
+
+  // Transfer final text to Monaco editor
+  code.value = stripFences(rawBuffer).trim() + '\n'
+  streamAbort = null
+  completedHtml.value = ''
+  typingHtml.value = ''
+  visibleTextBuffer = ''
+  currentTypingPartial = ''
+  solutionLoading.value = false
 }
 
 function handleStopTyping() {
-  cancelTypewriter()
+  if (streamAbort) {
+    streamAbort.abort()
+    streamAbort = null
+  }
+  if (twTimer) {
+    clearTimeout(twTimer)
+    twTimer = null
+  }
+  // Keep whatever has been typed so far — use tracked plain text, not DOM extraction
+  let text = visibleTextBuffer
+  if (currentTypingPartial) {
+    text += (text ? '\n' : '') + currentTypingPartial
+  }
+  const trimmed = text.trim()
+  code.value = trimmed ? trimmed + '\n' : ''
+  completedHtml.value = ''
+  typingHtml.value = ''
+  visibleTextBuffer = ''
+  currentTypingPartial = ''
+  solutionLoading.value = false
 }
 </script>
 
@@ -253,9 +467,9 @@ function handleStopTyping() {
                 <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
                 Chat
               </button>
-              <!-- Stop typing -->
+              <!-- Stop streaming -->
               <button
-                v-if="isTyping"
+                v-if="solutionLoading"
                 @click="handleStopTyping"
                 class="px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-xs font-medium rounded-md transition-colors flex items-center gap-1"
               >
@@ -264,7 +478,7 @@ function handleStopTyping() {
               </button>
               <!-- Show Answer -->
               <button
-                v-if="!isTyping"
+                v-if="!solutionLoading"
                 @click="handleShowAnswer"
                 :disabled="solutionLoading || !problemStore.currentProblem"
                 class="px-3 py-1 text-xs font-medium rounded-md transition-colors flex items-center gap-1"
@@ -281,7 +495,18 @@ function handleStopTyping() {
           <!-- Editor + Chat vertical split -->
           <Splitpanes horizontal class="flex-1">
             <Pane :size="chatOpen ? 60 : 100" :min-size="30">
+              <!-- During streaming: split overlay (completed lines are stable, only typing line updates) -->
+              <div
+                v-if="solutionLoading"
+                ref="streamPreRef"
+                class="h-full overflow-auto bg-[#1e1e1e] text-[#d4d4d4] font-mono text-sm p-3 m-0"
+              >
+                <div v-html="completedHtml"></div>
+                <div v-html="typingHtml"></div>
+                <span v-if="!completedHtml && !typingHtml" style="color:#888">Generating solution...</span>
+              </div>
               <vue-monaco-editor
+                v-else
                 v-model:value="code"
                 language="python"
                 theme="vs-dark"
@@ -295,7 +520,6 @@ function handleStopTyping() {
                   insertSpaces: true,
                   wordWrap: 'on',
                   padding: { top: 12 },
-                  readOnly: isTyping,
                 }"
                 @mount="handleEditorMount"
               />

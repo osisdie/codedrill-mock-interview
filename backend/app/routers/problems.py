@@ -1,9 +1,15 @@
+import json
+import logging
+
 from fastapi import APIRouter, HTTPException
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from app.models.problem import Problem, ProblemSummary
 from app.services.problem_service import list_problems, get_problem
-from app.services.ai_service import chat_completion
+from app.services.ai_service import chat_completion, chat_completion_stream
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/problems", tags=["problems"])
 
@@ -72,7 +78,16 @@ async def get_solution(problem_id: str):
         {"role": "user", "content": "Generate the solution now."},
     ]
 
-    solution = await chat_completion(messages, temperature=0.3)
+    try:
+        solution = await chat_completion(
+            messages,
+            temperature=0.3,
+            max_tokens=4096,
+            timeout=120.0,
+        )
+    except Exception as e:
+        logger.error("Solution generation failed for %s: %s", problem_id, e)
+        raise HTTPException(status_code=504, detail="AI service timed out — please try again")
 
     # Strip markdown code fences if the AI added them
     solution = solution.strip()
@@ -84,3 +99,51 @@ async def get_solution(problem_id: str):
         solution = solution[:-3].strip()
 
     return SolutionResponse(solution=solution)
+
+
+def _build_solution_messages(problem: Problem) -> list[dict]:
+    """Build the prompt messages for solution generation (shared by both endpoints)."""
+    examples_text = "\n".join(
+        f"  Input: {ex.get('input', '')}  Output: {ex.get('output', '')}" for ex in problem.examples
+    )
+    prompt = SOLUTION_PROMPT.format(
+        title=problem.title,
+        description=problem.description,
+        constraints=", ".join(problem.constraints),
+        starter_code=problem.starter_code,
+        examples=examples_text,
+    )
+    return [
+        {"role": "system", "content": prompt},
+        {"role": "user", "content": "Generate the solution now."},
+    ]
+
+
+@router.get("/{problem_id}/solution/stream")
+async def stream_solution(problem_id: str):
+    """SSE endpoint that streams the solution as the LLM generates it."""
+    problem = get_problem(problem_id)
+    if not problem:
+        raise HTTPException(status_code=404, detail="Problem not found")
+
+    messages = _build_solution_messages(problem)
+
+    async def generate():
+        try:
+            async for chunk in chat_completion_stream(
+                messages,
+                temperature=0.3,
+                max_tokens=4096,
+                timeout=120.0,
+            ):
+                yield f"data: {json.dumps({'chunk': chunk})}\n\n"
+        except Exception as e:
+            logger.error("Stream failed for %s: %s", problem_id, e)
+            yield f"data: {json.dumps({'error': str(e)})}\n\n"
+        yield "data: [DONE]\n\n"
+
+    return StreamingResponse(
+        generate(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
