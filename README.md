@@ -30,7 +30,7 @@ Screenshots of the main workflow: home → problems → coding arena → test re
 
 ## Features
 
-- **63 Coding Problems** — Algorithms (LeetCode medium), FastAPI, Django, and Pytest problems with automated test cases
+- **65 Coding Problems** — Algorithms (LeetCode medium), FastAPI, Django, and Pytest problems with automated test cases
 - **Python Sandbox** — Secure, isolated code execution for your solutions
 - **AI Mock Interview** — Senior technical interviewer powered by LLM (OpenRouter)
 - **Scored Feedback** — Detailed evaluation of your code and interview performance
@@ -83,7 +83,7 @@ make install
 3. (Optional) Frontend API base URL — edit `frontend/.env.example` if needed:
 
    ```
-   VITE_API_BASE_URL=http://localhost:8001
+   VITE_API_BASE_URL=http://localhost:8573
    ```
 
 ### Run
@@ -96,11 +96,11 @@ make dev-backend
 make dev-frontend
 ```
 
-- Backend: http://localhost:8001
+- Backend: http://localhost:8573
 - Frontend: http://localhost:5573
-- API docs: http://localhost:8001/docs
+- API docs: http://localhost:8573/docs
 
-**Docker** (`make up`): Same URLs — backend 8001, frontend 5573.
+**Docker** (`make up`): Same URLs — backend 8573, frontend 5573.
 
 ## Project Structure
 
@@ -124,7 +124,7 @@ ai-mock-interview/
 
 | Service  | Host  | Container (Docker) |
 |----------|-------|--------------------|
-| Backend  | 8001  | 8000               |
+| Backend  | 8573  | 8000               |
 | Frontend | 5573  | 5173               |
 
 ## Environment Variables
