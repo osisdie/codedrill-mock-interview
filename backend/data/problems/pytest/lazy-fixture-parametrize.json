@@ -1,0 +1,64 @@
+{
+  "id": "lazy-fixture-parametrize",
+  "title": "Implement Lazy Fixtures for Parametrized Tests",
+  "category": "pytest",
+  "difficulty": "medium",
+  "description": "The `pytest-lazy-fixture` plugin enables using fixtures inside `@pytest.mark.parametrize`. Normally, parametrize only accepts literal values, but with lazy fixtures you can pass fixture references that resolve at runtime.\n\nImplement a simplified lazy fixture system with parametrized test support.\n\n**Implement the following:**\n\n1. **`LazyFixture`** class:\n   - `__init__(self, name: str)`: Stores the fixture name to resolve later.\n   - `name` attribute: The fixture name string.\n\n2. **`lazy_fixture(name: str)`** — Factory function that returns a `LazyFixture` instance.\n\n3. **`ParametrizedRunner`** class:\n   - `__init__(self)`: Initializes fixture registry.\n   - `register_fixture(self, name: str, func)`: Registers a callable that returns the fixture value (no generator/yield needed).\n   - `parametrize(self, argnames: str, argvalues: list)`: Returns a **decorator** that attaches parametrize metadata to the test function. `argnames` is a comma-separated string of parameter names. `argvalues` is a list of tuples (or single values if one arg).\n   - `run(self, test_func) -> list`: Runs all parametrized variants. For each set of args, if a value is a `LazyFixture`, resolve it from the registry. Returns a list of dicts: `{'params': dict, 'passed': bool, 'error': str | None}`.\n\n**Key behavior:**\n- If `argvalues` contains a `LazyFixture`, the runner calls the registered fixture function to get the actual value.\n- Non-`LazyFixture` values are passed through as-is.\n- If a `LazyFixture` references an unregistered fixture, raise `ValueError`.",
+  "examples": [
+    {
+      "input": "runner = ParametrizedRunner()\nrunner.register_fixture('admin', lambda: {'role': 'admin'})\nrunner.register_fixture('guest', lambda: {'role': 'guest'})\n\n@runner.parametrize('user,expected', [\n    (lazy_fixture('admin'), 'admin'),\n    (lazy_fixture('guest'), 'guest'),\n])\ndef test_role(user, expected):\n    assert user['role'] == expected\n\nresults = runner.run(test_role)\n[r['passed'] for r in results]",
+      "output": "[True, True]",
+      "explanation": "Each LazyFixture is resolved at runtime. admin fixture returns {'role': 'admin'} which matches 'admin'."
+    },
+    {
+      "input": "runner = ParametrizedRunner()\nrunner.register_fixture('empty_list', lambda: [])\n\n@runner.parametrize('data', [\n    [1, 2, 3],\n    lazy_fixture('empty_list'),\n])\ndef test_is_list(data):\n    assert isinstance(data, list)\n\nresults = runner.run(test_is_list)\n[(r['params'], r['passed']) for r in results]",
+      "output": "[({'data': [1, 2, 3]}, True), ({'data': []}, True)]",
+      "explanation": "Single-arg parametrize: values are unwrapped (not tuples). LazyFixture resolves to []."
+    }
+  ],
+  "constraints": [
+    "LazyFixture stores only the fixture name; resolution happens at runtime in run().",
+    "parametrize() returns a decorator that attaches metadata to the function (e.g., _parametrize_argnames and _parametrize_argvalues attributes).",
+    "argnames is a comma-separated string (e.g., 'x,y' means two params).",
+    "For single-argument parametrize, argvalues elements are bare values (not tuples).",
+    "For multi-argument parametrize, argvalues elements are tuples.",
+    "If a LazyFixture references an unregistered name, raise ValueError.",
+    "run() returns a list of result dicts with 'params', 'passed', and 'error' keys.",
+    "Each parametrize variant runs independently; one failure doesn't stop others."
+  ],
+  "starter_code": "class LazyFixture:\n    def __init__(self, name: str):\n        # Store fixture name for later resolution\n        pass\n\n\ndef lazy_fixture(name: str):\n    # Factory function returning LazyFixture\n    pass\n\n\nclass ParametrizedRunner:\n    def __init__(self):\n        # Initialize fixture registry\n        pass\n\n    def register_fixture(self, name: str, func):\n        # Register a callable as a fixture\n        pass\n\n    def parametrize(self, argnames: str, argvalues: list):\n        # Return a decorator that attaches parametrize metadata\n        pass\n\n    def _resolve_value(self, value):\n        # If LazyFixture, resolve from registry; otherwise return as-is\n        pass\n\n    def run(self, test_func) -> list:\n        # Run all parametrized variants, return list of result dicts\n        pass\n",
+  "test_cases": [
+    {
+      "input": "runner = ParametrizedRunner()\nrunner.register_fixture('pi', lambda: 3.14)\n\n@runner.parametrize('val,expected', [\n    (lazy_fixture('pi'), 3.14),\n    (2.72, 2.72),\n])\ndef test_vals(val, expected):\n    assert val == expected\n\n[r['passed'] for r in runner.run(test_vals)]",
+      "expected": "[True, True]",
+      "is_hidden": false
+    },
+    {
+      "input": "runner = ParametrizedRunner()\nrunner.register_fixture('names', lambda: ['Alice', 'Bob'])\n\n@runner.parametrize('data', [\n    [1, 2],\n    lazy_fixture('names'),\n])\ndef test_len(data):\n    assert len(data) == 2\n\nresults = runner.run(test_len)\n[r['params']['data'] for r in results]",
+      "expected": "[[1, 2], ['Alice', 'Bob']]",
+      "is_hidden": false
+    },
+    {
+      "input": "runner = ParametrizedRunner()\n\n@runner.parametrize('x,y,expected', [\n    (1, 2, 3),\n    (10, 20, 30),\n    (0, 0, 0),\n])\ndef test_add(x, y, expected):\n    assert x + y == expected\n\nlen(runner.run(test_add))",
+      "expected": "3",
+      "is_hidden": false
+    },
+    {
+      "input": "runner = ParametrizedRunner()\nrunner.register_fixture('big', lambda: 999)\n\n@runner.parametrize('n', [\n    1,\n    lazy_fixture('big'),\n])\ndef test_positive(n):\n    assert n > 0\n\nresults = runner.run(test_positive)\n[(r['params']['n'], r['passed']) for r in results]",
+      "expected": "[(1, True), (999, True)]",
+      "is_hidden": true
+    },
+    {
+      "input": "runner = ParametrizedRunner()\n\n@runner.parametrize('x', [lazy_fixture('missing')])\ndef test_missing(x):\n    pass\n\ntry:\n    runner.run(test_missing)\n    caught = False\nexcept ValueError:\n    caught = True\ncaught",
+      "expected": "True",
+      "is_hidden": true
+    },
+    {
+      "input": "runner = ParametrizedRunner()\n\n@runner.parametrize('x', [1, 2, 3])\ndef test_fail_on_two(x):\n    assert x != 2\n\nresults = runner.run(test_fail_on_two)\n[r['passed'] for r in results]",
+      "expected": "[True, False, True]",
+      "is_hidden": true
+    }
+  ],
+  "time_limit_minutes": 25,
+  "tags": ["pytest", "lazy-fixture", "parametrize", "decorator", "testing"]
+}

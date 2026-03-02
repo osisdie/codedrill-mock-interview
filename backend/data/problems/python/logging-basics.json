@@ -1,0 +1,78 @@
+{
+  "id": "logging-basics",
+  "title": "Build a Simple Logging System",
+  "category": "python",
+  "difficulty": "easy",
+  "description": "Python's `logging` module is the standard way to emit structured log messages, but many developers use `print()` because they don't understand the Logger → Handler → Formatter pipeline.\n\nImplement a simplified version of Python's logging system to understand the architecture.\n\n**Implement the following:**\n\n1. **`LogLevel`** class (namespace for constants):\n   - `DEBUG = 10`, `INFO = 20`, `WARNING = 30`, `ERROR = 40`, `CRITICAL = 50`\n   - Class method `name(level: int) -> str`: Returns the level name string (e.g., `20 → 'INFO'`). For unknown levels, return `'LEVEL_{n}'`.\n\n2. **`LogRecord`** class:\n   - `__init__(self, level: int, message: str, logger_name: str)`: Stores `level`, `message`, `logger_name`, and derives `level_name` from `LogLevel.name(level)`.\n\n3. **`SimpleHandler`** class:\n   - `__init__(self, level: int = 0)`: Only emit records at or above this level.\n   - `formatter` attribute: `None` by default. If set, use it to format the record.\n   - `records` attribute: List of emitted output strings.\n   - `emit(self, record)`: If `record.level >= self.level`, format the record and append to `records`. Without formatter, just append `record.message`. With formatter, append `formatter.format(record)`.\n\n4. **`SimpleFormatter`** class:\n   - `__init__(self, fmt: str = '{level_name}:{logger_name}:{message}')`: Stores format string.\n   - `format(self, record) -> str`: Format the record using the `fmt` string with named placeholders `{level_name}`, `{logger_name}`, `{message}`.\n\n5. **`SimpleLogger`** class:\n   - `__init__(self, name: str, level: int = 0)`: Logger name and minimum level.\n   - `handlers` attribute: List of handlers.\n   - `add_handler(self, handler)`: Add a handler.\n   - `log(self, level, message)`: If `level >= self.level`, create a `LogRecord` and pass it to all handlers.\n   - Convenience methods: `debug(msg)`, `info(msg)`, `warning(msg)`, `error(msg)`, `critical(msg)`.\n\n**Pipeline:** `logger.info('msg')` → creates `LogRecord` → each handler checks its level → formatter formats → stored in `handler.records`.",
+  "examples": [
+    {
+      "input": "LogLevel.name(20)",
+      "output": "'INFO'",
+      "explanation": "Level 20 maps to 'INFO'."
+    },
+    {
+      "input": "h = SimpleHandler(level=30)\nlogger = SimpleLogger('app', level=10)\nlogger.add_handler(h)\nlogger.info('ignored')\nlogger.warning('kept')\nlogger.error('also kept')\nh.records",
+      "output": "['kept', 'also kept']",
+      "explanation": "Handler level is 30 (WARNING), so INFO (20) is filtered out."
+    }
+  ],
+  "constraints": [
+    "LogLevel.name() returns 'LEVEL_{n}' for unknown levels.",
+    "LogRecord stores level, message, logger_name, and level_name.",
+    "SimpleHandler only emits records where record.level >= handler.level.",
+    "SimpleHandler uses formatter if set, otherwise stores raw message.",
+    "SimpleFormatter.format() uses str.format() with named placeholders.",
+    "SimpleLogger only creates LogRecord if level >= logger.level.",
+    "SimpleLogger passes LogRecord to all handlers (handlers do their own filtering)."
+  ],
+  "starter_code": "class LogLevel:\n    DEBUG = 10\n    INFO = 20\n    WARNING = 30\n    ERROR = 40\n    CRITICAL = 50\n\n    @classmethod\n    def name(cls, level: int) -> str:\n        pass\n\n\nclass LogRecord:\n    def __init__(self, level: int, message: str, logger_name: str):\n        pass\n\n\nclass SimpleHandler:\n    def __init__(self, level: int = 0):\n        self.level = level\n        self.formatter = None\n        self.records = []\n\n    def emit(self, record):\n        pass\n\n\nclass SimpleFormatter:\n    def __init__(self, fmt: str = '{level_name}:{logger_name}:{message}'):\n        pass\n\n    def format(self, record) -> str:\n        pass\n\n\nclass SimpleLogger:\n    def __init__(self, name: str, level: int = 0):\n        pass\n\n    def add_handler(self, handler):\n        pass\n\n    def log(self, level: int, message: str):\n        pass\n\n    def debug(self, message: str):\n        pass\n\n    def info(self, message: str):\n        pass\n\n    def warning(self, message: str):\n        pass\n\n    def error(self, message: str):\n        pass\n\n    def critical(self, message: str):\n        pass\n",
+  "test_cases": [
+    {
+      "input": "LogLevel.name(10)",
+      "expected": "'DEBUG'",
+      "is_hidden": false
+    },
+    {
+      "input": "LogLevel.name(20)",
+      "expected": "'INFO'",
+      "is_hidden": false
+    },
+    {
+      "input": "LogLevel.name(99)",
+      "expected": "'LEVEL_99'",
+      "is_hidden": false
+    },
+    {
+      "input": "h = SimpleHandler(level=30)\nlogger = SimpleLogger('app', level=10)\nlogger.add_handler(h)\nlogger.info('ignored')\nlogger.warning('warn msg')\nlogger.error('err msg')\nh.records",
+      "expected": "['warn msg', 'err msg']",
+      "is_hidden": false
+    },
+    {
+      "input": "fmt = SimpleFormatter('{level_name}:{message}')\nh = SimpleHandler(level=10)\nh.formatter = fmt\nlogger = SimpleLogger('test', level=10)\nlogger.add_handler(h)\nlogger.debug('hello')\nlogger.info('world')\nh.records",
+      "expected": "['DEBUG:hello', 'INFO:world']",
+      "is_hidden": false
+    },
+    {
+      "input": "r = LogRecord(40, 'disk full', 'storage')\n(r.level, r.message, r.logger_name, r.level_name)",
+      "expected": "(40, 'disk full', 'storage', 'ERROR')",
+      "is_hidden": false
+    },
+    {
+      "input": "h1 = SimpleHandler(level=20)\nh2 = SimpleHandler(level=40)\nlogger = SimpleLogger('multi', level=10)\nlogger.add_handler(h1)\nlogger.add_handler(h2)\nlogger.info('info msg')\nlogger.error('err msg')\n(h1.records, h2.records)",
+      "expected": "(['info msg', 'err msg'], ['err msg'])",
+      "is_hidden": true
+    },
+    {
+      "input": "logger = SimpleLogger('strict', level=30)\nh = SimpleHandler(level=10)\nlogger.add_handler(h)\nlogger.debug('skip')\nlogger.info('skip')\nlogger.warning('keep')\nh.records",
+      "expected": "['keep']",
+      "is_hidden": true
+    },
+    {
+      "input": "fmt = SimpleFormatter('[{logger_name}] {level_name} - {message}')\nh = SimpleHandler(level=10)\nh.formatter = fmt\nlogger = SimpleLogger('web', level=10)\nlogger.add_handler(h)\nlogger.critical('server down')\nh.records",
+      "expected": "['[web] CRITICAL - server down']",
+      "is_hidden": true
+    }
+  ],
+  "time_limit_minutes": 20,
+  "tags": ["python", "logging", "handler", "formatter", "log-levels"]
+}

@@ -37,7 +37,7 @@ jobs:
               fp = pathlib.Path('data/problems') / p['file']
               data = json.loads(fp.read_text())
               assert data['id'] == p['id'], f\"ID mismatch: {p['id']}\"
-              assert data['category'] in ('algorithms','fastapi','django','pytest'), f\"Bad category: {data['category']}\"
+              assert data['category'] in ('algorithms','fastapi','django','pytest','python'), f\"Bad category: {data['category']}\"
               assert data['difficulty'] in ('easy','medium','hard'), f\"Bad difficulty: {data['difficulty']}\"
               assert len(data['test_cases']) > 0, f\"No test cases: {p['id']}\"
           print(f'Validated {len(index[\"problems\"])} problems')

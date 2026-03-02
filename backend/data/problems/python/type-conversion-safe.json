@@ -1,0 +1,107 @@
+{
+  "id": "type-conversion-safe",
+  "title": "Safe Type Conversions and Value Parsing",
+  "category": "python",
+  "difficulty": "easy",
+  "description": "Calling `int('hello')` raises `ValueError`. Calling `float(None)` raises `TypeError`. In real code, input data is often messy and unchecked conversions crash production systems.\n\nImplement defensive type conversion functions that never raise.\n\n**Implement the following:**\n\n1. **`safe_int(value, default=0)`**: Convert `value` to `int`. Returns `default` if conversion fails (`ValueError` or `TypeError`). Note: `safe_int(3.9)` should return `3` (normal int truncation).\n\n2. **`safe_float(value, default=0.0)`**: Convert `value` to `float`. Returns `default` if conversion fails.\n\n3. **`parse_value(s: str)`**: Parse a string into its most specific Python type, trying in this order:\n   - `'true'` / `'false'` (case-insensitive) → `bool`\n   - Integer string (e.g., `'42'`, `'-7'`) → `int`\n   - Float string (e.g., `'3.14'`, `'-0.5'`) → `float`\n   - Everything else → `str` (stripped of leading/trailing whitespace)\n\n4. **`safe_list(value)`**: Ensure value is a list.\n   - `None` → `[]`\n   - Already a `list` → return as-is\n   - Any other value → `[value]`\n\n**Examples:**\n```python\nsafe_int('42')           # 42\nsafe_int('hello', -1)    # -1\nparse_value('true')      # True\nparse_value('  3.14  ')  # 3.14\nsafe_list(5)             # [5]\n```",
+  "examples": [
+    {
+      "input": "safe_int('42')",
+      "output": "42",
+      "explanation": "String '42' is successfully converted to int."
+    },
+    {
+      "input": "safe_int('not_a_number', -1)",
+      "output": "-1",
+      "explanation": "Conversion fails, returns the default value."
+    },
+    {
+      "input": "parse_value('  TRUE  ')",
+      "output": "True",
+      "explanation": "Stripped and case-insensitive match for boolean 'true'."
+    }
+  ],
+  "constraints": [
+    "safe_int and safe_float must catch both ValueError and TypeError.",
+    "safe_int(3.9) returns 3 (truncation is normal int() behavior, not an error).",
+    "parse_value checks bool first, then int, then float, then str.",
+    "parse_value strips whitespace from input before parsing.",
+    "parse_value('true') → True, parse_value('False') → False (case-insensitive).",
+    "safe_list(None) → [], safe_list([1,2]) → [1,2], safe_list('x') → ['x']."
+  ],
+  "starter_code": "def safe_int(value, default=0):\n    \"\"\"Convert value to int. Returns default if conversion fails.\"\"\"\n    pass\n\n\ndef safe_float(value, default=0.0):\n    \"\"\"Convert value to float. Returns default if conversion fails.\"\"\"\n    pass\n\n\ndef parse_value(s: str):\n    \"\"\"Parse string to most specific type: bool > int > float > str.\"\"\"\n    pass\n\n\ndef safe_list(value):\n    \"\"\"Ensure value is a list. None->[], list->as-is, other->[value].\"\"\"\n    pass\n",
+  "test_cases": [
+    {
+      "input": "safe_int('42')",
+      "expected": "42",
+      "is_hidden": false
+    },
+    {
+      "input": "safe_int('hello', -1)",
+      "expected": "-1",
+      "is_hidden": false
+    },
+    {
+      "input": "safe_int(3.9)",
+      "expected": "3",
+      "is_hidden": false
+    },
+    {
+      "input": "safe_float('3.14')",
+      "expected": "3.14",
+      "is_hidden": false
+    },
+    {
+      "input": "safe_float(None, 99.9)",
+      "expected": "99.9",
+      "is_hidden": false
+    },
+    {
+      "input": "parse_value('42')",
+      "expected": "42",
+      "is_hidden": false
+    },
+    {
+      "input": "parse_value('3.14')",
+      "expected": "3.14",
+      "is_hidden": false
+    },
+    {
+      "input": "parse_value('true')",
+      "expected": "True",
+      "is_hidden": false
+    },
+    {
+      "input": "parse_value('hello world')",
+      "expected": "'hello world'",
+      "is_hidden": true
+    },
+    {
+      "input": "parse_value('  FALSE  ')",
+      "expected": "False",
+      "is_hidden": true
+    },
+    {
+      "input": "safe_list(None)",
+      "expected": "[]",
+      "is_hidden": true
+    },
+    {
+      "input": "safe_list([1, 2])",
+      "expected": "[1, 2]",
+      "is_hidden": true
+    },
+    {
+      "input": "safe_list('x')",
+      "expected": "['x']",
+      "is_hidden": true
+    },
+    {
+      "input": "parse_value('-7')",
+      "expected": "-7",
+      "is_hidden": true
+    }
+  ],
+  "time_limit_minutes": 15,
+  "tags": ["python", "type-conversion", "ValueError", "TypeError", "parsing", "safety"]
+}

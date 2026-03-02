@@ -1,0 +1,82 @@
+{
+  "id": "safe-dict-access",
+  "title": "Safe Dictionary Access and Nested Operations",
+  "category": "python",
+  "difficulty": "easy",
+  "description": "Accessing nested dictionaries is one of the most common sources of `KeyError` in Python. Chaining `d['a']['b']['c']` fails hard if any key is missing.\n\nImplement utility functions for safe, defensive dictionary operations.\n\n**Implement the following:**\n\n1. **`safe_get(data, path, default=None)`**: Get a value from a nested dict using a dot-separated path string (e.g., `'a.b.c'`). Returns `default` if any key is missing or any intermediate value is not a dict.\n\n2. **`safe_set(data, path, value)`**: Set a value in a nested dict using a dot-separated path. Creates intermediate dicts as needed. Returns the modified `data` dict.\n\n3. **`flatten_dict(data, separator='.')`**: Flatten a nested dict into a single-level dict with keys joined by `separator`. Only `dict` values are recursed into; other types (lists, strings, etc.) are leaf values.\n\n**Examples:**\n```python\nsafe_get({'a': {'b': 1}}, 'a.b')        # 1\nsafe_get({'a': 1}, 'a.b.c', 'missing')   # 'missing'\nsafe_set({}, 'x.y.z', 42)               # {'x': {'y': {'z': 42}}}\nflatten_dict({'a': {'b': 1}, 'c': 2})    # {'a.b': 1, 'c': 2}\n```",
+  "examples": [
+    {
+      "input": "safe_get({'a': {'b': {'c': 42}}}, 'a.b.c')",
+      "output": "42",
+      "explanation": "Traverses a → b → c successfully."
+    },
+    {
+      "input": "safe_set({}, 'db.host', 'localhost')",
+      "output": "{'db': {'host': 'localhost'}}",
+      "explanation": "Creates intermediate dict 'db' and sets 'host' inside it."
+    },
+    {
+      "input": "flatten_dict({'a': 1, 'b': {'c': 2, 'd': {'e': 3}}})",
+      "output": "{'a': 1, 'b.c': 2, 'b.d.e': 3}",
+      "explanation": "Nested dicts are flattened with dot-separated keys."
+    }
+  ],
+  "constraints": [
+    "safe_get returns default if any key is missing or intermediate is not a dict.",
+    "safe_set creates intermediate dicts as needed (overwrites non-dict intermediates).",
+    "safe_set returns the modified data dict.",
+    "flatten_dict only recurses into dict values (not lists, tuples, etc.).",
+    "flatten_dict uses the separator parameter to join key parts.",
+    "Path is always a non-empty dot-separated string."
+  ],
+  "starter_code": "def safe_get(data: dict, path: str, default=None):\n    \"\"\"Get nested value by dot-separated path. Returns default if missing.\"\"\"\n    pass\n\n\ndef safe_set(data: dict, path: str, value) -> dict:\n    \"\"\"Set nested value by dot-separated path, creating intermediate dicts.\"\"\"\n    pass\n\n\ndef flatten_dict(data: dict, separator: str = '.', _prefix: str = '') -> dict:\n    \"\"\"Flatten nested dict into single-level dict with joined keys.\"\"\"\n    pass\n",
+  "test_cases": [
+    {
+      "input": "safe_get({'a': {'b': {'c': 42}}}, 'a.b.c')",
+      "expected": "42",
+      "is_hidden": false
+    },
+    {
+      "input": "safe_get({'x': 1}, 'x.y.z', 'miss')",
+      "expected": "'miss'",
+      "is_hidden": false
+    },
+    {
+      "input": "safe_get({'a': [1, 2]}, 'a.b', None)",
+      "expected": "None",
+      "is_hidden": false
+    },
+    {
+      "input": "safe_set({}, 'a.b.c', 1)",
+      "expected": "{'a': {'b': {'c': 1}}}",
+      "is_hidden": false
+    },
+    {
+      "input": "d = {'a': {'x': 10}}\nsafe_set(d, 'a.y', 20)\nd",
+      "expected": "{'a': {'x': 10, 'y': 20}}",
+      "is_hidden": false
+    },
+    {
+      "input": "flatten_dict({'a': 1, 'b': {'c': 2, 'd': {'e': 3}}})",
+      "expected": "{'a': 1, 'b.c': 2, 'b.d.e': 3}",
+      "is_hidden": false
+    },
+    {
+      "input": "safe_get({}, 'missing', 'default_val')",
+      "expected": "'default_val'",
+      "is_hidden": true
+    },
+    {
+      "input": "safe_set({'a': 'not_a_dict'}, 'a.b', 5)",
+      "expected": "{'a': {'b': 5}}",
+      "is_hidden": true
+    },
+    {
+      "input": "flatten_dict({'a': {'b': [1, 2]}, 'c': {'d': 'text'}}, separator='/')",
+      "expected": "{'a/b': [1, 2], 'c/d': 'text'}",
+      "is_hidden": true
+    }
+  ],
+  "time_limit_minutes": 20,
+  "tags": ["python", "dict", "KeyError", "nested", "safety"]
+}

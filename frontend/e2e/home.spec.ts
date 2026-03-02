@@ -7,12 +7,13 @@ test.describe('Home Page', () => {
     await expect(page.getByRole('heading', { level: 1 })).toContainText('Sharpen Your Coding Skills')
 
     const cards = page.locator('button').filter({ hasText: /problems$/ })
-    await expect(cards).toHaveCount(4)
+    await expect(cards).toHaveCount(5)
 
     await expect(page.getByRole('heading', { name: 'Algorithms' })).toBeVisible()
     await expect(page.getByRole('heading', { name: 'FastAPI' })).toBeVisible()
     await expect(page.getByRole('heading', { name: 'Django' })).toBeVisible()
     await expect(page.getByRole('heading', { name: 'Pytest' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Python Basics' })).toBeVisible()
   })
 
   test('shows how-it-works steps', async ({ page }) => {

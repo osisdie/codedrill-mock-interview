@@ -1,0 +1,74 @@
+{
+  "id": "mock-patch-side-effect",
+  "title": "Implement patch() Context Manager with side_effect",
+  "category": "pytest",
+  "difficulty": "hard",
+  "description": "Python's `unittest.mock` provides `patch()` to temporarily replace attributes during tests, and `Mock(side_effect=...)` to control what happens when a mock is called.\n\nImplement simplified versions of both.\n\n**Implement the following:**\n\n1. **`AdvancedMock`** class:\n   - `__init__(self, return_value=None, side_effect=None)`: Creates a mock with optional `return_value` and `side_effect`.\n   - `__call__(self, *args, **kwargs)`: Records the call as `(args, kwargs)` in `call_args_list`. Then:\n     - If `side_effect` is a **list**: pop the first item. If that item is an exception instance, raise it. Otherwise return it. If the list is empty, raise `StopIteration`.\n     - If `side_effect` is a **callable**: call it with the same `(args, kwargs)` and return its result.\n     - If `side_effect` is an **exception class** (subclass of `BaseException`): raise an instance of it.\n     - If `side_effect` is an **exception instance**: raise it.\n     - Otherwise (no side_effect): return `return_value`.\n   - `call_count` (property): Number of times called.\n   - `call_args_list` (attribute): List of `(args, kwargs)` tuples.\n   - `called` (property): `True` if called at least once.\n   - `assert_called_with(*args, **kwargs)`: Raises `AssertionError` if the most recent call doesn't match.\n   - `reset()`: Clears all call records.\n\n2. **`patch(obj, attr_name, new=None)`** — Returns a context manager:\n   - On `__enter__`: Saves original value of `obj.attr_name` (or notes it didn't exist), replaces it with `new` (defaults to a fresh `AdvancedMock()`). Returns `new`.\n   - On `__exit__`: Restores the original value. If the attribute didn't exist before, deletes it.\n\n**Key behavior:**\n- `side_effect` takes priority over `return_value` when both are set.\n- A list `side_effect` is consumed in order (FIFO). The list is mutated (items popped).\n- `patch` can create new attributes that get cleaned up on exit.",
+  "examples": [
+    {
+      "input": "m = AdvancedMock(side_effect=[10, 20, ValueError('bad')])\nresults = []\nresults.append(m())\nresults.append(m())\ntry:\n    m()\nexcept ValueError as e:\n    results.append(str(e))\n(results, m.call_count)",
+      "output": "([10, 20, 'bad'], 3)",
+      "explanation": "List side_effect returns items in order. Exception items are raised. All calls are counted."
+    },
+    {
+      "input": "class API:\n    base_url = 'https://prod.example.com'\n\nwith patch(API, 'base_url', 'http://localhost') as mock_url:\n    inside = API.base_url\nafter = API.base_url\n(inside, after)",
+      "output": "('http://localhost', 'https://prod.example.com')",
+      "explanation": "patch replaces the attribute inside the context, restores it on exit."
+    }
+  ],
+  "constraints": [
+    "side_effect takes priority over return_value when set.",
+    "List side_effect pops items from the front (FIFO). Raise StopIteration when empty.",
+    "Callable side_effect is invoked with the same (args, kwargs) passed to the mock.",
+    "Exception class side_effect: raise an instance. Exception instance: raise it directly.",
+    "patch saves original and restores on exit. New attributes are deleted on exit.",
+    "assert_called_with checks only the most recent call.",
+    "reset() clears call_args_list, resetting call_count to 0.",
+    "patch(obj, attr, new=None) defaults new to a fresh AdvancedMock()."
+  ],
+  "starter_code": "class AdvancedMock:\n    def __init__(self, return_value=None, side_effect=None):\n        self.return_value = return_value\n        self.side_effect = side_effect\n        self.call_args_list = []\n\n    def __call__(self, *args, **kwargs):\n        # Record call, then handle side_effect or return_value\n        pass\n\n    @property\n    def call_count(self):\n        pass\n\n    @property\n    def called(self):\n        pass\n\n    def assert_called_with(self, *args, **kwargs):\n        # Raise AssertionError if last call doesn't match\n        pass\n\n    def reset(self):\n        pass\n\n\nclass _Patch:\n    def __init__(self, obj, attr_name, new):\n        self.obj = obj\n        self.attr_name = attr_name\n        self.new = new\n        self._original = None\n        self._had_attr = False\n\n    def __enter__(self):\n        # Save original, replace with new, return new\n        pass\n\n    def __exit__(self, *exc):\n        # Restore original or delete attribute\n        pass\n\n\ndef patch(obj, attr_name, new=None):\n    # Return a _Patch context manager\n    pass\n",
+  "test_cases": [
+    {
+      "input": "m = AdvancedMock(return_value='default')\nm(1, 2)\nm(x=3)\n(m.call_count, m.called, m.call_args_list)",
+      "expected": "(2, True, [((1, 2), {}), ((), {'x': 3})])",
+      "is_hidden": false
+    },
+    {
+      "input": "m = AdvancedMock(side_effect=lambda x: x * 2)\nresults = [m(3), m(10)]\n(results, m.call_count)",
+      "expected": "([6, 20], 2)",
+      "is_hidden": false
+    },
+    {
+      "input": "m = AdvancedMock(side_effect=[1, 2, 3])\nresults = [m(), m(), m()]\ntry:\n    m()\n    overflow = False\nexcept StopIteration:\n    overflow = True\n(results, overflow)",
+      "expected": "([1, 2, 3], True)",
+      "is_hidden": false
+    },
+    {
+      "input": "class Svc:\n    url = 'https://api.prod.com'\nwith patch(Svc, 'url', 'http://localhost') as val:\n    inside = Svc.url\nafter = Svc.url\n(inside, after, val)",
+      "expected": "('http://localhost', 'https://api.prod.com', 'http://localhost')",
+      "is_hidden": false
+    },
+    {
+      "input": "m = AdvancedMock(side_effect=ValueError)\ntry:\n    m()\n    caught = False\nexcept ValueError:\n    caught = True\ncaught",
+      "expected": "True",
+      "is_hidden": true
+    },
+    {
+      "input": "class Obj:\n    pass\nwith patch(Obj, 'new_attr', 42):\n    inside = Obj.new_attr\nhas = hasattr(Obj, 'new_attr')\n(inside, has)",
+      "expected": "(42, False)",
+      "is_hidden": true
+    },
+    {
+      "input": "class Svc:\n    def fetch(self):\n        return 'real'\nwith patch(Svc, 'fetch') as mock:\n    mock.return_value = 'fake'\n    result = Svc().fetch()\nreal_result = Svc().fetch()\ntype(real_result).__name__",
+      "expected": "'str'",
+      "is_hidden": true
+    },
+    {
+      "input": "m = AdvancedMock(side_effect=[10, RuntimeError('fail'), 30])\nresults = []\nresults.append(m())\ntry:\n    m()\nexcept RuntimeError as e:\n    results.append(str(e))\nresults.append(m())\nresults",
+      "expected": "[10, 'fail', 30]",
+      "is_hidden": true
+    }
+  ],
+  "time_limit_minutes": 30,
+  "tags": ["pytest", "mock", "patch", "side-effect", "context-manager", "testing"]
+}
