@@ -64,6 +64,14 @@
     {"id": "jump-game", "file": "algorithms/jump-game.json"},
     {"id": "decode-ways", "file": "algorithms/decode-ways.json"},
     {"id": "find-min-rotated-sorted-array", "file": "algorithms/find-min-rotated-sorted-array.json"},
-    {"id": "binary-tree-level-order", "file": "algorithms/binary-tree-level-order.json"}
+    {"id": "binary-tree-level-order", "file": "algorithms/binary-tree-level-order.json"},
+    {"id": "fixture-scope-yield", "file": "pytest/fixture-scope-yield.json"},
+    {"id": "lazy-fixture-parametrize", "file": "pytest/lazy-fixture-parametrize.json"},
+    {"id": "mock-patch-side-effect", "file": "pytest/mock-patch-side-effect.json"},
+    {"id": "safe-dict-access", "file": "python/safe-dict-access.json"},
+    {"id": "none-safe-patterns", "file": "python/none-safe-patterns.json"},
+    {"id": "type-conversion-safe", "file": "python/type-conversion-safe.json"},
+    {"id": "exception-handling-basics", "file": "python/exception-handling-basics.json"},
+    {"id": "logging-basics", "file": "python/logging-basics.json"}
   ]
 }

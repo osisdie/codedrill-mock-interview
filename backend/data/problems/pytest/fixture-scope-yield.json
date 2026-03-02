@@ -1,0 +1,64 @@
+{
+  "id": "fixture-scope-yield",
+  "title": "Implement Yield Fixtures with Scope-Based Teardown",
+  "category": "pytest",
+  "difficulty": "medium",
+  "description": "In pytest, **yield fixtures** provide an elegant setup/teardown pattern: code before `yield` runs as setup, and code after `yield` runs as teardown. Combined with **scopes**, fixtures can be shared across tests efficiently.\n\nImplement a fixture system that supports yield-based teardown and scoping.\n\n**Implement the following:**\n\n1. **`YieldFixture`** class:\n   - `__init__(self, name, func, scope='function')`: `func` is a generator function that yields exactly one value. `scope` is `'function'` (fresh per test) or `'module'` (shared/cached).\n   - `setup(self)`: Starts the generator, advances to the `yield`, returns the yielded value.\n   - `teardown(self)`: Resumes the generator past `yield` to run cleanup code. Does nothing if not set up.\n\n2. **`ScopedFixtureManager`** class:\n   - `__init__(self)`: Initializes fixture registry and scope caches.\n   - `register(self, name, func, scope='function')`: Creates and stores a `YieldFixture`.\n   - `resolve(self, name)`: Returns the fixture value. For `'module'` scope, returns cached value if already set up. For `'function'` scope, always calls `setup()` fresh, tracking the active instance for teardown.\n   - `teardown_function(self)`: Tears down all `'function'`-scoped fixtures set up since last teardown, in **reverse** order. Clears function-scope tracking.\n   - `teardown_all(self)`: Tears down **all** active fixtures (function + module) in reverse setup order.\n   - `run_test(self, test_func)`: Resolves fixtures by test function parameter names, runs the test, calls `teardown_function()`. Returns `(passed: bool, error: str | None)`.\n\n**Important:** Use `func.__code__.co_varnames[:func.__code__.co_argcount]` to extract parameter names from the test function.",
+  "examples": [
+    {
+      "input": "log = []\ndef db():\n    log.append('db_setup')\n    yield {'connected': True}\n    log.append('db_teardown')\n\nmgr = ScopedFixtureManager()\nmgr.register('db', db)\nval = mgr.resolve('db')\nmgr.teardown_all()\n(val, log)",
+      "output": "({'connected': True}, ['db_setup', 'db_teardown'])",
+      "explanation": "The generator runs up to yield (setup), returns the value, then teardown resumes it (cleanup)."
+    },
+    {
+      "input": "log = []\ndef cache():\n    log.append('cache_init')\n    yield [1, 2, 3]\n    log.append('cache_close')\n\nmgr = ScopedFixtureManager()\nmgr.register('cache', cache, scope='module')\nv1 = mgr.resolve('cache')\nv2 = mgr.resolve('cache')\nmgr.teardown_all()\n(v1 is v2, log)",
+      "output": "(True, ['cache_init', 'cache_close'])",
+      "explanation": "Module-scoped fixtures are cached. resolve() returns the same object; setup runs only once."
+    }
+  ],
+  "constraints": [
+    "func must be a generator function (uses yield).",
+    "setup() advances the generator to yield and returns the yielded value.",
+    "teardown() resumes the generator past yield. Does nothing if not started.",
+    "Module-scoped fixtures are cached: setup() runs only on first resolve().",
+    "Function-scoped fixtures run setup() fresh on each resolve().",
+    "teardown_function() only tears down function-scoped fixtures.",
+    "teardown_all() tears down all fixtures in reverse setup order.",
+    "run_test() resolves fixtures by parameter names, then teardown_function() after."
+  ],
+  "starter_code": "class YieldFixture:\n    def __init__(self, name, func, scope='function'):\n        self.name = name\n        self.func = func\n        self.scope = scope\n        self._gen = None\n        self._value = None\n\n    def setup(self):\n        # Start the generator, advance to yield, return the yielded value\n        pass\n\n    def teardown(self):\n        # Resume the generator past yield to run cleanup\n        pass\n\n\nclass ScopedFixtureManager:\n    def __init__(self):\n        # Initialize registry and caches\n        pass\n\n    def register(self, name, func, scope='function'):\n        # Register a yield fixture\n        pass\n\n    def resolve(self, name):\n        # Return fixture value (cached for module scope)\n        pass\n\n    def teardown_function(self):\n        # Teardown function-scoped fixtures in reverse order\n        pass\n\n    def teardown_all(self):\n        # Teardown all fixtures in reverse order\n        pass\n\n    def run_test(self, test_func):\n        # Resolve fixtures, run test, teardown function scope\n        # Returns (passed: bool, error: str | None)\n        pass\n",
+  "test_cases": [
+    {
+      "input": "log = []\ndef db():\n    log.append('setup_db')\n    yield 'db_conn'\n    log.append('teardown_db')\nmgr = ScopedFixtureManager()\nmgr.register('db', db)\nval = mgr.resolve('db')\nmgr.teardown_all()\n(val, log)",
+      "expected": "('db_conn', ['setup_db', 'teardown_db'])",
+      "is_hidden": false
+    },
+    {
+      "input": "log = []\ndef cache():\n    log.append('cache_up')\n    yield [1, 2, 3]\n    log.append('cache_down')\nmgr = ScopedFixtureManager()\nmgr.register('cache', cache, scope='module')\na = mgr.resolve('cache')\nb = mgr.resolve('cache')\nmgr.teardown_all()\n(a is b, log)",
+      "expected": "(True, ['cache_up', 'cache_down'])",
+      "is_hidden": false
+    },
+    {
+      "input": "log = []\ndef conn():\n    log.append('open')\n    yield 'conn'\n    log.append('close')\nmgr = ScopedFixtureManager()\nmgr.register('conn', conn, scope='function')\ndef test_a(conn):\n    log.append(f'test_a:{conn}')\ndef test_b(conn):\n    log.append(f'test_b:{conn}')\nmgr.run_test(test_a)\nmgr.run_test(test_b)\nmgr.teardown_all()\nlog",
+      "expected": "['open', 'test_a:conn', 'close', 'open', 'test_b:conn', 'close']",
+      "is_hidden": false
+    },
+    {
+      "input": "log = []\ndef svc():\n    log.append('svc_up')\n    yield 'svc'\n    log.append('svc_down')\nmgr = ScopedFixtureManager()\nmgr.register('svc', svc, scope='module')\ndef test_x(svc):\n    log.append(f'x:{svc}')\ndef test_y(svc):\n    log.append(f'y:{svc}')\nmgr.run_test(test_x)\nmgr.run_test(test_y)\nmgr.teardown_all()\nlog",
+      "expected": "['svc_up', 'x:svc', 'y:svc', 'svc_down']",
+      "is_hidden": true
+    },
+    {
+      "input": "log = []\ndef a():\n    log.append('a_up')\n    yield 'A'\n    log.append('a_down')\ndef b():\n    log.append('b_up')\n    yield 'B'\n    log.append('b_down')\nmgr = ScopedFixtureManager()\nmgr.register('a', a)\nmgr.register('b', b)\ndef test_ab(a, b):\n    log.append(f'{a}+{b}')\nmgr.run_test(test_ab)\nlog",
+      "expected": "['a_up', 'b_up', 'A+B', 'b_down', 'a_down']",
+      "is_hidden": true
+    },
+    {
+      "input": "log = []\ndef res():\n    log.append('up')\n    yield 'val'\n    log.append('down')\nmgr = ScopedFixtureManager()\nmgr.register('res', res)\ndef test_err(res):\n    raise ValueError('oops')\nresult = mgr.run_test(test_err)\n(result[0], 'oops' in result[1], log)",
+      "expected": "(False, True, ['up', 'down'])",
+      "is_hidden": true
+    }
+  ],
+  "time_limit_minutes": 30,
+  "tags": ["pytest", "fixtures", "yield", "scope", "teardown", "testing"]
+}

@@ -10,7 +10,7 @@ const categories = [
     description: 'Classic LeetCode-style problems to sharpen your problem-solving skills. Practice array manipulation, dynamic programming, and more.',
     icon: '&#x1F9E9;',
     color: 'from-blue-600 to-blue-800',
-    count: '16 problems',
+    count: '29 problems',
   },
   {
     id: 'fastapi',
@@ -18,7 +18,7 @@ const categories = [
     description: 'Build REST APIs, handle validation, middleware, authentication, and dependency injection with FastAPI.',
     icon: '&#x26A1;',
     color: 'from-emerald-600 to-emerald-800',
-    count: '7 problems',
+    count: '26 problems',
   },
   {
     id: 'django',
@@ -34,6 +34,14 @@ const categories = [
     description: 'Implement core testing concepts: fixtures, parametrize, markers, mocking, and test discovery — the building blocks of pytest.',
     icon: '&#x1F9EA;',
     color: 'from-orange-600 to-orange-800',
+    count: '8 problems',
+  },
+  {
+    id: 'python',
+    title: 'Python Basics',
+    description: 'Master defensive Python: safe dict access, None handling, type conversions, error handling patterns, and logging — avoid KeyError, AttributeError, and ValueError.',
+    icon: '&#x1F40D;',
+    color: 'from-yellow-600 to-yellow-800',
     count: '5 problems',
   },
 ]

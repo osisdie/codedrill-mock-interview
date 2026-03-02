@@ -1,0 +1,98 @@
+{
+  "id": "exception-handling-basics",
+  "title": "Exception Handling Patterns and Custom Exceptions",
+  "category": "python",
+  "difficulty": "easy",
+  "description": "Good error handling is the difference between code that crashes mysteriously and code that fails gracefully. Python's exception system is powerful but often misused (bare `except:`, swallowed errors, no cleanup).\n\nImplement practical error handling patterns.\n\n**Implement the following:**\n\n1. **`ValidationError`** (extends `Exception`):\n   - `__init__(self, field: str, message: str)`: Stores `field` and `message` as attributes.\n   - `str(e)` should return `'{field}: {message}'`.\n\n2. **`NotFoundError`** (extends `Exception`):\n   - `__init__(self, resource: str, resource_id)`: Stores `resource` and `resource_id` as attributes.\n   - `str(e)` should return `'{resource} with id {resource_id} not found'`.\n\n3. **`safe_execute(func, *args, default=None)`**: Call `func(*args)`. If any exception occurs, return `default` instead of crashing.\n\n4. **`retry(func, max_attempts=3)`**: Call `func()` up to `max_attempts` times. On first success, return `(result, attempts_used)`. If all attempts fail, raise the last exception.\n\n5. **`Result`** class (Ok/Err pattern):\n   - `Result.ok(value)` — class method, creates success result.\n   - `Result.err(error)` — class method, creates failure result.\n   - `is_ok` / `is_err` — properties returning `bool`.\n   - `unwrap()` — returns value if Ok; raises the error if Err (wraps in `ValueError` if error is not an Exception).\n   - `unwrap_or(default)` — returns value if Ok, `default` if Err.\n   - `map(func)` — returns `Result.ok(func(value))` if Ok, passes Err through unchanged.\n\n**Examples:**\n```python\nsafe_execute(int, 'abc', default=-1)  # -1\nResult.ok(42).unwrap()                # 42\nResult.err('bad').unwrap_or(0)        # 0\n```",
+  "examples": [
+    {
+      "input": "try:\n    raise ValidationError('email', 'invalid format')\nexcept ValidationError as e:\n    (e.field, e.message, str(e))",
+      "output": "('email', 'invalid format', 'email: invalid format')",
+      "explanation": "Custom exception stores structured data and has readable str()."
+    },
+    {
+      "input": "safe_execute(int, 'abc', default=-1)",
+      "output": "-1",
+      "explanation": "int('abc') raises ValueError, so default is returned."
+    },
+    {
+      "input": "Result.ok(42).map(lambda x: x * 2).unwrap()",
+      "output": "84",
+      "explanation": "map transforms the Ok value; unwrap extracts it."
+    }
+  ],
+  "constraints": [
+    "ValidationError and NotFoundError must extend Exception.",
+    "safe_execute catches all exceptions (Exception), not just specific ones.",
+    "retry calls func() with no arguments. It returns (result, attempt_number).",
+    "retry raises the last exception if all attempts fail.",
+    "Result.ok(v).is_ok is True, Result.err(e).is_err is True.",
+    "unwrap() on Err: raises error if it's an Exception, wraps in ValueError otherwise.",
+    "map() on Err returns the same Err without calling func."
+  ],
+  "starter_code": "class ValidationError(Exception):\n    def __init__(self, field: str, message: str):\n        pass\n\n\nclass NotFoundError(Exception):\n    def __init__(self, resource: str, resource_id):\n        pass\n\n\ndef safe_execute(func, *args, default=None):\n    \"\"\"Call func(*args), return default on any exception.\"\"\"\n    pass\n\n\ndef retry(func, max_attempts=3):\n    \"\"\"Retry func() up to max_attempts. Returns (result, attempt_number).\"\"\"\n    pass\n\n\nclass Result:\n    def __init__(self, value=None, error=None, _is_ok=True):\n        pass\n\n    @classmethod\n    def ok(cls, value):\n        pass\n\n    @classmethod\n    def err(cls, error):\n        pass\n\n    @property\n    def is_ok(self):\n        pass\n\n    @property\n    def is_err(self):\n        pass\n\n    def unwrap(self):\n        \"\"\"Return value if Ok, raise error if Err.\"\"\"\n        pass\n\n    def unwrap_or(self, default):\n        \"\"\"Return value if Ok, default if Err.\"\"\"\n        pass\n\n    def map(self, func):\n        \"\"\"Apply func to value if Ok, pass Err through.\"\"\"\n        pass\n",
+  "test_cases": [
+    {
+      "input": "try:\n    raise ValidationError('email', 'invalid')\nexcept ValidationError as e:\n    (e.field, e.message)",
+      "expected": "('email', 'invalid')",
+      "is_hidden": false
+    },
+    {
+      "input": "str(NotFoundError('User', 42))",
+      "expected": "'User with id 42 not found'",
+      "is_hidden": false
+    },
+    {
+      "input": "safe_execute(int, 'abc', default=-1)",
+      "expected": "-1",
+      "is_hidden": false
+    },
+    {
+      "input": "safe_execute(lambda x: x + 1, 10)",
+      "expected": "11",
+      "is_hidden": false
+    },
+    {
+      "input": "counter = [0]\ndef flaky():\n    counter[0] += 1\n    if counter[0] < 3:\n        raise ConnectionError('fail')\n    return 'ok'\nretry(flaky, max_attempts=5)",
+      "expected": "('ok', 3)",
+      "is_hidden": false
+    },
+    {
+      "input": "Result.ok(42).unwrap()",
+      "expected": "42",
+      "is_hidden": false
+    },
+    {
+      "input": "Result.err('bad').unwrap_or(0)",
+      "expected": "0",
+      "is_hidden": false
+    },
+    {
+      "input": "Result.ok(5).map(lambda x: x * 3).unwrap()",
+      "expected": "15",
+      "is_hidden": true
+    },
+    {
+      "input": "Result.err('fail').map(lambda x: x * 3).is_err",
+      "expected": "True",
+      "is_hidden": true
+    },
+    {
+      "input": "try:\n    Result.err('boom').unwrap()\nexcept ValueError as e:\n    'boom' in str(e)",
+      "expected": "True",
+      "is_hidden": true
+    },
+    {
+      "input": "counter = [0]\ndef always_fail():\n    counter[0] += 1\n    raise RuntimeError('nope')\ntry:\n    retry(always_fail, max_attempts=3)\nexcept RuntimeError:\n    counter[0]",
+      "expected": "3",
+      "is_hidden": true
+    },
+    {
+      "input": "str(ValidationError('age', 'must be >= 18'))",
+      "expected": "'age: must be >= 18'",
+      "is_hidden": true
+    }
+  ],
+  "time_limit_minutes": 20,
+  "tags": ["python", "exceptions", "error-handling", "Result", "retry", "safety"]
+}

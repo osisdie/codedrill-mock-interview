@@ -1,0 +1,101 @@
+{
+  "id": "none-safe-patterns",
+  "title": "None-Safe Operations and Optional Value Handling",
+  "category": "python",
+  "difficulty": "easy",
+  "description": "In Python, `None` is the most common cause of `AttributeError: 'NoneType' object has no attribute ...`. Unlike languages with optional chaining (`?.`), Python requires explicit null checks.\n\nImplement utility functions for safe None handling — the Python equivalent of null-safe patterns.\n\n**Implement the following:**\n\n1. **`coalesce(*values)`**: Return the first non-`None` value. Returns `None` if all values are `None`.\n\n2. **`safe_chain(obj, *attrs)`**: Safely traverse a chain of attribute accesses. Like optional chaining (`obj?.a?.b?.c`). Returns `None` if any attribute is missing or any intermediate is `None`.\n\n3. **`safe_index(lst, index, default=None)`**: Safely access a list element by index. Returns `default` if the index is out of range or `lst` is not subscriptable.\n\n4. **`none_map(value, func)`**: Apply `func` to `value` if it is not `None`. Returns `None` if value is `None`. (Like Rust's `Option::map` or Java's `Optional.map`.)\n\n**Examples:**\n```python\ncoalesce(None, None, 3, 4)       # 3\nsafe_chain(request, 'user', 'name')  # None if any is missing\nsafe_index([10, 20], 5, -1)      # -1\nnone_map(5, str)                  # '5'\nnone_map(None, str)               # None\n```",
+  "examples": [
+    {
+      "input": "coalesce(None, None, 'found', 'extra')",
+      "output": "'found'",
+      "explanation": "Skips the two Nones, returns the first non-None value."
+    },
+    {
+      "input": "class User:\n    pass\nu = User()\nu.profile = User()\nu.profile.email = 'a@b.com'\nsafe_chain(u, 'profile', 'email')",
+      "output": "'a@b.com'",
+      "explanation": "Traverses u.profile.email safely."
+    },
+    {
+      "input": "none_map(10, lambda x: x * 2)",
+      "output": "20",
+      "explanation": "Value is not None, so func is applied."
+    }
+  ],
+  "constraints": [
+    "coalesce() with no arguments returns None.",
+    "coalesce treats only None as missing (0, '', False are valid values).",
+    "safe_chain returns None immediately when it encounters None or a missing attribute.",
+    "safe_index handles IndexError and TypeError (non-subscriptable) gracefully.",
+    "none_map returns None without calling func when value is None."
+  ],
+  "starter_code": "def coalesce(*values):\n    \"\"\"Return the first non-None value, or None if all are None.\"\"\"\n    pass\n\n\ndef safe_chain(obj, *attrs):\n    \"\"\"Safely traverse attribute chain. Returns None if any is missing.\"\"\"\n    pass\n\n\ndef safe_index(lst, index, default=None):\n    \"\"\"Safely access list element by index. Returns default if out of range.\"\"\"\n    pass\n\n\ndef none_map(value, func):\n    \"\"\"Apply func to value if not None, else return None.\"\"\"\n    pass\n",
+  "test_cases": [
+    {
+      "input": "coalesce(None, None, 3, 4)",
+      "expected": "3",
+      "is_hidden": false
+    },
+    {
+      "input": "coalesce(None, 0, 5)",
+      "expected": "0",
+      "is_hidden": false
+    },
+    {
+      "input": "coalesce(None, None, None)",
+      "expected": "None",
+      "is_hidden": false
+    },
+    {
+      "input": "class A:\n    pass\na = A()\na.b = A()\na.b.x = 10\nsafe_chain(a, 'b', 'x')",
+      "expected": "10",
+      "is_hidden": false
+    },
+    {
+      "input": "safe_chain(None, 'a', 'b')",
+      "expected": "None",
+      "is_hidden": false
+    },
+    {
+      "input": "class A:\n    pass\na = A()\nsafe_chain(a, 'missing', 'deep')",
+      "expected": "None",
+      "is_hidden": false
+    },
+    {
+      "input": "safe_index([10, 20, 30], 1)",
+      "expected": "20",
+      "is_hidden": false
+    },
+    {
+      "input": "safe_index([10, 20], 5, 'oob')",
+      "expected": "'oob'",
+      "is_hidden": false
+    },
+    {
+      "input": "safe_index(None, 0, 'err')",
+      "expected": "'err'",
+      "is_hidden": true
+    },
+    {
+      "input": "none_map(5, lambda x: x ** 2)",
+      "expected": "25",
+      "is_hidden": true
+    },
+    {
+      "input": "none_map(None, lambda x: x ** 2)",
+      "expected": "None",
+      "is_hidden": true
+    },
+    {
+      "input": "coalesce()",
+      "expected": "None",
+      "is_hidden": true
+    },
+    {
+      "input": "coalesce('', False, None)",
+      "expected": "''",
+      "is_hidden": true
+    }
+  ],
+  "time_limit_minutes": 15,
+  "tags": ["python", "None", "Optional", "safety", "AttributeError"]
+}

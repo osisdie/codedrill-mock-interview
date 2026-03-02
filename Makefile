@@ -5,7 +5,8 @@ install:
 	cd frontend && pnpm install
 
 dev-backend:
-	cd backend && uvicorn main:app --reload --port 8573
+	# cd backend && uvicorn main:app --reload --port 8573
+	cd backend && uvicorn main:app --port 8573
 
 dev-frontend:
 	cd frontend && pnpm dev

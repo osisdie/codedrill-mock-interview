@@ -30,7 +30,7 @@ backend:check:
           fp = pathlib.Path('data/problems') / p['file']
           data = json.loads(fp.read_text())
           assert data['id'] == p['id'], f'ID mismatch: {p[\"id\"]}'
-          assert data['category'] in ('algorithms','fastapi','django','pytest'), f'Bad category: {data[\"category\"]}'
+          assert data['category'] in ('algorithms','fastapi','django','pytest','python'), f'Bad category: {data[\"category\"]}'
           assert data['difficulty'] in ('easy','medium','hard'), f'Bad difficulty: {data[\"difficulty\"]}'
           assert len(data['test_cases']) > 0, f'No test cases: {p[\"id\"]}'
       print(f'Validated {len(index[\"problems\"])} problems')
@@ -69,10 +69,19 @@ e2e:playwright:
     - cp backend/.env.example backend/.env
     - docker compose up --build -d
     - |
-      echo "Waiting for services..."
+      echo "Waiting for backend..."
       for i in $(seq 1 30); do
         if docker compose exec -T backend python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')" 2>/dev/null; then
           echo "Backend ready"
+          break
+        fi
+        sleep 2
+      done
+    - |
+      echo "Waiting for frontend..."
+      for i in $(seq 1 30); do
+        if docker compose exec -T backend python -c "import urllib.request; urllib.request.urlopen('http://frontend:5173/')" 2>/dev/null; then
+          echo "Frontend ready"
           break
         fi
         sleep 2
