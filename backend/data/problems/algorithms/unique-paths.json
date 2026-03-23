@@ -5,19 +5,57 @@
   "difficulty": "medium",
   "description": "There is a robot on an `m x n` grid. The robot is initially located at the **top-left corner** (i.e., `grid[0][0]`). The robot tries to move to the **bottom-right corner** (i.e., `grid[m-1][n-1]`). The robot can only move either **down** or **right** at any point in time.\n\nGiven the two integers `m` and `n`, return the **number of possible unique paths** that the robot can take to reach the bottom-right corner.",
   "examples": [
-    {"input": "m = 3, n = 7", "output": "28"},
-    {"input": "m = 3, n = 2", "output": "3", "explanation": "From the top-left corner, there are 3 ways to reach the bottom-right: Right -> Down -> Down, Down -> Down -> Right, Down -> Right -> Down."}
+    {
+      "input": "m = 3, n = 7",
+      "output": "28"
+    },
+    {
+      "input": "m = 3, n = 2",
+      "output": "3",
+      "explanation": "From the top-left corner, there are 3 ways to reach the bottom-right: Right -> Down -> Down, Down -> Down -> Right, Down -> Right -> Down."
+    }
   ],
-  "constraints": ["1 <= m, n <= 100"],
+  "constraints": [
+    "1 <= m, n <= 100"
+  ],
   "starter_code": "def unique_paths(m: int, n: int) -> int:\n    # Write your solution here\n    pass\n",
   "test_cases": [
-    {"input": "unique_paths(3, 7)", "expected": "28", "is_hidden": false},
-    {"input": "unique_paths(3, 2)", "expected": "3", "is_hidden": false},
-    {"input": "unique_paths(1, 1)", "expected": "1", "is_hidden": false},
-    {"input": "unique_paths(7, 3)", "expected": "28", "is_hidden": true},
-    {"input": "unique_paths(3, 3)", "expected": "6", "is_hidden": true},
-    {"input": "unique_paths(10, 10)", "expected": "48620", "is_hidden": true}
+    {
+      "input": "unique_paths(3, 7)",
+      "expected": "28",
+      "is_hidden": false
+    },
+    {
+      "input": "unique_paths(3, 2)",
+      "expected": "3",
+      "is_hidden": false
+    },
+    {
+      "input": "unique_paths(1, 1)",
+      "expected": "1",
+      "is_hidden": false
+    },
+    {
+      "input": "unique_paths(7, 3)",
+      "expected": "28",
+      "is_hidden": true
+    },
+    {
+      "input": "unique_paths(3, 3)",
+      "expected": "6",
+      "is_hidden": true
+    },
+    {
+      "input": "unique_paths(10, 10)",
+      "expected": "48620",
+      "is_hidden": true
+    }
   ],
   "time_limit_minutes": 20,
-  "tags": ["dynamic-programming", "math", "combinatorics"]
+  "tags": [
+    "dynamic-programming",
+    "math",
+    "combinatorics"
+  ],
+  "solution": "\n\n# Problem: Count the number of unique paths from top-left to bottom-right\n# of an m x n grid, moving only right or down.\n#\n# Approach: Dynamic Programming (bottom-up).\n# Each cell dp[i][j] stores the number of ways to reach it.\n# A cell can only be reached from above (dp[i-1][j]) or from the left (dp[i][j-1]).\n# First row and first column all have exactly 1 path (straight line).\n#\n# Time complexity: O(m * n)\n# Space complexity: O(n) using a single row optimization\n#\n# Key steps:\n# 1. Initialize a 1D array of size n, filled with 1s (first row).\n# 2. For each subsequent row, accumulate paths from the left.\n# 3. Return the last element which represents dp[m-1][n-1].\n\ndef unique_paths(m: int, n: int) -> int:\n    dp = [1] * n  # base case: first row has 1 way to reach each cell\n\n    for i in range(1, m):       # iterate rows starting from the second\n        for j in range(1, n):   # first column stays 1 (only one way: straight down)\n            dp[j] += dp[j - 1]  # paths from above (dp[j]) + paths from left (dp[j-1])\n\n    return dp[-1]"
 }

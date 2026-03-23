@@ -24,15 +24,53 @@
   ],
   "starter_code": "def flatten(data) -> list:\n    # Recursive solution\n    pass\n\n\ndef flatten_iterative(data) -> list:\n    # Iterative solution (no recursion)\n    pass\n",
   "test_cases": [
-    {"input": "flatten([1, [2, [3, 4], 5], 6])", "expected": "[1, 2, 3, 4, 5, 6]", "is_hidden": false},
-    {"input": "flatten([1, [], [2, [[], 3]]])", "expected": "[1, 2, 3]", "is_hidden": false},
-    {"input": "flatten_iterative([1, [2, [3, 4], 5], 6])", "expected": "[1, 2, 3, 4, 5, 6]", "is_hidden": false},
-    {"input": "flatten([])", "expected": "[]", "is_hidden": true},
-    {"input": "flatten([[[[[1]]]]])", "expected": "[1]", "is_hidden": true},
-    {"input": "flatten(['a', ['b', ['c']], 'd'])", "expected": "['a', 'b', 'c', 'd']", "is_hidden": true},
-    {"input": "flatten_iterative([1, [], [2, [[], 3]]])", "expected": "[1, 2, 3]", "is_hidden": true},
-    {"input": "flatten_iterative(['x', [1, ['y', [2]]]])", "expected": "['x', 1, 'y', 2]", "is_hidden": true}
+    {
+      "input": "flatten([1, [2, [3, 4], 5], 6])",
+      "expected": "[1, 2, 3, 4, 5, 6]",
+      "is_hidden": false
+    },
+    {
+      "input": "flatten([1, [], [2, [[], 3]]])",
+      "expected": "[1, 2, 3]",
+      "is_hidden": false
+    },
+    {
+      "input": "flatten_iterative([1, [2, [3, 4], 5], 6])",
+      "expected": "[1, 2, 3, 4, 5, 6]",
+      "is_hidden": false
+    },
+    {
+      "input": "flatten([])",
+      "expected": "[]",
+      "is_hidden": true
+    },
+    {
+      "input": "flatten([[[[[1]]]]])",
+      "expected": "[1]",
+      "is_hidden": true
+    },
+    {
+      "input": "flatten(['a', ['b', ['c']], 'd'])",
+      "expected": "['a', 'b', 'c', 'd']",
+      "is_hidden": true
+    },
+    {
+      "input": "flatten_iterative([1, [], [2, [[], 3]]])",
+      "expected": "[1, 2, 3]",
+      "is_hidden": true
+    },
+    {
+      "input": "flatten_iterative(['x', [1, ['y', [2]]]])",
+      "expected": "['x', 1, 'y', 2]",
+      "is_hidden": true
+    }
   ],
   "time_limit_minutes": 20,
-  "tags": ["recursion", "iteration", "list", "stack"]
+  "tags": [
+    "recursion",
+    "iteration",
+    "list",
+    "stack"
+  ],
+  "solution": "# Problem: Given an arbitrarily nested list, return a flat list of all\n# non-list elements preserving their original left-to-right order.\n#\n# Approach (Recursive): Walk through each element. If it's a list, recurse\n# into it and extend the result. Otherwise, append the element directly.\n#\n# Approach (Iterative): Use an explicit stack seeded with the input items\n# in reverse order. Pop from the stack: if the item is a list, push its\n# children (reversed) back onto the stack; otherwise, append to result.\n#\n# Time complexity:  O(n) for both, where n = total number of elements\n# Space complexity: O(n + d) where d = max nesting depth (stack/recursion)\n#\n# Key steps:\n# 1. Check if each element is a list.\n# 2. If list  -> recurse/push children onto stack.\n# 3. If not   -> add to the flat result.\n# 4. Return the accumulated flat list.\n\n\ndef flatten(data) -> list:\n    # Recursive solution\n    result = []\n    for item in data:\n        if isinstance(item, list):\n            result.extend(flatten(item))  # recurse into nested list\n        else:\n            result.append(item)\n    return result\n\n\ndef flatten_iterative(data) -> list:\n    # Iterative solution (no recursion)\n    stack = list(reversed(data))  # reverse so we pop from the left logically\n    result = []\n    while stack:\n        item = stack.pop()\n        if isinstance(item, list):\n            stack.extend(reversed(item))  # push children in reverse order\n        else:\n            result.append(item)\n    return result"
 }

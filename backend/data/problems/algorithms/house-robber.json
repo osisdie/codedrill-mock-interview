@@ -5,19 +5,57 @@
   "difficulty": "medium",
   "description": "You are a professional robber planning to rob houses along a street. Each house has a certain amount of money stashed. The only constraint is that **adjacent houses have security systems connected**, so robbing two adjacent houses will trigger an alarm.\n\nGiven an integer array `nums` representing the amount of money in each house, return the **maximum amount of money** you can rob tonight **without alerting the police** (i.e., without robbing two adjacent houses).",
   "examples": [
-    {"input": "nums = [1, 2, 3, 1]", "output": "4", "explanation": "Rob house 1 (1) and house 3 (3) = 1 + 3 = 4."},
-    {"input": "nums = [2, 7, 9, 3, 1]", "output": "12", "explanation": "Rob house 1 (2) + house 3 (9) + house 5 (1) = 12."}
+    {
+      "input": "nums = [1, 2, 3, 1]",
+      "output": "4",
+      "explanation": "Rob house 1 (1) and house 3 (3) = 1 + 3 = 4."
+    },
+    {
+      "input": "nums = [2, 7, 9, 3, 1]",
+      "output": "12",
+      "explanation": "Rob house 1 (2) + house 3 (9) + house 5 (1) = 12."
+    }
   ],
-  "constraints": ["1 <= len(nums) <= 100", "0 <= nums[i] <= 400"],
+  "constraints": [
+    "1 <= len(nums) <= 100",
+    "0 <= nums[i] <= 400"
+  ],
   "starter_code": "def rob(nums: list[int]) -> int:\n    # Write your solution here\n    pass\n",
   "test_cases": [
-    {"input": "rob([1, 2, 3, 1])", "expected": "4", "is_hidden": false},
-    {"input": "rob([2, 7, 9, 3, 1])", "expected": "12", "is_hidden": false},
-    {"input": "rob([2, 1, 1, 2])", "expected": "4", "is_hidden": true},
-    {"input": "rob([0])", "expected": "0", "is_hidden": true},
-    {"input": "rob([100])", "expected": "100", "is_hidden": true},
-    {"input": "rob([10, 1, 1, 10, 1, 1, 10])", "expected": "30", "is_hidden": true}
+    {
+      "input": "rob([1, 2, 3, 1])",
+      "expected": "4",
+      "is_hidden": false
+    },
+    {
+      "input": "rob([2, 7, 9, 3, 1])",
+      "expected": "12",
+      "is_hidden": false
+    },
+    {
+      "input": "rob([2, 1, 1, 2])",
+      "expected": "4",
+      "is_hidden": true
+    },
+    {
+      "input": "rob([0])",
+      "expected": "0",
+      "is_hidden": true
+    },
+    {
+      "input": "rob([100])",
+      "expected": "100",
+      "is_hidden": true
+    },
+    {
+      "input": "rob([10, 1, 1, 10, 1, 1, 10])",
+      "expected": "30",
+      "is_hidden": true
+    }
   ],
   "time_limit_minutes": 20,
-  "tags": ["dynamic-programming"]
+  "tags": [
+    "dynamic-programming"
+  ],
+  "solution": "\n\n# House Robber Problem\n# Given an array of house values, find the max amount you can rob\n# without robbing two adjacent houses.\n#\n# Approach: Dynamic Programming (optimized space)\n# At each house, we decide: rob it (add to best from 2 houses back)\n# or skip it (keep best from previous house).\n# We only need the last two DP values, so O(1) space suffices.\n#\n# Time complexity: O(n) - single pass through the array\n# Space complexity: O(1) - only two variables\n#\n# Key steps:\n# 1. Track two variables: best sum excluding previous house, best sum including previous house\n# 2. At each house, new best = max(skip this house, rob this house + best from 2 back)\n# 3. Shift the two variables forward\n# 4. Return the final best\n\ndef rob(nums: list[int]) -> int:\n    prev2 = 0  # max money up to two houses back\n    prev1 = 0  # max money up to the previous house\n\n    for money in nums:\n        current = max(prev1, prev2 + money)  # skip or rob this house\n        prev2 = prev1\n        prev1 = current\n\n    return prev1"
 }

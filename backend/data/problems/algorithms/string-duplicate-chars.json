@@ -24,14 +24,47 @@
   ],
   "starter_code": "def find_duplicate_chars(s: str) -> list[str]:\n    # Write your solution here\n    pass\n",
   "test_cases": [
-    {"input": "find_duplicate_chars('programming')", "expected": "['g', 'm', 'r']", "is_hidden": false},
-    {"input": "find_duplicate_chars('hello world')", "expected": "['l', 'o']", "is_hidden": false},
-    {"input": "find_duplicate_chars('abcdef')", "expected": "[]", "is_hidden": false},
-    {"input": "find_duplicate_chars('')", "expected": "[]", "is_hidden": true},
-    {"input": "find_duplicate_chars('aAbBcC')", "expected": "[]", "is_hidden": true},
-    {"input": "find_duplicate_chars('aabbcc')", "expected": "['a', 'b', 'c']", "is_hidden": true},
-    {"input": "find_duplicate_chars('  a  b  a  ')", "expected": "['a']", "is_hidden": true}
+    {
+      "input": "find_duplicate_chars('programming')",
+      "expected": "['g', 'm', 'r']",
+      "is_hidden": false
+    },
+    {
+      "input": "find_duplicate_chars('hello world')",
+      "expected": "['l', 'o']",
+      "is_hidden": false
+    },
+    {
+      "input": "find_duplicate_chars('abcdef')",
+      "expected": "[]",
+      "is_hidden": false
+    },
+    {
+      "input": "find_duplicate_chars('')",
+      "expected": "[]",
+      "is_hidden": true
+    },
+    {
+      "input": "find_duplicate_chars('aAbBcC')",
+      "expected": "[]",
+      "is_hidden": true
+    },
+    {
+      "input": "find_duplicate_chars('aabbcc')",
+      "expected": "['a', 'b', 'c']",
+      "is_hidden": true
+    },
+    {
+      "input": "find_duplicate_chars('  a  b  a  ')",
+      "expected": "['a']",
+      "is_hidden": true
+    }
   ],
   "time_limit_minutes": 15,
-  "tags": ["hash-map", "string", "counting"]
+  "tags": [
+    "hash-map",
+    "string",
+    "counting"
+  ],
+  "solution": "# Problem: Find all characters that appear more than once in a string (case-sensitive, ignoring spaces).\n#\n# Approach: Use a frequency counter (hash map) to count occurrences of each non-space character.\n# Then filter for characters with count > 1 and return them sorted alphabetically.\n#\n# Time Complexity: O(n log n) — O(n) for counting, O(k log k) for sorting where k <= n\n# Space Complexity: O(n) — for the counter dictionary\n#\n# Steps:\n# 1. Remove spaces from the string\n# 2. Count the frequency of each character\n# 3. Collect characters that appear more than once\n# 4. Return them sorted alphabetically\n\nfrom collections import Counter\n\ndef find_duplicate_chars(s: str) -> list[str]:\n    # Count occurrences of each non-space character\n    counts = Counter(c for c in s if c != ' ')\n    # Return sorted list of characters appearing more than once\n    return sorted(ch for ch, freq in counts.items() if freq > 1)"
 }

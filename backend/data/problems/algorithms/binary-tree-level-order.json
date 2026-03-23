@@ -5,20 +5,61 @@
   "difficulty": "medium",
   "description": "Given the root of a binary tree represented as a nested list, return the **level order traversal** of its nodes' values (i.e., from left to right, level by level).\n\nThe tree is represented as a list where `None` indicates an absent node. For example, `[3, 9, 20, None, None, 15, 7]` represents:\n\n```\n    3\n   / \\\n  9  20\n    /  \\\n   15   7\n```\n\nImplement a function that builds the tree from this list and returns the level-order traversal as a list of lists.",
   "examples": [
-    {"input": "root = [3, 9, 20, None, None, 15, 7]", "output": "[[3], [9, 20], [15, 7]]"},
-    {"input": "root = [1]", "output": "[[1]]"},
-    {"input": "root = []", "output": "[]"}
+    {
+      "input": "root = [3, 9, 20, None, None, 15, 7]",
+      "output": "[[3], [9, 20], [15, 7]]"
+    },
+    {
+      "input": "root = [1]",
+      "output": "[[1]]"
+    },
+    {
+      "input": "root = []",
+      "output": "[]"
+    }
   ],
-  "constraints": ["The number of nodes is in the range [0, 2000].", "-1000 <= Node.val <= 1000"],
+  "constraints": [
+    "The number of nodes is in the range [0, 2000].",
+    "-1000 <= Node.val <= 1000"
+  ],
   "starter_code": "def level_order(root_list: list) -> list[list[int]]:\n    # Build tree from list representation, then return level-order traversal\n    # Write your solution here\n    pass\n",
   "test_cases": [
-    {"input": "level_order([3, 9, 20, None, None, 15, 7])", "expected": "[[3], [9, 20], [15, 7]]", "is_hidden": false},
-    {"input": "level_order([1])", "expected": "[[1]]", "is_hidden": false},
-    {"input": "level_order([])", "expected": "[]", "is_hidden": false},
-    {"input": "level_order([1, 2, 3, 4, 5])", "expected": "[[1], [2, 3], [4, 5]]", "is_hidden": true},
-    {"input": "level_order([1, None, 2, None, 3])", "expected": "[[1], [2], [3]]", "is_hidden": true},
-    {"input": "level_order([5, 4, 7, 3, None, 2, None, -1, None, 9])", "expected": "[[5], [4, 7], [3, 2], [-1, 9]]", "is_hidden": true}
+    {
+      "input": "level_order([3, 9, 20, None, None, 15, 7])",
+      "expected": "[[3], [9, 20], [15, 7]]",
+      "is_hidden": false
+    },
+    {
+      "input": "level_order([1])",
+      "expected": "[[1]]",
+      "is_hidden": false
+    },
+    {
+      "input": "level_order([])",
+      "expected": "[]",
+      "is_hidden": false
+    },
+    {
+      "input": "level_order([1, 2, 3, 4, 5])",
+      "expected": "[[1], [2, 3], [4, 5]]",
+      "is_hidden": true
+    },
+    {
+      "input": "level_order([1, None, 2, None, 3])",
+      "expected": "[[1], [2], [3]]",
+      "is_hidden": true
+    },
+    {
+      "input": "level_order([5, 4, 7, 3, None, 2, None, -1, None, 9])",
+      "expected": "[[5], [4, 7], [3, 2], [-1, 9]]",
+      "is_hidden": true
+    }
   ],
   "time_limit_minutes": 25,
-  "tags": ["tree", "bfs", "breadth-first-search"]
+  "tags": [
+    "tree",
+    "bfs",
+    "breadth-first-search"
+  ],
+  "solution": "# Problem: Given a binary tree as a list (heap-style), return level-order traversal\n# as a list of lists, where each inner list contains values at that depth.\n#\n# Approach:\n# 1. Build a binary tree from the list using index math (children of i are 2i+1, 2i+2).\n# 2. BFS (breadth-first search) using a queue, processing one level per iteration.\n#\n# Time complexity: O(n) — every node visited once during build and once during BFS.\n# Space complexity: O(n) — tree nodes + queue can hold up to n/2 nodes at widest level.\n#\n# Key steps:\n# 1. Handle empty input.\n# 2. Build tree nodes from list, linking parent to children via index formula.\n# 3. BFS: for each level, drain current queue into a values list, enqueue children.\n# 4. Return collected levels.\n\nfrom collections import deque\n\ndef level_order(root_list: list) -> list[list[int]]:\n    if not root_list:\n        return []\n\n    # -- Step 1: Build tree from list representation --\n    class TreeNode:\n        def __init__(self, val):\n            self.val = val\n            self.left = None\n            self.right = None\n\n    # Create node objects (None entries stay None)\n    nodes = [TreeNode(v) if v is not None else None for v in root_list]\n\n    # Link children: node at index i has left child at 2i+1, right at 2i+2\n    for i, node in enumerate(nodes):\n        if node is None:\n            continue\n        left_idx = 2 * i + 1\n        right_idx = 2 * i + 2\n        if left_idx < len(nodes):\n            node.left = nodes[left_idx]\n        if right_idx < len(nodes):\n            node.right = nodes[right_idx]\n\n    root = nodes[0]\n    if root is None:\n        return []\n\n    # -- Step 2: BFS level-order traversal --\n    result = []\n    queue = deque([root])\n\n    while queue:\n        level_size = len(queue)  # number of nodes at current depth\n        level_vals = []\n\n        for _ in range(level_size):\n            node = queue.popleft()\n            level_vals.append(node.val)\n            if node.left:\n                queue.append(node.left)\n            if node.right:\n                queue.append(node.right)\n\n        result.append(level_vals)\n\n    return result"
 }

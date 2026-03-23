@@ -27,13 +27,41 @@
   ],
   "starter_code": "def reverse_list(head: list[int]) -> list[int]:\n    # Write your solution here\n    # Input and output are represented as lists for simplicity\n    pass\n",
   "test_cases": [
-    {"input": "reverse_list([1, 2, 3, 4, 5])", "expected": "[5, 4, 3, 2, 1]", "is_hidden": false},
-    {"input": "reverse_list([1, 2])", "expected": "[2, 1]", "is_hidden": false},
-    {"input": "reverse_list([])", "expected": "[]", "is_hidden": false},
-    {"input": "reverse_list([1])", "expected": "[1]", "is_hidden": true},
-    {"input": "reverse_list([7, 3, 9, 1, 5])", "expected": "[5, 1, 9, 3, 7]", "is_hidden": true},
-    {"input": "reverse_list([100, -100])", "expected": "[-100, 100]", "is_hidden": true}
+    {
+      "input": "reverse_list([1, 2, 3, 4, 5])",
+      "expected": "[5, 4, 3, 2, 1]",
+      "is_hidden": false
+    },
+    {
+      "input": "reverse_list([1, 2])",
+      "expected": "[2, 1]",
+      "is_hidden": false
+    },
+    {
+      "input": "reverse_list([])",
+      "expected": "[]",
+      "is_hidden": false
+    },
+    {
+      "input": "reverse_list([1])",
+      "expected": "[1]",
+      "is_hidden": true
+    },
+    {
+      "input": "reverse_list([7, 3, 9, 1, 5])",
+      "expected": "[5, 1, 9, 3, 7]",
+      "is_hidden": true
+    },
+    {
+      "input": "reverse_list([100, -100])",
+      "expected": "[-100, 100]",
+      "is_hidden": true
+    }
   ],
   "time_limit_minutes": 20,
-  "tags": ["linked-list", "recursion"]
+  "tags": [
+    "linked-list",
+    "recursion"
+  ],
+  "solution": "# Problem: Reverse a singly linked list and return the reversed list.\n#\n# Approach: Build a linked list from the input, then reverse it iteratively\n# using three pointers (prev, curr, next_node). At each step, we redirect\n# the current node's next pointer to the previous node, then advance all\n# three pointers forward by one position.\n#\n# Time Complexity: O(n) - single pass to build, single pass to reverse\n# Space Complexity: O(n) - for building the linked list and output array\n#\n# Key steps:\n# 1. Define a ListNode class for the linked list\n# 2. Build the linked list from the input list\n# 3. Reverse the linked list using iterative pointer manipulation\n# 4. Convert the reversed linked list back to a list\n\nclass ListNode:\n    def __init__(self, val=0, next=None):\n        self.val = val\n        self.next = next\n\ndef reverse_list(head: list[int]) -> list[int]:\n    if not head:\n        return []\n\n    # Step 1: Build linked list from input list\n    dummy = ListNode(0)\n    current = dummy\n    for val in head:\n        current.next = ListNode(val)\n        current = current.next\n    linked_head = dummy.next\n\n    # Step 2: Reverse using three-pointer technique\n    prev = None\n    curr = linked_head\n    while curr:\n        next_node = curr.next  # save next before we overwrite it\n        curr.next = prev       # reverse the pointer\n        prev = curr            # advance prev\n        curr = next_node       # advance curr\n\n    # Step 3: Convert reversed linked list back to list\n    result = []\n    node = prev  # prev is now the new head\n    while node:\n        result.append(node.val)\n        node = node.next\n\n    return result"
 }

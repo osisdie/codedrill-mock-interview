@@ -62,5 +62,11 @@
     }
   ],
   "time_limit_minutes": 30,
-  "tags": ["fastapi", "authentication", "token", "security"]
+  "tags": [
+    "fastapi",
+    "authentication",
+    "token",
+    "security"
+  ],
+  "solution": "# Problem: Implement a token-based auth system with register, login,\n# token validation, and token revocation using in-memory storage.\n#\n# Approach:\n#   - hash_password: reverse the string and append its length (deterministic, no deps)\n#   - register_user: check for duplicates, store hashed password in users_db\n#   - login: verify username exists and hashed password matches, then mint a token\n#   - get_current_user: simple dict lookup in tokens_db\n#   - revoke_token: pop from tokens_db, return whether it existed\n#\n# Time complexity: O(n) for hash_password (n = len(password)); O(1) for all others.\n# Space complexity: O(u + t) where u = users, t = active tokens.\n#\n# Key steps:\n#   1. Define the hash as reverse + length suffix\n#   2. Guard registration against duplicate usernames\n#   3. On login, compare hashed input against stored hash\n#   4. Generate tokens with a deterministic format using tokens_db size\n#   5. Validate and revoke tokens via dict operations\n\nusers_db: dict[str, str] = {}   # username -> hashed_password\ntokens_db: dict[str, str] = {}  # token -> username\n\n\ndef hash_password(password: str) -> str:\n    # Simple hash: reverse + length\n    return password[::-1] + str(len(password))\n\n\ndef register_user(username: str, password: str) -> dict:\n    # Register a new user, store hashed password\n    if username in users_db:\n        raise ValueError(f\"Username '{username}' already exists\")\n    users_db[username] = hash_password(password)\n    return {\"username\": username, \"message\": \"registered\"}\n\n\ndef login(username: str, password: str) -> dict:\n    # Verify credentials, generate and store token\n    if username not in users_db or users_db[username] != hash_password(password):\n        raise ValueError(\"Invalid username or password\")\n    token = f\"{username}:token:{len(tokens_db)}\"\n    tokens_db[token] = username\n    return {\"access_token\": token, \"token_type\": \"bearer\"}\n\n\ndef get_current_user(token: str) -> str:\n    # Look up token and return username\n    if token not in tokens_db:\n        raise ValueError(\"Invalid or expired token\")\n    return tokens_db[token]\n\n\ndef revoke_token(token: str) -> bool:\n    # Revoke a token, return True if it existed, False otherwise\n    return tokens_db.pop(token, None) is not None"
 }

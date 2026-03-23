@@ -21,13 +21,40 @@
   ],
   "starter_code": "def climb_stairs(n: int) -> int:\n    # Write your solution here\n    pass\n",
   "test_cases": [
-    {"input": "climb_stairs(2)", "expected": "2", "is_hidden": false},
-    {"input": "climb_stairs(3)", "expected": "3", "is_hidden": false},
-    {"input": "climb_stairs(1)", "expected": "1", "is_hidden": false},
-    {"input": "climb_stairs(5)", "expected": "8", "is_hidden": true},
-    {"input": "climb_stairs(10)", "expected": "89", "is_hidden": true},
-    {"input": "climb_stairs(20)", "expected": "10946", "is_hidden": true}
+    {
+      "input": "climb_stairs(2)",
+      "expected": "2",
+      "is_hidden": false
+    },
+    {
+      "input": "climb_stairs(3)",
+      "expected": "3",
+      "is_hidden": false
+    },
+    {
+      "input": "climb_stairs(1)",
+      "expected": "1",
+      "is_hidden": false
+    },
+    {
+      "input": "climb_stairs(5)",
+      "expected": "8",
+      "is_hidden": true
+    },
+    {
+      "input": "climb_stairs(10)",
+      "expected": "89",
+      "is_hidden": true
+    },
+    {
+      "input": "climb_stairs(20)",
+      "expected": "10946",
+      "is_hidden": true
+    }
   ],
   "time_limit_minutes": 15,
-  "tags": ["dynamic-programming"]
+  "tags": [
+    "dynamic-programming"
+  ],
+  "solution": "# Problem: Count the number of distinct ways to climb n stairs,\n# taking either 1 or 2 steps at a time.\n#\n# Approach: Dynamic programming (bottom-up). The number of ways to reach\n# step i equals the sum of ways to reach step (i-1) and step (i-2),\n# which is the Fibonacci recurrence. We use two variables instead of\n# an array to keep space usage constant.\n#\n# Time complexity: O(n)\n# Space complexity: O(1)\n#\n# Key steps:\n# 1. Handle base cases: 1 way for step 0, 1 way for step 1\n# 2. Iterate from step 2 to n, updating two rolling variables\n# 3. Return the final value\n\ndef climb_stairs(n: int) -> int:\n    if n <= 1:\n        return 1\n\n    prev2 = 1  # ways to reach step 0\n    prev1 = 1  # ways to reach step 1\n\n    for i in range(2, n + 1):\n        current = prev1 + prev2  # ways(i) = ways(i-1) + ways(i-2)\n        prev2 = prev1\n        prev1 = current\n\n    return prev1"
 }

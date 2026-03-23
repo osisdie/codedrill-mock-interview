@@ -1,6 +1,14 @@
 # CodeDrill — AI Mock Interview Platform
 
+[![CI](https://github.com/osisdie/codedrill-mock-interview/actions/workflows/deploy-pages.yml/badge.svg)](https://github.com/osisdie/codedrill-mock-interview/actions)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-blue)](https://www.python.org/)
+[![Vue 3](https://img.shields.io/badge/Vue-3-4FC08D?logo=vue.js)](https://vuejs.org/)
+[![Docker](https://img.shields.io/badge/Docker-ready-2496ED?logo=docker)](docker-compose.yml)
+
 Practice coding problems, get AI-powered mock interviews, and receive scored feedback — all in one platform.
+
+> **[Live Demo](https://osisdie.github.io/codedrill-mock-interview/)** — Try it instantly in your browser (no setup required). Code execution and AI features require the full local version.
 
 ## Preview
 
@@ -30,7 +38,7 @@ Screenshots of the main workflow: home → problems → coding arena → test re
 
 ## Features
 
-- **65 Coding Problems** — Algorithms (LeetCode medium), FastAPI, Django, and Pytest problems with automated test cases
+- **73 Coding Problems** — Algorithms, FastAPI, Django, Pytest, and Python problems with automated test cases
 - **Python Sandbox** — Secure, isolated code execution for your solutions
 - **AI Mock Interview** — Senior technical interviewer powered by LLM (OpenRouter)
 - **Scored Feedback** — Detailed evaluation of your code and interview performance
@@ -51,7 +59,7 @@ Screenshots of the main workflow: home → problems → coding arena → test re
 
 ### Prerequisites
 
-- Python 3.10+
+- Python 3.12+
 - Node.js 18+ with [pnpm](https://pnpm.io/) (`corepack enable && corepack prepare pnpm@latest --activate`)
 - [OpenRouter](https://openrouter.ai/) API key
 
@@ -59,8 +67,8 @@ Screenshots of the main workflow: home → problems → coding arena → test re
 
 ```bash
 # Clone the repo
-git clone https://github.com/your-org/ai-mock-interview.git
-cd ai-mock-interview
+git clone https://github.com/osisdie/codedrill-mock-interview.git
+cd codedrill-mock-interview
 
 # Install dependencies
 make install
@@ -105,7 +113,7 @@ make dev-frontend
 ## Project Structure
 
 ```
-ai-mock-interview/
+codedrill-mock-interview/
 ├── backend/           # FastAPI app
 │   ├── app/
 │   │   ├── routers/   # API routes (problems, sessions, execution, interview, scoring)
@@ -115,8 +123,9 @@ ai-mock-interview/
 │   └── main.py
 ├── frontend/          # Vue 3 SPA
 │   ├── src/
+│   │   └── demo/      # Demo mode mock layer (GitHub Pages)
 │   └── e2e/           # Playwright E2E tests
-├── scripts/           # Start scripts
+├── scripts/           # Start/generate scripts
 └── docs/
 ```
 
@@ -137,6 +146,17 @@ ai-mock-interview/
 | `SANDBOX_TIMEOUT`  | Code execution timeout (seconds)    | `10`    |
 | `SANDBOX_MAX_MEMORY_MB` | Max memory per run (MB)         | `256`   |
 
+## Roadmap
+
+- [ ] JavaScript / TypeScript problems
+- [ ] Real-time collaborative interviews
+- [ ] Difficulty rating system
+- [ ] Multi-language execution (Go, Java, Rust)
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
 ## License
 
-MIT
+[MIT](LICENSE)

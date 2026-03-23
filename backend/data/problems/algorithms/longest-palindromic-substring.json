@@ -5,19 +5,58 @@
   "difficulty": "medium",
   "description": "Given a string `s`, return the **longest palindromic substring** in `s`.\n\nA palindrome is a string that reads the same forwards and backwards. If there are multiple answers of the same length, return any one of them.",
   "examples": [
-    {"input": "s = \"babad\"", "output": "\"bab\"", "explanation": "\"aba\" is also a valid answer."},
-    {"input": "s = \"cbbd\"", "output": "\"bb\""}
+    {
+      "input": "s = \"babad\"",
+      "output": "\"bab\"",
+      "explanation": "\"aba\" is also a valid answer."
+    },
+    {
+      "input": "s = \"cbbd\"",
+      "output": "\"bb\""
+    }
   ],
-  "constraints": ["1 <= len(s) <= 1000", "s consists of only digits and English letters."],
+  "constraints": [
+    "1 <= len(s) <= 1000",
+    "s consists of only digits and English letters."
+  ],
   "starter_code": "def longest_palindrome(s: str) -> str:\n    # Write your solution here\n    pass\n",
   "test_cases": [
-    {"input": "r = longest_palindrome('babad')\nr in ('bab', 'aba')", "expected": "True", "is_hidden": false},
-    {"input": "longest_palindrome('cbbd')", "expected": "'bb'", "is_hidden": false},
-    {"input": "longest_palindrome('a')", "expected": "'a'", "is_hidden": false},
-    {"input": "longest_palindrome('racecar')", "expected": "'racecar'", "is_hidden": true},
-    {"input": "longest_palindrome('ac')\nin ('a', 'c')", "expected": "True", "is_hidden": true},
-    {"input": "len(longest_palindrome('aaaa'))", "expected": "4", "is_hidden": true}
+    {
+      "input": "r = longest_palindrome('babad')\nr in ('bab', 'aba')",
+      "expected": "True",
+      "is_hidden": false
+    },
+    {
+      "input": "longest_palindrome('cbbd')",
+      "expected": "'bb'",
+      "is_hidden": false
+    },
+    {
+      "input": "longest_palindrome('a')",
+      "expected": "'a'",
+      "is_hidden": false
+    },
+    {
+      "input": "longest_palindrome('racecar')",
+      "expected": "'racecar'",
+      "is_hidden": true
+    },
+    {
+      "input": "longest_palindrome('ac')\nin ('a', 'c')",
+      "expected": "True",
+      "is_hidden": true
+    },
+    {
+      "input": "len(longest_palindrome('aaaa'))",
+      "expected": "4",
+      "is_hidden": true
+    }
   ],
   "time_limit_minutes": 25,
-  "tags": ["dynamic-programming", "string", "expand-around-center"]
+  "tags": [
+    "dynamic-programming",
+    "string",
+    "expand-around-center"
+  ],
+  "solution": "# Problem: Find the longest substring of s that is a palindrome.\n#\n# Approach: \"Expand around center\" technique. Every palindrome has a center.\n# For each possible center (single char or between two chars), expand outward\n# while characters match. Track the longest palindrome found.\n#\n# Time complexity: O(n^2) — up to 2n centers, each expansion is O(n).\n# Space complexity: O(1) — only tracking start index and max length.\n#\n# Key steps:\n# 1. Define a helper that expands from a center and returns the palindrome bounds.\n# 2. Iterate over each index, expanding for both odd-length and even-length cases.\n# 3. Update the best result whenever a longer palindrome is found.\n\ndef longest_palindrome(s: str) -> str:\n    if len(s) < 2:\n        return s\n\n    start = 0\n    max_len = 1\n\n    def expand(left: int, right: int) -> tuple[int, int]:\n        while left >= 0 and right < len(s) and s[left] == s[right]:\n            left -= 1\n            right += 1\n        # left+1 and right-1 are the actual palindrome bounds\n        return left + 1, right - 1\n\n    for i in range(len(s)):\n        # Odd-length palindrome centered at i\n        lo, hi = expand(i, i)\n        if hi - lo + 1 > max_len:\n            start = lo\n            max_len = hi - lo + 1\n\n        # Even-length palindrome centered between i and i+1\n        lo, hi = expand(i, i + 1)\n        if hi - lo + 1 > max_len:\n            start = lo\n            max_len = hi - lo + 1\n\n    return s[start:start + max_len]"
 }

@@ -1,3 +1,7 @@
+if (import.meta.env.VITE_DEMO_MODE === 'true') {
+  await import('./demo/init')
+}
+
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import { install as VueMonacoEditorPlugin } from '@guolao/vue-monaco-editor'

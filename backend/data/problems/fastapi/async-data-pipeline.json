@@ -51,5 +51,12 @@
     }
   ],
   "time_limit_minutes": 30,
-  "tags": ["fastapi", "async", "pipeline", "closures", "data-processing"]
+  "tags": [
+    "fastapi",
+    "async",
+    "pipeline",
+    "closures",
+    "data-processing"
+  ],
+  "solution": "# Problem: Build a chainable data processing pipeline that applies\n# a series of transformation steps (filter, map, sort) to a list of dicts.\n#\n# Approach:\n# - Pipeline stores steps as (name, function) pairs and applies them sequentially.\n# - Each transform_* function is a closure factory: it captures parameters and\n#   returns a new function that operates on a list of dicts.\n# - transform_map creates new dicts via spread syntax to avoid mutation.\n#\n# Time complexity: O(S * N) where S = number of steps, N = data length\n#   (sort steps are O(N log N) each)\n# Space complexity: O(N) per step (new list created at each stage)\n#\n# Key steps:\n# 1. Pipeline.add_step appends (name, fn) and returns self for chaining.\n# 2. Pipeline.execute iterates steps in order, passing data through each.\n# 3. transform_filter returns a closure that keeps dicts where field == value.\n# 4. transform_map returns a closure that applies fn to one field, returning new dicts.\n# 5. transform_sort returns a closure that sorts dicts by a field.\n\nclass Pipeline:\n    def __init__(self):\n        self.steps = []\n\n    def add_step(self, name: str, transform_fn):\n        self.steps.append((name, transform_fn))\n        return self  # enables method chaining\n\n    def execute(self, data: list) -> dict:\n        result = data\n        steps_executed = []\n        for name, fn in self.steps:\n            result = fn(result)\n            steps_executed.append(name)\n        return {\n            \"result\": result,\n            \"steps_executed\": steps_executed,\n            \"record_count\": len(result),\n        }\n\n\ndef transform_filter(field: str, value):\n    # Closure captures field and value for later filtering\n    def _filter(data: list) -> list:\n        return [d for d in data if d[field] == value]\n    return _filter\n\n\ndef transform_map(field: str, fn):\n    # Returns new dicts with the field transformed — no mutation\n    def _map(data: list) -> list:\n        return [{**d, field: fn(d[field])} for d in data]\n    return _map\n\n\ndef transform_sort(field: str, reverse: bool = False):\n    def _sort(data: list) -> list:\n        return sorted(data, key=lambda d: d[field], reverse=reverse)\n    return _sort"
 }

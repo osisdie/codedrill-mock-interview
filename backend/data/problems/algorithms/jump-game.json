@@ -5,19 +5,58 @@
   "difficulty": "medium",
   "description": "You are given an integer array `nums`. You are initially positioned at the array's **first index**, and each element in the array represents your **maximum jump length** at that position.\n\nReturn `True` if you can reach the **last index**, or `False` otherwise.",
   "examples": [
-    {"input": "nums = [2, 3, 1, 1, 4]", "output": "True", "explanation": "Jump 1 step from index 0 to 1, then 3 steps to the last index."},
-    {"input": "nums = [3, 2, 1, 0, 4]", "output": "False", "explanation": "You will always arrive at index 3 no matter what. Its maximum jump length is 0, which makes it impossible to reach the last index."}
+    {
+      "input": "nums = [2, 3, 1, 1, 4]",
+      "output": "True",
+      "explanation": "Jump 1 step from index 0 to 1, then 3 steps to the last index."
+    },
+    {
+      "input": "nums = [3, 2, 1, 0, 4]",
+      "output": "False",
+      "explanation": "You will always arrive at index 3 no matter what. Its maximum jump length is 0, which makes it impossible to reach the last index."
+    }
   ],
-  "constraints": ["1 <= len(nums) <= 10^4", "0 <= nums[i] <= 10^5"],
+  "constraints": [
+    "1 <= len(nums) <= 10^4",
+    "0 <= nums[i] <= 10^5"
+  ],
   "starter_code": "def can_jump(nums: list[int]) -> bool:\n    # Write your solution here\n    pass\n",
   "test_cases": [
-    {"input": "can_jump([2, 3, 1, 1, 4])", "expected": "True", "is_hidden": false},
-    {"input": "can_jump([3, 2, 1, 0, 4])", "expected": "False", "is_hidden": false},
-    {"input": "can_jump([0])", "expected": "True", "is_hidden": false},
-    {"input": "can_jump([2, 0, 0])", "expected": "True", "is_hidden": true},
-    {"input": "can_jump([1, 1, 1, 1, 1])", "expected": "True", "is_hidden": true},
-    {"input": "can_jump([1, 0, 1, 0])", "expected": "False", "is_hidden": true}
+    {
+      "input": "can_jump([2, 3, 1, 1, 4])",
+      "expected": "True",
+      "is_hidden": false
+    },
+    {
+      "input": "can_jump([3, 2, 1, 0, 4])",
+      "expected": "False",
+      "is_hidden": false
+    },
+    {
+      "input": "can_jump([0])",
+      "expected": "True",
+      "is_hidden": false
+    },
+    {
+      "input": "can_jump([2, 0, 0])",
+      "expected": "True",
+      "is_hidden": true
+    },
+    {
+      "input": "can_jump([1, 1, 1, 1, 1])",
+      "expected": "True",
+      "is_hidden": true
+    },
+    {
+      "input": "can_jump([1, 0, 1, 0])",
+      "expected": "False",
+      "is_hidden": true
+    }
   ],
   "time_limit_minutes": 20,
-  "tags": ["greedy", "dynamic-programming"]
+  "tags": [
+    "greedy",
+    "dynamic-programming"
+  ],
+  "solution": "# Problem: Determine if you can reach the last index of an array,\n# where each element represents the maximum jump length from that position.\n#\n# Approach: Greedy algorithm - track the farthest index reachable so far.\n# Iterate through the array; if the current index is beyond our farthest\n# reach, we're stuck. Otherwise, update the farthest reach at each step.\n#\n# Time complexity: O(n) - single pass through the array\n# Space complexity: O(1) - only one variable to track max reach\n#\n# Key steps:\n# 1. Initialize max_reach to 0 (farthest index we can reach)\n# 2. For each index i, check if i is reachable (i <= max_reach)\n# 3. If reachable, update max_reach = max(max_reach, i + nums[i])\n# 4. If max_reach >= last index at any point, return True\n# 5. If we find an unreachable index, return False\n\ndef can_jump(nums: list[int]) -> bool:\n    max_reach = 0\n\n    for i in range(len(nums)):\n        if i > max_reach:\n            return False  # current index is beyond what we can reach\n        max_reach = max(max_reach, i + nums[i])\n        if max_reach >= len(nums) - 1:\n            return True  # early exit: last index is reachable\n\n    return True"
 }

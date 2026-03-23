@@ -1,12 +1,21 @@
 {
-  "name": "frontend",
+  "name": "codedrill-frontend",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0",
+  "description": "CodeDrill — AI Mock Interview Platform (Vue 3 frontend)",
   "type": "module",
+  "homepage": "https://osisdie.github.io/codedrill-mock-interview/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/osisdie/codedrill-mock-interview.git",
+    "directory": "frontend"
+  },
+  "license": "MIT",
   "packageManager": "pnpm@9.15.0",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "build:demo": "node scripts/bundle-problems.mjs && tsc && vite build",
     "preview": "vite preview",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",

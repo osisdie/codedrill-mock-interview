@@ -5,19 +5,58 @@
   "difficulty": "medium",
   "description": "Given an integer array `nums`, return an array `answer` such that `answer[i]` is equal to the product of all the elements of `nums` except `nums[i]`.\n\nThe product of any prefix or suffix of `nums` is guaranteed to fit in a 32-bit integer.\n\nYou must write an algorithm that runs in **O(n)** time and **without using the division operator**.",
   "examples": [
-    {"input": "nums = [1, 2, 3, 4]", "output": "[24, 12, 8, 6]"},
-    {"input": "nums = [-1, 1, 0, -3, 3]", "output": "[0, 0, 9, 0, 0]"}
+    {
+      "input": "nums = [1, 2, 3, 4]",
+      "output": "[24, 12, 8, 6]"
+    },
+    {
+      "input": "nums = [-1, 1, 0, -3, 3]",
+      "output": "[0, 0, 9, 0, 0]"
+    }
   ],
-  "constraints": ["2 <= len(nums) <= 10^5", "-30 <= nums[i] <= 30", "Product of any prefix or suffix fits in a 32-bit integer.", "O(n) time without division operator."],
+  "constraints": [
+    "2 <= len(nums) <= 10^5",
+    "-30 <= nums[i] <= 30",
+    "Product of any prefix or suffix fits in a 32-bit integer.",
+    "O(n) time without division operator."
+  ],
   "starter_code": "def product_except_self(nums: list[int]) -> list[int]:\n    # Write your solution here\n    pass\n",
   "test_cases": [
-    {"input": "product_except_self([1, 2, 3, 4])", "expected": "[24, 12, 8, 6]", "is_hidden": false},
-    {"input": "product_except_self([-1, 1, 0, -3, 3])", "expected": "[0, 0, 9, 0, 0]", "is_hidden": false},
-    {"input": "product_except_self([2, 3])", "expected": "[3, 2]", "is_hidden": true},
-    {"input": "product_except_self([1, 1, 1, 1])", "expected": "[1, 1, 1, 1]", "is_hidden": true},
-    {"input": "product_except_self([0, 0])", "expected": "[0, 0]", "is_hidden": true},
-    {"input": "product_except_self([5, -1, 2])", "expected": "[-2, 10, -5]", "is_hidden": true}
+    {
+      "input": "product_except_self([1, 2, 3, 4])",
+      "expected": "[24, 12, 8, 6]",
+      "is_hidden": false
+    },
+    {
+      "input": "product_except_self([-1, 1, 0, -3, 3])",
+      "expected": "[0, 0, 9, 0, 0]",
+      "is_hidden": false
+    },
+    {
+      "input": "product_except_self([2, 3])",
+      "expected": "[3, 2]",
+      "is_hidden": true
+    },
+    {
+      "input": "product_except_self([1, 1, 1, 1])",
+      "expected": "[1, 1, 1, 1]",
+      "is_hidden": true
+    },
+    {
+      "input": "product_except_self([0, 0])",
+      "expected": "[0, 0]",
+      "is_hidden": true
+    },
+    {
+      "input": "product_except_self([5, -1, 2])",
+      "expected": "[-2, 10, -5]",
+      "is_hidden": true
+    }
   ],
   "time_limit_minutes": 25,
-  "tags": ["prefix-product", "array"]
+  "tags": [
+    "prefix-product",
+    "array"
+  ],
+  "solution": "# Problem: For each index i, compute the product of all elements except nums[i].\n#\n# Approach: Two-pass prefix/suffix product.\n#   - First pass (left to right): build an array where answer[i] = product of all elements to the LEFT of i.\n#   - Second pass (right to left): multiply each answer[i] by the product of all elements to the RIGHT of i.\n#   This avoids division and runs in O(n) time.\n#\n# Time complexity: O(n) — two linear passes.\n# Space complexity: O(1) extra — the output array doesn't count as extra space per the problem statement.\n#\n# Key steps:\n#   1. Initialize answer array with left (prefix) products.\n#   2. Traverse from right, accumulating a suffix product and multiplying into answer.\n\ndef product_except_self(nums: list[int]) -> list[int]:\n    n = len(nums)\n    answer = [1] * n\n\n    # Pass 1: answer[i] = product of all elements to the left of i\n    left_product = 1\n    for i in range(n):\n        answer[i] = left_product\n        left_product *= nums[i]\n\n    # Pass 2: multiply by product of all elements to the right of i\n    right_product = 1\n    for i in range(n - 1, -1, -1):\n        answer[i] *= right_product\n        right_product *= nums[i]\n\n    return answer"
 }

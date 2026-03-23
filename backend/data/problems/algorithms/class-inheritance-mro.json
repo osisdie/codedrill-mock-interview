@@ -56,5 +56,11 @@
     }
   ],
   "time_limit_minutes": 25,
-  "tags": ["oop", "inheritance", "mro", "python-advanced"]
+  "tags": [
+    "oop",
+    "inheritance",
+    "mro",
+    "python-advanced"
+  ],
+  "solution": "# Problem: Design a notification system class hierarchy using multiple inheritance\n# that demonstrates Python's Method Resolution Order (MRO / C3 linearization).\n#\n# Approach:\n# - Each send() calls super().send(message) first, then appends its own entry.\n# - super() follows the MRO chain, so the base Notifier is called first (deepest),\n#   and results accumulate as the call stack unwinds.\n# - For UrgentNotifier(EmailNotifier, SMSNotifier), MRO is:\n#   UrgentNotifier -> EmailNotifier -> SMSNotifier -> Notifier -> object\n#\n# Time complexity: O(n) where n is the depth of the MRO chain\n# Space complexity: O(n) for the accumulated result list\n#\n# Key steps:\n# 1. Notifier.send() returns a new list with one entry (base case)\n# 2. Each subclass calls super().send(), gets the list, appends its own message\n# 3. get_mro_names() uses cls.__mro__ to return class name strings\n\n\nclass Notifier:\n    def send(self, message: str) -> list[str]:\n        return [f\"Notifier: {message}\"]\n\n\nclass EmailNotifier(Notifier):\n    def send(self, message: str) -> list[str]:\n        result = super().send(message)\n        result.append(f\"Email: {message}\")\n        return result\n\n\nclass SMSNotifier(Notifier):\n    def send(self, message: str) -> list[str]:\n        result = super().send(message)\n        result.append(f\"SMS: {message}\")\n        return result\n\n\nclass UrgentNotifier(EmailNotifier, SMSNotifier):\n    def send(self, message: str) -> list[str]:\n        # MRO: UrgentNotifier -> EmailNotifier -> SMSNotifier -> Notifier\n        # so super() chains through all of them before appending \"Urgent\"\n        result = super().send(message)\n        result.append(f\"Urgent: {message}\")\n        return result\n\n\ndef get_mro_names(cls) -> list[str]:\n    return [c.__name__ for c in cls.__mro__]"
 }
