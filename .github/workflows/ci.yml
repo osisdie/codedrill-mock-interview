@@ -63,6 +63,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
+      - name: Bundle problem data (needed for tsc)
+        run: node scripts/bundle-problems.mjs
+
       - name: Type check & build
         run: pnpm build
 
