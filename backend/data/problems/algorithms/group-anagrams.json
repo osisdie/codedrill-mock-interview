@@ -25,12 +25,37 @@
   ],
   "starter_code": "def group_anagrams(strs: list[str]) -> list[list[str]]:\n    # Write your solution here\n    pass\n",
   "test_cases": [
-    {"input": "group_anagrams(['eat', 'tea', 'tan', 'ate', 'nat', 'bat'])", "expected": "[['ate', 'eat', 'tea'], ['bat'], ['nat', 'tan']]", "is_hidden": false},
-    {"input": "group_anagrams([''])", "expected": "[['']]", "is_hidden": false},
-    {"input": "group_anagrams(['a'])", "expected": "[['a']]", "is_hidden": false},
-    {"input": "group_anagrams(['abc', 'bca', 'cab', 'xyz', 'zyx'])", "expected": "[['abc', 'bca', 'cab'], ['xyz', 'zyx']]", "is_hidden": true},
-    {"input": "group_anagrams(['listen', 'silent', 'hello', 'world', 'enlist'])", "expected": "[['enlist', 'listen', 'silent'], ['hello'], ['world']]", "is_hidden": true}
+    {
+      "input": "group_anagrams(['eat', 'tea', 'tan', 'ate', 'nat', 'bat'])",
+      "expected": "[['ate', 'eat', 'tea'], ['bat'], ['nat', 'tan']]",
+      "is_hidden": false
+    },
+    {
+      "input": "group_anagrams([''])",
+      "expected": "[['']]",
+      "is_hidden": false
+    },
+    {
+      "input": "group_anagrams(['a'])",
+      "expected": "[['a']]",
+      "is_hidden": false
+    },
+    {
+      "input": "group_anagrams(['abc', 'bca', 'cab', 'xyz', 'zyx'])",
+      "expected": "[['abc', 'bca', 'cab'], ['xyz', 'zyx']]",
+      "is_hidden": true
+    },
+    {
+      "input": "group_anagrams(['listen', 'silent', 'hello', 'world', 'enlist'])",
+      "expected": "[['enlist', 'listen', 'silent'], ['hello'], ['world']]",
+      "is_hidden": true
+    }
   ],
   "time_limit_minutes": 25,
-  "tags": ["hash-map", "string", "sorting"]
+  "tags": [
+    "hash-map",
+    "string",
+    "sorting"
+  ],
+  "solution": "# Problem: Group strings that are anagrams of each other.\n#\n# Approach: Two strings are anagrams if they have the same sorted characters.\n# Use a dictionary mapping sorted-character tuples to lists of original strings.\n# This lets us group anagrams in a single pass through the input.\n#\n# Time complexity: O(n * k log k) where n = number of strings, k = max string length\n# Space complexity: O(n * k) for storing all strings in the dictionary\n#\n# Key steps:\n# 1. Create a dictionary with sorted-character tuples as keys\n# 2. Iterate through each string, sort its characters, and append to the corresponding group\n# 3. Sort each group alphabetically\n# 4. Sort the list of groups by their first element\n\nfrom collections import defaultdict\n\ndef group_anagrams(strs: list[str]) -> list[list[str]]:\n    anagram_map = defaultdict(list)\n\n    for s in strs:\n        key = tuple(sorted(s))  # anagrams produce the same sorted tuple\n        anagram_map[key].append(s)\n\n    # Sort each group internally, then sort groups by first element\n    result = [sorted(group) for group in anagram_map.values()]\n    result.sort(key=lambda group: group[0])\n\n    return result"
 }

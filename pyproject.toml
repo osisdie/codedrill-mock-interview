@@ -1,2 +1,14 @@
+[project]
+name = "codedrill-backend"
+version = "0.1.0"
+description = "CodeDrill — AI Mock Interview Platform (FastAPI backend)"
+requires-python = ">=3.12"
+license = "MIT"
+
+[project.urls]
+Homepage = "https://github.com/osisdie/codedrill-mock-interview"
+Repository = "https://github.com/osisdie/codedrill-mock-interview"
+Issues = "https://github.com/osisdie/codedrill-mock-interview/issues"
+
 [tool.ruff]
 line-length = 120

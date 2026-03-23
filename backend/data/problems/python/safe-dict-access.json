@@ -78,5 +78,12 @@
     }
   ],
   "time_limit_minutes": 20,
-  "tags": ["python", "dict", "KeyError", "nested", "safety"]
+  "tags": [
+    "python",
+    "dict",
+    "KeyError",
+    "nested",
+    "safety"
+  ],
+  "solution": "# Problem: Implement safe dictionary access utilities to avoid KeyError exceptions\n# when working with nested dictionaries using dot-separated paths.\n#\n# Approach:\n# - safe_get: Split path into keys, traverse dict step by step, return default on failure\n# - safe_set: Split path, traverse/create intermediate dicts, set final key\n# - flatten_dict: Recursively walk dict, build dot-joined keys for leaf values\n#\n# Time complexity: O(k) for safe_get/safe_set where k = path depth; O(n) for flatten_dict where n = total keys\n# Space complexity: O(k) for path splits; O(n) for flattened output\n#\n# Key steps:\n# 1. Parse dot-separated path into list of keys\n# 2. For get: walk down dict, bail on missing key or non-dict intermediate\n# 3. For set: walk down dict, create dicts for missing/non-dict intermediates\n# 4. For flatten: recurse into dict values, collect non-dict values with joined prefix\n\ndef safe_get(data: dict, path: str, default=None):\n    keys = path.split('.')\n    current = data\n    for key in keys:\n        if not isinstance(current, dict) or key not in current:\n            return default\n        current = current[key]\n    return current\n\n\ndef safe_set(data: dict, path: str, value) -> dict:\n    keys = path.split('.')\n    current = data\n    for key in keys[:-1]:  # traverse all but last key\n        if key not in current or not isinstance(current[key], dict):\n            current[key] = {}  # create or overwrite non-dict intermediate\n        current = current[key]\n    current[keys[-1]] = value  # set the final key\n    return data\n\n\ndef flatten_dict(data: dict, separator: str = '.', _prefix: str = '') -> dict:\n    result = {}\n    for key, val in data.items():\n        full_key = f\"{_prefix}{separator}{key}\" if _prefix else key\n        if isinstance(val, dict):\n            result.update(flatten_dict(val, separator, full_key))  # recurse into nested dicts\n        else:\n            result[full_key] = val  # leaf value\n    return result"
 }

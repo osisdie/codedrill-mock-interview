@@ -103,5 +103,13 @@
     }
   ],
   "time_limit_minutes": 15,
-  "tags": ["python", "type-conversion", "ValueError", "TypeError", "parsing", "safety"]
+  "tags": [
+    "python",
+    "type-conversion",
+    "ValueError",
+    "TypeError",
+    "parsing",
+    "safety"
+  ],
+  "solution": "# Problem: Implement defensive type conversion functions that never raise exceptions.\n# Messy input data causes ValueError/TypeError crashes — we need safe wrappers.\n#\n# Approach:\n#   - safe_int/safe_float: wrap int()/float() in try/except for ValueError and TypeError\n#   - parse_value: strip whitespace, then try conversions in order: bool > int > float > str\n#   - safe_list: simple type checks with if/elif chain\n#\n# Time complexity: O(1) for all functions (constant-time conversions)\n# Space complexity: O(1)\n#\n# Key steps:\n#   1. safe_int/safe_float: try conversion, return default on failure\n#   2. parse_value: strip input, check lowercase for bool literals, then try int, float\n#   3. safe_list: check None, then list, then wrap in list\n\ndef safe_int(value, default=0):\n    try:\n        return int(value)\n    except (ValueError, TypeError):\n        return default\n\n\ndef safe_float(value, default=0.0):\n    try:\n        return float(value)\n    except (ValueError, TypeError):\n        return default\n\n\ndef parse_value(s: str):\n    stripped = s.strip()\n    # Check bool first (case-insensitive)\n    if stripped.lower() == 'true':\n        return True\n    if stripped.lower() == 'false':\n        return False\n    # Try int before float so '42' returns int, not float\n    try:\n        return int(stripped)\n    except ValueError:\n        pass\n    try:\n        return float(stripped)\n    except ValueError:\n        pass\n    # Fall back to stripped string\n    return stripped\n\n\ndef safe_list(value):\n    if value is None:\n        return []\n    if isinstance(value, list):\n        return value\n    return [value]"
 }

@@ -58,5 +58,11 @@
     }
   ],
   "time_limit_minutes": 20,
-  "tags": ["pytest", "parametrize", "decorator", "testing"]
+  "tags": [
+    "pytest",
+    "parametrize",
+    "decorator",
+    "testing"
+  ],
+  "solution": "# Problem: Implement a simplified @parametrize decorator (like pytest.mark.parametrize)\n# that attaches test parameter metadata to functions, and a runner that executes\n# the function once per parameter set, collecting pass/fail results.\n#\n# Approach:\n# - parametrize() is a decorator factory: it returns a decorator that attaches\n#   _param_names and _param_values as attributes on the function (without wrapping it).\n# - run_parametrized() reads those attributes, zips names with each value tuple to\n#   build kwargs, calls the function in a try/except, and collects ParamResult objects.\n#\n# Time complexity: O(n) where n = number of parameter tuples\n# Space complexity: O(n) for storing results\n#\n# Key steps:\n# 1. ParamResult stores args dict, passed bool, and optional error string.\n# 2. parametrize() splits/strips arg_names, attaches metadata, returns original func.\n# 3. run_parametrized() iterates _param_values, builds kwargs via zip, calls func,\n#    catches exceptions, and returns list of ParamResult.\n\n\nclass ParamResult:\n    def __init__(self, args: dict, passed: bool, error: str | None = None):\n        self.args = args\n        self.passed = passed\n        self.error = error\n\n\ndef parametrize(arg_names: str, arg_values: list):\n    def decorator(func):\n        # Split comma-separated names and strip whitespace\n        func._param_names = [name.strip() for name in arg_names.split(\",\")]\n        func._param_values = arg_values\n        return func  # Return original function unchanged, not a wrapper\n    return decorator\n\n\ndef run_parametrized(func) -> list:\n    results = []\n    for values in func._param_values:\n        # Zip parameter names with this tuple's values to build kwargs\n        kwargs = dict(zip(func._param_names, values))\n        try:\n            func(**kwargs)\n            results.append(ParamResult(args=kwargs, passed=True))\n        except Exception as e:\n            results.append(ParamResult(args=kwargs, passed=False, error=str(e)))\n    return results"
 }

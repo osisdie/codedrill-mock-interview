@@ -5,21 +5,69 @@
   "difficulty": "medium",
   "description": "Given a string `s`, find the length of the **longest substring** without repeating characters.\n\nA substring is a contiguous sequence of characters within a string.",
   "examples": [
-    {"input": "s = \"abcabcbb\"", "output": "3", "explanation": "The longest substring without repeating characters is \"abc\", which has length 3."},
-    {"input": "s = \"bbbbb\"", "output": "1", "explanation": "The longest substring is \"b\", with length 1."},
-    {"input": "s = \"pwwkew\"", "output": "3", "explanation": "The longest substring is \"wke\", with length 3. Note that \"pwke\" is a subsequence, not a substring."}
+    {
+      "input": "s = \"abcabcbb\"",
+      "output": "3",
+      "explanation": "The longest substring without repeating characters is \"abc\", which has length 3."
+    },
+    {
+      "input": "s = \"bbbbb\"",
+      "output": "1",
+      "explanation": "The longest substring is \"b\", with length 1."
+    },
+    {
+      "input": "s = \"pwwkew\"",
+      "output": "3",
+      "explanation": "The longest substring is \"wke\", with length 3. Note that \"pwke\" is a subsequence, not a substring."
+    }
   ],
-  "constraints": ["0 <= len(s) <= 5 * 10^4", "s consists of English letters, digits, symbols and spaces."],
+  "constraints": [
+    "0 <= len(s) <= 5 * 10^4",
+    "s consists of English letters, digits, symbols and spaces."
+  ],
   "starter_code": "def length_of_longest_substring(s: str) -> int:\n    # Write your solution here\n    pass\n",
   "test_cases": [
-    {"input": "length_of_longest_substring('abcabcbb')", "expected": "3", "is_hidden": false},
-    {"input": "length_of_longest_substring('bbbbb')", "expected": "1", "is_hidden": false},
-    {"input": "length_of_longest_substring('pwwkew')", "expected": "3", "is_hidden": false},
-    {"input": "length_of_longest_substring('')", "expected": "0", "is_hidden": true},
-    {"input": "length_of_longest_substring('abcdefg')", "expected": "7", "is_hidden": true},
-    {"input": "length_of_longest_substring('dvdf')", "expected": "3", "is_hidden": true},
-    {"input": "length_of_longest_substring('anviaj')", "expected": "5", "is_hidden": true}
+    {
+      "input": "length_of_longest_substring('abcabcbb')",
+      "expected": "3",
+      "is_hidden": false
+    },
+    {
+      "input": "length_of_longest_substring('bbbbb')",
+      "expected": "1",
+      "is_hidden": false
+    },
+    {
+      "input": "length_of_longest_substring('pwwkew')",
+      "expected": "3",
+      "is_hidden": false
+    },
+    {
+      "input": "length_of_longest_substring('')",
+      "expected": "0",
+      "is_hidden": true
+    },
+    {
+      "input": "length_of_longest_substring('abcdefg')",
+      "expected": "7",
+      "is_hidden": true
+    },
+    {
+      "input": "length_of_longest_substring('dvdf')",
+      "expected": "3",
+      "is_hidden": true
+    },
+    {
+      "input": "length_of_longest_substring('anviaj')",
+      "expected": "5",
+      "is_hidden": true
+    }
   ],
   "time_limit_minutes": 25,
-  "tags": ["sliding-window", "hash-set", "string"]
+  "tags": [
+    "sliding-window",
+    "hash-set",
+    "string"
+  ],
+  "solution": "# Problem: Find the length of the longest substring without repeating characters.\n#\n# Approach: Sliding window with a hash map.\n#   - Use two pointers (left, right) to define a window of unique characters.\n#   - A dictionary tracks the last-seen index of each character.\n#   - When we encounter a repeat, jump `left` past the previous occurrence.\n#\n# Time complexity:  O(n) — each character is visited at most twice.\n# Space complexity: O(min(n, m)) — where m is the size of the character set.\n#\n# Key steps:\n#   1. Initialize left pointer and a dict for last-seen indices.\n#   2. Iterate right pointer across the string.\n#   3. If char was seen and is within the current window, move left past it.\n#   4. Update the char's last-seen index and track the max window size.\n\ndef length_of_longest_substring(s: str) -> int:\n    last_seen = {}  # char -> most recent index\n    left = 0\n    max_len = 0\n\n    for right, char in enumerate(s):\n        if char in last_seen and last_seen[char] >= left:\n            left = last_seen[char] + 1  # shrink window past the duplicate\n        last_seen[char] = right\n        max_len = max(max_len, right - left + 1)\n\n    return max_len"
 }

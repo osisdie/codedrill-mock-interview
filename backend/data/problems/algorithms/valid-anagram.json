@@ -22,12 +22,37 @@
   ],
   "starter_code": "def is_anagram(s: str, t: str) -> bool:\n    # Write your solution here\n    pass\n",
   "test_cases": [
-    {"input": "is_anagram('anagram', 'nagaram')", "expected": "True", "is_hidden": false},
-    {"input": "is_anagram('rat', 'car')", "expected": "False", "is_hidden": false},
-    {"input": "is_anagram('listen', 'silent')", "expected": "True", "is_hidden": true},
-    {"input": "is_anagram('hello', 'world')", "expected": "False", "is_hidden": true},
-    {"input": "is_anagram('', '')", "expected": "True", "is_hidden": true}
+    {
+      "input": "is_anagram('anagram', 'nagaram')",
+      "expected": "True",
+      "is_hidden": false
+    },
+    {
+      "input": "is_anagram('rat', 'car')",
+      "expected": "False",
+      "is_hidden": false
+    },
+    {
+      "input": "is_anagram('listen', 'silent')",
+      "expected": "True",
+      "is_hidden": true
+    },
+    {
+      "input": "is_anagram('hello', 'world')",
+      "expected": "False",
+      "is_hidden": true
+    },
+    {
+      "input": "is_anagram('', '')",
+      "expected": "True",
+      "is_hidden": true
+    }
   ],
   "time_limit_minutes": 15,
-  "tags": ["hash-map", "string", "sorting"]
+  "tags": [
+    "hash-map",
+    "string",
+    "sorting"
+  ],
+  "solution": "# Problem: Determine if string t is an anagram of string s\n# (i.e., t is formed by rearranging all letters of s exactly once).\n#\n# Approach: Use a frequency counter (hash map) to count character\n# occurrences in s, then decrement for each character in t.\n# If all counts return to zero, the strings are anagrams.\n#\n# Time complexity: O(n) where n is the length of the strings\n# Space complexity: O(1) since the alphabet is fixed (26 lowercase letters)\n#\n# Key steps:\n# 1. Early return False if lengths differ\n# 2. Count character frequencies in s\n# 3. Decrement counts for each character in t\n# 4. Check that all counts are zero\n\ndef is_anagram(s: str, t: str) -> bool:\n    if len(s) != len(t):\n        return False\n\n    count = {}\n\n    for char in s:\n        count[char] = count.get(char, 0) + 1\n\n    for char in t:\n        count[char] = count.get(char, 0) - 1\n        if count[char] < 0:  # t has more of this char than s\n            return False\n\n    return True"
 }

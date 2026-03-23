@@ -97,5 +97,12 @@
     }
   ],
   "time_limit_minutes": 15,
-  "tags": ["python", "None", "Optional", "safety", "AttributeError"]
+  "tags": [
+    "python",
+    "None",
+    "Optional",
+    "safety",
+    "AttributeError"
+  ],
+  "solution": "\n\n# Problem: Implement None-safe utility functions for safe attribute access,\n# indexing, value coalescing, and optional mapping in Python.\n#\n# Approach: Each function uses defensive checks against None and catches\n# specific exceptions to avoid crashes from missing attributes or bad indexes.\n# - coalesce: linear scan for first non-None value\n# - safe_chain: iterative getattr with None short-circuit\n# - safe_index: try/except around subscript access\n# - none_map: guard check before function application\n#\n# Time complexity: O(n) for coalesce/safe_chain where n is number of args/attrs\n# Space complexity: O(1) for all functions\n#\n# Key steps:\n# 1. coalesce - iterate values, return first that is not None\n# 2. safe_chain - walk attributes, bail on None or AttributeError\n# 3. safe_index - attempt lst[index], catch IndexError and TypeError\n# 4. none_map - check None before calling func\n\ndef coalesce(*values):\n    \"\"\"Return the first non-None value, or None if all are None.\"\"\"\n    for v in values:\n        if v is not None:  # use identity check, not truthiness (0, '', False are valid)\n            return v\n    return None\n\n\ndef safe_chain(obj, *attrs):\n    \"\"\"Safely traverse attribute chain. Returns None if any is missing.\"\"\"\n    current = obj\n    for attr in attrs:\n        if current is None:  # short-circuit on None intermediate\n            return None\n        try:\n            current = getattr(current, attr)\n        except AttributeError:\n            return None\n    return current\n\n\ndef safe_index(lst, index, default=None):\n    \"\"\"Safely access list element by index. Returns default if out of range.\"\"\"\n    try:\n        return lst[index]\n    except (IndexError, TypeError):  # TypeError handles non-subscriptable objects\n        return default\n\n\ndef none_map(value, func):\n    \"\"\"Apply func to value if not None, else return None.\"\"\"\n    if value is None:\n        return None\n    return func(value)"
 }

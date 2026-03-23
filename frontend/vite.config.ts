@@ -2,7 +2,10 @@ import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import tailwindcss from '@tailwindcss/vite'
 
+const isDemo = process.env.VITE_DEMO_MODE === 'true'
+
 export default defineConfig({
+  base: isDemo ? '/codedrill-mock-interview/' : '/',
   plugins: [vue(), tailwindcss()],
   server: {
     host: '0.0.0.0',

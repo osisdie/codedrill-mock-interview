@@ -24,12 +24,36 @@
   ],
   "starter_code": "def two_sum(nums: list[int], target: int) -> list[int]:\n    # Write your solution here\n    pass\n",
   "test_cases": [
-    {"input": "two_sum([2, 7, 11, 15], 9)", "expected": "[0, 1]", "is_hidden": false},
-    {"input": "two_sum([3, 2, 4], 6)", "expected": "[1, 2]", "is_hidden": false},
-    {"input": "two_sum([3, 3], 6)", "expected": "[0, 1]", "is_hidden": true},
-    {"input": "two_sum([1, 5, 3, 7, 2], 9)", "expected": "[3, 4]", "is_hidden": true},
-    {"input": "two_sum([-1, -2, -3, -4, -5], -8)", "expected": "[2, 4]", "is_hidden": true}
+    {
+      "input": "two_sum([2, 7, 11, 15], 9)",
+      "expected": "[0, 1]",
+      "is_hidden": false
+    },
+    {
+      "input": "two_sum([3, 2, 4], 6)",
+      "expected": "[1, 2]",
+      "is_hidden": false
+    },
+    {
+      "input": "two_sum([3, 3], 6)",
+      "expected": "[0, 1]",
+      "is_hidden": true
+    },
+    {
+      "input": "two_sum([1, 5, 3, 7, 2], 9)",
+      "expected": "[3, 4]",
+      "is_hidden": true
+    },
+    {
+      "input": "two_sum([-1, -2, -3, -4, -5], -8)",
+      "expected": "[2, 4]",
+      "is_hidden": true
+    }
   ],
   "time_limit_minutes": 20,
-  "tags": ["hash-map", "array"]
+  "tags": [
+    "hash-map",
+    "array"
+  ],
+  "solution": "# Problem: Given an array of integers and a target, find two indices\n# whose corresponding values add up to the target.\n#\n# Approach: Use a hash map (dictionary) to store each number's index\n# as we iterate. For each number, compute its complement (target - num).\n# If the complement already exists in the map, we've found our pair.\n# This gives us a single-pass solution.\n#\n# Time complexity: O(n) - single pass through the array\n# Space complexity: O(n) - hash map stores up to n elements\n#\n# Key steps:\n# 1. Initialize an empty dictionary to map values to their indices\n# 2. For each number, compute complement = target - num\n# 3. If complement is in the dictionary, return both indices\n# 4. Otherwise, store the current number and its index\n\ndef two_sum(nums: list[int], target: int) -> list[int]:\n    seen = {}  # value -> index\n\n    for i, num in enumerate(nums):\n        complement = target - num\n\n        if complement in seen:\n            return [seen[complement], i]\n\n        seen[num] = i  # store after checking to avoid using same element twice"
 }

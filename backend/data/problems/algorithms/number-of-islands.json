@@ -5,19 +5,60 @@
   "difficulty": "medium",
   "description": "Given an `m x n` 2D grid map of `'1'`s (land) and `'0'`s (water), return the **number of islands**.\n\nAn island is surrounded by water and is formed by connecting adjacent lands horizontally or vertically. You may assume all four edges of the grid are surrounded by water.",
   "examples": [
-    {"input": "grid = [[\"1\",\"1\",\"1\",\"1\",\"0\"],[\"1\",\"1\",\"0\",\"1\",\"0\"],[\"1\",\"1\",\"0\",\"0\",\"0\"],[\"0\",\"0\",\"0\",\"0\",\"0\"]]", "output": "1"},
-    {"input": "grid = [[\"1\",\"1\",\"0\",\"0\",\"0\"],[\"1\",\"1\",\"0\",\"0\",\"0\"],[\"0\",\"0\",\"1\",\"0\",\"0\"],[\"0\",\"0\",\"0\",\"1\",\"1\"]]", "output": "3"}
+    {
+      "input": "grid = [[\"1\",\"1\",\"1\",\"1\",\"0\"],[\"1\",\"1\",\"0\",\"1\",\"0\"],[\"1\",\"1\",\"0\",\"0\",\"0\"],[\"0\",\"0\",\"0\",\"0\",\"0\"]]",
+      "output": "1"
+    },
+    {
+      "input": "grid = [[\"1\",\"1\",\"0\",\"0\",\"0\"],[\"1\",\"1\",\"0\",\"0\",\"0\"],[\"0\",\"0\",\"1\",\"0\",\"0\"],[\"0\",\"0\",\"0\",\"1\",\"1\"]]",
+      "output": "3"
+    }
   ],
-  "constraints": ["m == len(grid)", "n == len(grid[i])", "1 <= m, n <= 300", "grid[i][j] is '0' or '1'."],
+  "constraints": [
+    "m == len(grid)",
+    "n == len(grid[i])",
+    "1 <= m, n <= 300",
+    "grid[i][j] is '0' or '1'."
+  ],
   "starter_code": "def num_islands(grid: list[list[str]]) -> int:\n    # Write your solution here\n    pass\n",
   "test_cases": [
-    {"input": "num_islands([['1','1','1','1','0'],['1','1','0','1','0'],['1','1','0','0','0'],['0','0','0','0','0']])", "expected": "1", "is_hidden": false},
-    {"input": "num_islands([['1','1','0','0','0'],['1','1','0','0','0'],['0','0','1','0','0'],['0','0','0','1','1']])", "expected": "3", "is_hidden": false},
-    {"input": "num_islands([['1']])", "expected": "1", "is_hidden": true},
-    {"input": "num_islands([['0']])", "expected": "0", "is_hidden": true},
-    {"input": "num_islands([['1','0','1'],['0','1','0'],['1','0','1']])", "expected": "5", "is_hidden": true},
-    {"input": "num_islands([['1','1'],['1','1']])", "expected": "1", "is_hidden": true}
+    {
+      "input": "num_islands([['1','1','1','1','0'],['1','1','0','1','0'],['1','1','0','0','0'],['0','0','0','0','0']])",
+      "expected": "1",
+      "is_hidden": false
+    },
+    {
+      "input": "num_islands([['1','1','0','0','0'],['1','1','0','0','0'],['0','0','1','0','0'],['0','0','0','1','1']])",
+      "expected": "3",
+      "is_hidden": false
+    },
+    {
+      "input": "num_islands([['1']])",
+      "expected": "1",
+      "is_hidden": true
+    },
+    {
+      "input": "num_islands([['0']])",
+      "expected": "0",
+      "is_hidden": true
+    },
+    {
+      "input": "num_islands([['1','0','1'],['0','1','0'],['1','0','1']])",
+      "expected": "5",
+      "is_hidden": true
+    },
+    {
+      "input": "num_islands([['1','1'],['1','1']])",
+      "expected": "1",
+      "is_hidden": true
+    }
   ],
   "time_limit_minutes": 25,
-  "tags": ["dfs", "bfs", "graph", "matrix"]
+  "tags": [
+    "dfs",
+    "bfs",
+    "graph",
+    "matrix"
+  ],
+  "solution": "# Problem: Count the number of connected components of '1's in a 2D grid.\n#\n# Approach: Iterate through every cell. When we find a '1', increment our island\n# count and run DFS to \"sink\" (mark as '0') all connected land cells. This ensures\n# each island is only counted once.\n#\n# Time complexity:  O(m * n) — every cell is visited at most twice (once in the loop, once in DFS).\n# Space complexity: O(m * n) worst-case for the DFS call stack (e.g., a grid full of '1's).\n#\n# Key steps:\n#   1. Loop through each cell in the grid.\n#   2. When a '1' is found, increment the island count.\n#   3. Run DFS from that cell, marking all connected '1's as '0' (sinking the island).\n#   4. Return the total island count.\n\ndef num_islands(grid: list[list[str]]) -> int:\n    if not grid:\n        return 0\n\n    rows, cols = len(grid), len(grid[0])\n    count = 0\n\n    def dfs(r: int, c: int) -> None:\n        # Stop if out of bounds or on water\n        if r < 0 or r >= rows or c < 0 or c >= cols or grid[r][c] == '0':\n            return\n        grid[r][c] = '0'  # Sink this cell so we don't revisit it\n        # Explore all four adjacent directions\n        dfs(r + 1, c)\n        dfs(r - 1, c)\n        dfs(r, c + 1)\n        dfs(r, c - 1)\n\n    for r in range(rows):\n        for c in range(cols):\n            if grid[r][c] == '1':\n                count += 1  # Found a new island\n                dfs(r, c)   # Sink the entire island\n\n    return count"
 }

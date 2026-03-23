@@ -27,13 +27,41 @@
   ],
   "starter_code": "def is_valid(s: str) -> bool:\n    # Write your solution here\n    pass\n",
   "test_cases": [
-    {"input": "is_valid('()')", "expected": "True", "is_hidden": false},
-    {"input": "is_valid('()[]{}')", "expected": "True", "is_hidden": false},
-    {"input": "is_valid('(]')", "expected": "False", "is_hidden": false},
-    {"input": "is_valid('([)]')", "expected": "False", "is_hidden": true},
-    {"input": "is_valid('{[]}')", "expected": "True", "is_hidden": true},
-    {"input": "is_valid(']')", "expected": "False", "is_hidden": true}
+    {
+      "input": "is_valid('()')",
+      "expected": "True",
+      "is_hidden": false
+    },
+    {
+      "input": "is_valid('()[]{}')",
+      "expected": "True",
+      "is_hidden": false
+    },
+    {
+      "input": "is_valid('(]')",
+      "expected": "False",
+      "is_hidden": false
+    },
+    {
+      "input": "is_valid('([)]')",
+      "expected": "False",
+      "is_hidden": true
+    },
+    {
+      "input": "is_valid('{[]}')",
+      "expected": "True",
+      "is_hidden": true
+    },
+    {
+      "input": "is_valid(']')",
+      "expected": "False",
+      "is_hidden": true
+    }
   ],
   "time_limit_minutes": 15,
-  "tags": ["stack", "string"]
+  "tags": [
+    "stack",
+    "string"
+  ],
+  "solution": "# Problem: Determine if a string of brackets is valid (properly opened and closed).\n#\n# Approach: Use a stack. Push opening brackets onto the stack. When we encounter\n# a closing bracket, check if it matches the top of the stack. If it doesn't\n# match or the stack is empty, the string is invalid. At the end, the stack\n# must be empty for the string to be valid.\n#\n# Time complexity: O(n) where n is the length of the string\n# Space complexity: O(n) in the worst case (all opening brackets)\n#\n# Key steps:\n# 1. Create a mapping of closing brackets to their opening counterparts\n# 2. Iterate through each character in the string\n# 3. If it's an opening bracket, push onto stack\n# 4. If it's a closing bracket, check stack top for matching opener\n# 5. Return whether the stack is empty at the end\n\ndef is_valid(s: str) -> bool:\n    stack = []\n    # Map each closing bracket to its corresponding opening bracket\n    matching = {')': '(', '}': '{', ']': '['}\n\n    for char in s:\n        if char in matching:\n            # Closing bracket: check if top of stack has the matching opener\n            if not stack or stack[-1] != matching[char]:\n                return False\n            stack.pop()\n        else:\n            # Opening bracket: push onto stack\n            stack.append(char)\n\n    # Valid only if all opening brackets were matched\n    return len(stack) == 0"
 }

@@ -1,3 +1,6 @@
+import { useMockApi } from '../demo/mockApi'
+
+const DEMO = import.meta.env.VITE_DEMO_MODE === 'true'
 const BASE = '/api'
 
 const DEFAULT_TIMEOUT = 120_000 // 120s — generous for AI generation endpoints
@@ -33,6 +36,7 @@ async function request<T>(
 }
 
 export function useApi() {
+  if (DEMO) return useMockApi()
   return {
     get: <T>(path: string, options?: { timeout?: number }) =>
       request<T>(path, options),
