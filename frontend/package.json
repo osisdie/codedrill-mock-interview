@@ -25,7 +25,7 @@
     "@playwright/test": "^1.58.2",
     "@types/splitpanes": "^2.2.6",
     "@vitejs/plugin-vue": "^6.0.4",
-    "typescript": "~5.9.3",
+    "typescript": "~6.0.2",
     "vite": "^7.3.1",
     "vue-tsc": "^3.2.6"
   },
@@ -36,6 +36,6 @@
     "splitpanes": "^4.0.4",
     "tailwindcss": "^4.2.2",
     "vue": "^3.5.30",
-    "vue-router": "^4.6.4"
+    "vue-router": "^5.0.4"
   }
 }
