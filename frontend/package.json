@@ -24,7 +24,7 @@
   "devDependencies": {
     "@playwright/test": "^1.58.2",
     "@types/splitpanes": "^2.2.6",
-    "@vitejs/plugin-vue": "^6.0.4",
+    "@vitejs/plugin-vue": "^6.0.5",
     "typescript": "~6.0.2",
     "vite": "^7.3.1",
     "vue-tsc": "^3.2.6"
