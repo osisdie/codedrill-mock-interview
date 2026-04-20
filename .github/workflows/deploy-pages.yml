@@ -42,7 +42,7 @@ jobs:
           VITE_DEMO_MODE: "true"
         run: pnpm build
 
-      - uses: actions/upload-pages-artifact@v4
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: frontend/dist
 
