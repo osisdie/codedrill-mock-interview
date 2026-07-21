@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased] - 2026-07-22
+
+### Changed
+
+- **Dependency maintenance** — consolidated all outstanding Dependabot updates:
+  - Frontend (npm): `vue`, `vue-tsc`, `@vitejs/plugin-vue`, `@tailwindcss/vite`, `@playwright/test`
+  - Backend (pip): `pydantic`, `pydantic-settings`, `python-dotenv`, `pytest`, `pytest-asyncio`
+  - CI (github-actions): `actions/checkout`, `pnpm/action-setup`, `actions/upload-pages-artifact`, `actions/deploy-pages`
+
 ## [0.1.0] - 2026-03-23
 
 ### Added
