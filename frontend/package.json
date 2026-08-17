@@ -22,7 +22,7 @@
     "test:e2e:headed": "playwright test --headed"
   },
   "devDependencies": {
-    "@playwright/test": "^1.62.0",
+    "@playwright/test": "^1.62.1",
     "@types/splitpanes": "^2.2.6",
     "@vitejs/plugin-vue": "^6.0.6",
     "typescript": "~7.0.2",
